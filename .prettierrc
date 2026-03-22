@@ -1,0 +1,20 @@
+{
+  "plugins": [
+    "/nix/store/3kgr4d2alb0kigivs8r9vjw77nr9g8iz-prettier-plugin-go-template-0.0.15-unstable-2023-07-26/lib/node_modules/prettier-plugin-go-template/lib/index.js",
+    "/nix/store/phsaqcazbyw5vc2qn7739j3hvqwqm83n-prettier-plugin-tailwindcss-extra-plus-0.3.1/lib/node_modules/prettier-plugin-tailwindcss-extra-plus/dist/main.js",
+    "/nix/store/ikdjachhzqkagay0x6a9hq5iisi45x0j-prettier-plugin-tailwindcss-0.6.11/lib/node_modules/prettier-plugin-tailwindcss/dist/index.mjs"
+  ],
+  "tailwindStylesheet": "./tailwind.css",
+  "overrides": [
+    {
+      "files": "*.gohtml",
+      "options": {
+        "parser": "go-template"
+      }
+    },
+    {
+      "files": "*.templ",
+      "options": { "parser": "tailwindcss-extra-plus" }
+    }
+  ]
+}

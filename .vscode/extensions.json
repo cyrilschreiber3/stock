@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "golang.go", // Go language support
+    "a-h.templ", // Templ language support
+    "esbenp.prettier-vscode", // Code formatting
+    "formulahendry.auto-rename-tag" // Auto rename paired HTML/XML tags
+  ]
+}

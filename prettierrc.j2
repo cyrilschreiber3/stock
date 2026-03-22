@@ -1,0 +1,20 @@
+{
+  "plugins": [
+    "{{ prettier_go_template_plugin_path | default('prettier-plugin-go-template', true) }}",
+    "{{ prettier_tailwindcss_extra_plus_plugin_path | default('prettier-plugin-tailwindcss-extra-plus', true) }}",
+    "{{ prettier_tailwindcss_plugin_path | default('prettier-plugin-tailwindcss', true) }}"
+  ],
+  "tailwindStylesheet": "./tailwind.css",
+  "overrides": [
+    {
+      "files": "*.gohtml",
+      "options": {
+        "parser": "go-template"
+      }
+    },
+    {
+      "files": "*.templ",
+      "options": { "parser": "tailwindcss-extra-plus" }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "[templ]": {
+    "editor.defaultFormatter": "a-h.templ"
+  },
+  "emmet.includeLanguages": {
+    "templ": "html"
+  },
+  "go.lintTool": "golangci-lint",
+  "tailwindCSS.includeLanguages": {
+    "templ": "html"
+  }
+}

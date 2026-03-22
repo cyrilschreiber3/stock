@@ -1,0 +1,7 @@
+/gomod2nix-template
+stock
+.env
+.env.local
+/tmp
+/result
+/localStorage
