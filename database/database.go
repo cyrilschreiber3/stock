@@ -16,7 +16,7 @@ var Pool *pgxpool.Pool
 func Init() {
 	log.Println("Initializing PostgreSQL database...")
 
-	dsn := utils.GetEnv("DATABASE_URL", "")
+	dsn := utils.GetEnv("DB_URL", "")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
