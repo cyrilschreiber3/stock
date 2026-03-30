@@ -13,5 +13,17 @@ services:
     volumes:
       - db_data:/var/lib/postgresql
 
+  pgadmin4:
+    image: dpage/pgadmin4
+    container_name: pgadmin-stock
+    volumes:
+      - "pgadmin-stock-data:/var/lib/pgadmin"
+    ports:
+      - "5532:80"
+    environment:
+      - PGADMIN_DEFAULT_PASSWORD=password
+      - PGADMIN_DEFAULT_EMAIL=admin@schreibernet.dev
+
 volumes:
   db_data:
+  pgadmin-stock-data:
