@@ -8,3 +8,6 @@ SELECT * FROM products WHERE id = $1;
 INSERT INTO products (brand, name, subtype, aliases, default_price)
 VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
+
+-- name: DeleteProduct :execrows
+DELETE FROM products WHERE id = $1;
