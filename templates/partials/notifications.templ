@@ -1,0 +1,101 @@
+package partials
+
+import (
+	"github.com/cyrilschreiber3/stock/templates/icons"
+	"github.com/gin-gonic/gin"
+)
+
+var notificationDuration = 3000 // ms
+
+templ NotificationHandler(c *gin.Context) {
+	<div
+		x-data="notifications()"
+		@notify.window="add($event.detail)"
+		class="fixed right-4 top-4 z-50 w-[min(24rem,calc(100vw-2rem))] space-y-2"
+		aria-live="polite"
+		aria-atomic="true"
+	>
+		<div id="icon-default" class="hidden">
+			@icons.InformationCircle()
+		</div>
+		<div id="icon-info" class="hidden">
+			@icons.InformationCircle()
+		</div>
+		<div id="icon-success" class="hidden">
+			@icons.CheckCircle()
+		</div>
+		<div id="icon-warning" class="hidden">
+			@icons.ExclamationTriangle()
+		</div>
+		<div id="icon-error" class="hidden">
+			@icons.XCircle()
+		</div>
+		<template x-for="n in items" :key="n.id">
+			<div
+				x-show="n.show"
+				x-transition.opacity.duration.150ms
+				@transitionend="if (!n.show) finalizeRemove(n.id)"
+				@click="hide(n.id)"
+				role="alert"
+				class="alert"
+				:class="colorBySeverity[n.severity]"
+			>
+				<i x-html="getIcon(n.severity)"></i>
+				<span x-text="n.message"></span>
+			</div>
+		</template>
+		<script>
+            function getIcon(severity) {
+                const el = document.getElementById('icon-' + severity);
+                return el?.innerHTML || document.getElementById('icon-default')?.innerHTML;
+            }
+
+            function notifications() {
+                return {
+                    seq: 0,
+                    items: [],
+
+                    colorBySeverity: {
+                        default: '',
+                        info: 'alert-info',
+                        success: 'alert-success',
+                        warning: 'alert-warning',
+                        error: 'alert-error',
+                    },
+
+                    add(payload) {
+                        const id = ++this.seq;
+                        const ttlMs = payload?.ttlMs ?? 3500;
+
+                        this.items.push({
+                            id,
+                            severity: payload?.severity ?? "default",
+                            message: payload?.message ?? String(payload ?? ""),
+                            show: false,
+                        });
+
+                        const createdItem = this.items.find((x) => x.id === id);
+
+                        this.$nextTick(() => {
+                            createdItem.show = true;
+                        })
+
+
+                        window.setTimeout(() => this.hide(id), ttlMs+150);
+                    },
+
+                    hide(id) {
+                        const n = this.items.find((x) => x.id === id);
+                        if (!n) return;
+                        n.show = false;
+                    },
+
+                    finalizeRemove(id) {
+                        this.items = this.items.filter((x) => x.id !== id);
+                    },
+                };
+            }
+            </script>
+		<div id="notify-inbox" class="hidden" aria-hidden="true"></div>
+	</div>
+}
