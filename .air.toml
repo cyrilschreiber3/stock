@@ -6,7 +6,7 @@ tmp_dir = "tmp"
   args_bin = []
   bin = "./tmp/main"
   cmd = "go build -o ./tmp/main main.go; templ generate --notify-proxy --proxyport='8081'"
-  pre_cmd = ["prettier -w ./**/*.templ", "tailwindcss -i ./tailwind.css -o ./static/styles.css"]
+  pre_cmd = ["prettier -w ./**/*.templ", "tailwindcss -i ./styles/tailwind.css -o ./static/styles.css"]
   delay = 0
   exclude_dir = ["node_modules", "assets", "tmp", "vendor", "testdata", ".vscode"]
   exclude_file = ["static/styles.css"]

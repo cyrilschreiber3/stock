@@ -5,3 +5,8 @@ stock
 /tmp
 /result
 /localStorage
+
+/static/styles.css
+/styles/daisyui*
+
+/templates/**/*_templ.go
