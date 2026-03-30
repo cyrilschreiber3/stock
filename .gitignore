@@ -6,6 +6,8 @@ stock
 /result
 /localStorage
 
+/database/repository/*.go
+
 /static/styles.css
 /styles/daisyui*
 
