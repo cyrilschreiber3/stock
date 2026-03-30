@@ -1,0 +1,14 @@
+package pages
+
+import (
+	"github.com/cyrilschreiber3/stock/templates/layouts"
+	"github.com/gin-gonic/gin"
+)
+
+templ Login(c *gin.Context) {
+	@layouts.Base(c, "Stock") {
+		<div class="login">
+			<div id="login-result"></div>
+		</div>
+	}
+}

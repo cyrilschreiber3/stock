@@ -9,13 +9,15 @@ func SetupRoutes(router *gin.Engine) {
 
 	router.Static("/static", "./static")
 
-	apiGroup := router.Group("/api")
+	productGroup := router.Group("/products")
 	{
-		apiGroup.GET("/products", handlers.HandleGetProducts())
-		// apiGroup.POST("/products", handlers.HandleCreateProduct())
-		// apiGroup.GET("/products/:id", handlers.HandleGetProductByID())
-		// apiGroup.PUT("/products/:id", handlers.HandleUpdateProduct())
-		// apiGroup.DELETE("/products/:id", handlers.HandleDeleteProduct())
+		productGroup.GET("", handlers.HandleGetProducts())
+		productGroup.POST("", handlers.HandleCreateProduct())
+		productGroup.GET("/:id")
+		productGroup.PUT("/:id")
+		productGroup.DELETE("/:id", handlers.HandleDeleteProduct())
 	}
+
+	router.GET("/", handlers.Index())
 
 }

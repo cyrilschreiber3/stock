@@ -1,0 +1,29 @@
+package components
+
+import "strings"
+
+type ModalButton struct {
+	Icon       templ.Component
+	Label      string
+	Classes    []string
+	Attributes templ.Attributes
+}
+
+templ Modal(title string, modalButtons templ.Component) {
+	<div class="modal" id="modal">
+		<div class="modal-box">
+			<h3 class="text-lg font-bold">{ title }</h3>
+			{ children... }
+			<div class="modal-action">
+				@modalButtons
+			</div>
+		</div>
+	</div>
+}
+
+templ modalButton(button ModalButton) {
+	<button class={ "btn " + strings.Join(button.Classes, " ") } { button.Attributes... }>
+		@button.Icon
+		{ button.Label }
+	</button>
+}

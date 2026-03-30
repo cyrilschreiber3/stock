@@ -1,0 +1,27 @@
+package layouts
+
+import (
+	"github.com/cyrilschreiber3/stock/templates/partials"
+	"github.com/gin-gonic/gin"
+)
+
+templ Base(c *gin.Context, title string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+			<script src="https://unpkg.com/alpinejs" defer></script>
+			<link rel="stylesheet" href="/static/styles.css"/>
+			<title>{ title }</title>
+		</head>
+		<body class="mx-auto max-w-[90rem]">
+			@partials.Header()
+			<main class="mx-auto mt-8 max-w-5xl p-4">
+				{ children... }
+			</main>
+			@partials.NotificationHandler(c)
+		</body>
+	</html>
+}
