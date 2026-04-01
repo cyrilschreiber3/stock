@@ -8,5 +8,6 @@
   "go.lintTool": "golangci-lint",
   "tailwindCSS.includeLanguages": {
     "templ": "html"
-  }
+  },
+  "alpine-intellisense.settings.languageScopes": "html,templ"
 }

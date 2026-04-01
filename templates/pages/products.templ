@@ -2,6 +2,7 @@ package pages
 
 import (
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
 	"github.com/cyrilschreiber3/stock/utils"
@@ -17,61 +18,114 @@ templ Products(c *gin.Context, products []repository.Product) {
 				@icons.Plus()
 				Create
 			</button>
-			<dialog id="create_product_modal" class="modal">
-				<div class="modal-box">
-					<h3 class="text-lg font-bold">Create a product</h3>
-					<form id="create-product" name="create-product" hx-post="/products/" hx-swap="none" hx-on:product-created="create_product_modal.close(); this.reset()">
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Product Brand</legend>
-							<input type="text" name="brand" class="input" required placeholder="Dr. Gabs"/>
-							<p class="validator-hint hidden">Required</p>
-						</fieldset>
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Product Name</legend>
-							<input type="text" name="name" class="input" required placeholder="SWAF"/>
-						</fieldset>
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">
-								Subtype
-								<span class="badge badge-neutral badge-xs">Optional</span>
-							</legend>
-							<input type="text" name="subtype" class="input" placeholder="0.0%"/>
-						</fieldset>
-						<fieldset class="fieldset">
-							<legend class="fieldset-legend">Base price</legend>
-							<label class="input validator">
-								<input type="number" name="default_price" required step="0.01" min="0" placeholder="3"/>
-								<span class="label">CHF</span>
-							</label>
-						</fieldset>
-						<fieldset class="fieldset" x-data="{ aliases: [] }">
-							<legend class="fieldset-legend">
-								Aliases
-								<span class="badge badge-neutral badge-xs">Optional</span>
-							</legend>
-							<template x-for="(alias, index) in aliases" :key="index">
-								<div class="join">
-									<input type="text" name="aliases" class="input join-item" x-model="aliases[index]" placeholder="Alternate product name"/>
-									<button type="button" class="btn btn-soft btn-error join-item" @click="aliases.splice(index, 1)">
-										@icons.Trash()
-									</button>
-								</div>
-							</template>
-							<button type="button" class="btn btn-sm btn-soft btn-success mt-2 justify-self-start" @click="aliases.push('')">
-								@icons.Plus()
-								Add alias
-							</button>
-						</fieldset>
-						<div class="modal-action">
-							<button type="button" class="btn" onclick="create_product_modal.close()">Close</button>
-							<button type="submit" class="btn btn-primary">Create</button>
+			@components.Modal("create_product_modal", "Create a product") {
+				<form id="create-product" name="create-product" hx-post="/products/" hx-swap="none" hx-on:product-created="create_product_modal.close(); this.reset()">
+					@components.FormField("Product Brand", true) {
+						@components.TextInput("brand", "Dr. Gabs", true)
+					}
+					@components.FormField("Product Name", true) {
+						@components.TextInput("name", "SWAF", true)
+					}
+					@components.FormField("Subtype", false) {
+						@components.TextInput("subtype", "0.0%", false)
+					}
+					@components.FormField("Base price", true) {
+						@components.NumberInput("default_price", "3", "CHF")
+					}
+					@components.FormField("Aliases", false) {
+						<div x-data="{ aliases: [] }">
+							<div>
+								<template x-for="(alias, index) in aliases" :key="index">
+									<div class="join">
+										<input type="text" name="aliases" class="input join-item" x-model="aliases[index]" placeholder="Alternate product name"/>
+										@components.Button(components.ButtonConfig("").
+											Icon(icons.Trash()).
+											Type("button").
+											Color("error").
+											AtClick("aliases.splice(index, 1)").
+											Style("soft").
+											Classes("join-item", "mb-2"),
+										)
+									</div>
+								</template>
+							</div>
+							@components.Button(components.ButtonConfig("Add alias").
+								Icon(icons.Plus()).
+								Type("button").
+								Color("success").
+								Size("sm").
+								Style("soft").
+								AtClick("aliases.push('')"),
+							)
 						</div>
-					</form>
-				</div>
-				<form method="dialog" class="modal-backdrop">
-					<button>close</button>
+					}
+					<div class="modal-action">
+						@components.Button(components.ButtonConfig("Close").
+							Type("button").
+							OnClick("create_product_modal.close()"),
+						)
+						@components.Button(components.ButtonConfig("Create").
+							Type("submit").
+							Color("primary"),
+						)
+					</div>
 				</form>
-			</dialog>
+			}
+			// <dialog id="create_product_modal" class="modal">
+			// 	<div class="modal-box">
+			// 		<h3 class="text-lg font-bold">Create a product</h3>
+			// 		<form id="create-product" name="create-product" hx-post="/products/" hx-swap="none" hx-on:product-created="create_product_modal.close(); this.reset()">
+			// 			<fieldset class="fieldset">
+			// 				<legend class="fieldset-legend">Product Brand</legend>
+			// 				<input type="text" name="brand" class="input" required placeholder="Dr. Gabs"/>
+			// 				<p class="validator-hint hidden">Required</p>
+			// 			</fieldset>
+			// 			<fieldset class="fieldset">
+			// 				<legend class="fieldset-legend">Product Name</legend>
+			// 				<input type="text" name="name" class="input" required placeholder="SWAF"/>
+			// 			</fieldset>
+			// 			<fieldset class="fieldset">
+			// 				<legend class="fieldset-legend">
+			// 					Subtype
+			// 					<span class="badge badge-neutral badge-xs">Optional</span>
+			// 				</legend>
+			// 				<input type="text" name="subtype" class="input" placeholder="0.0%"/>
+			// 			</fieldset>
+			// 			<fieldset class="fieldset">
+			// 				<legend class="fieldset-legend">Base price</legend>
+			// 				<label class="input validator">
+			// 					<input type="number" name="default_price" required step="0.01" min="0" placeholder="3"/>
+			// 					<span class="label">CHF</span>
+			// 				</label>
+			// 			</fieldset>
+			// 			<fieldset class="fieldset" x-data="{ aliases: [] }">
+			// 				<legend class="fieldset-legend">
+			// 					Aliases
+			// 					<span class="badge badge-neutral badge-xs">Optional</span>
+			// 				</legend>
+			// 				<template x-for="(alias, index) in aliases" :key="index">
+			// 					<div class="join">
+			// 						<input type="text" name="aliases" class="input join-item" x-model="aliases[index]" placeholder="Alternate product name"/>
+			// 						<button type="button" class="btn btn-soft btn-error join-item" @click="aliases.splice(index, 1)">
+			// 							@icons.Trash()
+			// 						</button>
+			// 					</div>
+			// 				</template>
+			// 				<button type="button" class="btn btn-sm btn-soft btn-success mt-2 justify-self-start" @click="aliases.push('')">
+			// 					@icons.Plus()
+			// 					Add alias
+			// 				</button>
+			// 			</fieldset>
+			// 			<div class="modal-action">
+			// 				<button type="button" class="btn" onclick="create_product_modal.close()">Close</button>
+			// 				<button type="submit" class="btn btn-primary">Create</button>
+			// 			</div>
+			// 		</form>
+			// 	</div>
+			// 	<form method="dialog" class="modal-backdrop">
+			// 		<button>close</button>
+			// 	</form>
+			// </dialog>
 		</div>
 		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
 			<table class="table">

@@ -1,0 +1,24 @@
+package components
+
+templ FormField(label string, required bool, children ...templ.Component) {
+	<fieldset class="fieldset">
+		<legend class="fieldset-legend">
+			{ label }
+			if !required {
+				<span class="badge badge-neutral badge-xs">Optional</span>
+			}
+		</legend>
+		{ children... }
+	</fieldset>
+}
+
+templ TextInput(name string, placeholder string, required bool) {
+	<input type="text" name={ name } class="input validator" placeholder={ placeholder } required?={ required && required == true }/>
+}
+
+templ NumberInput(name string, placeholder string, suffix string) {
+	<label class="input validator">
+		<input type="number" name={ name } required step="0.01" min="0" placeholder={ placeholder }/>
+		<span class="label">{ suffix }</span>
+	</label>
+}
