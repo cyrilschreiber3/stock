@@ -1,24 +1,74 @@
 package components
 
-templ FormField(label string, required bool, children ...templ.Component) {
+import "strings"
+
+templ FormField(config *formFieldConfig) {
 	<fieldset class="fieldset">
 		<legend class="fieldset-legend">
-			{ label }
-			if !required {
+			{ config.label }
+			if !config.required {
 				<span class="badge badge-neutral badge-xs">Optional</span>
 			}
 		</legend>
-		{ children... }
+		if config.prefix != "" || config.suffix != "" {
+			<label class={ strings.Join(config.inputClasses, " ") }>
+				if config.prefix != "" {
+					<span class="label">{ config.prefix }</span>
+				}
+				@config.getInputComponent()
+				if config.suffix != "" {
+					<span class="label">{ config.suffix }</span>
+				}
+			</label>
+		} else {
+			@config.getInputComponent()
+		}
 	</fieldset>
 }
 
-templ TextInput(name string, placeholder string, required bool) {
-	<input type="text" name={ name } class="input validator" placeholder={ placeholder } required?={ required && required == true }/>
+templ formInput(classes []string, attributes templ.Attributes) {
+	<input class={ strings.Join(classes, " ") } { attributes... }/>
 }
 
-templ NumberInput(name string, placeholder string, suffix string) {
-	<label class="input validator">
-		<input type="number" name={ name } required step="0.01" min="0" placeholder={ placeholder }/>
-		<span class="label">{ suffix }</span>
-	</label>
+templ selectFormInput(classes []string, attributes templ.Attributes, options []string, placeholder string) {
+	<select class={ strings.Join(classes, " ") } { attributes... }>
+		if placeholder != "" {
+			<option disabled selected>{ placeholder }</option>
+		}
+		for _, option := range options {
+			<option value={ option }>{ option }</option>
+		}
+	</select>
 }
+
+templ radioFormInput(name string, classes []string, options []string) {
+	for index, option := range options {
+		<label class="label">
+			<input type="radio" class={ strings.Join(classes, " ") } name={ name } value={ option } checked?={ index == 0 }/>
+			<span class="label-text">{ option }</span>
+		</label>
+	}
+}
+
+templ textareaFormInput(classes []string, attributes templ.Attributes) {
+	<textarea class={ strings.Join(classes, " ") } { attributes... }></textarea>
+}
+
+// templ TextInput(name string, placeholder string, value string, required bool) {
+// 	<input type="text" name={ name } class="input validator" placeholder={ placeholder } value={ value } required?={ required && required == true }/>
+// }
+
+// templ NumberInput(name string, placeholder string, suffix string, value string, required bool) {
+// 	if suffix != "" {
+// 		<label class="input validator">
+// 			<input type="number" name={ name } value={ value } required?={ required && required == true } step="0.01" min="0" placeholder={ placeholder }/>
+// 			<span class="label">{ suffix }</span>
+// 		</label>
+// 	} else {
+// 		<input type="number" name={ name } value={ value } required?={ required && required == true } step="0.01" min="0" placeholder={ placeholder } class="input validator"/>
+// 	}
+// }
+
+// templ TextArea(name string, placeholder string, value string, required bool) {
+// 	<textarea name={ name } class="textarea validator" placeholder={ placeholder } required?={ required && required == true }>{ value }</textarea>
+// }

@@ -1,0 +1,15 @@
+package components
+
+import "strings"
+
+templ Badge(config *badgeConfig) {
+	<span class={ "badge " + strings.Join(config.classes, " ") }>
+		if config.icon != nil && !config.iconAfter {
+			@config.icon
+		}
+		{ config.label }
+		if config.icon != nil && config.iconAfter {
+			@config.icon
+		}
+	</span>
+}
