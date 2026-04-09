@@ -1,6 +1,15 @@
 init-daisyui:
-	@test -f ./styles/daisyui.css || curl -o ./styles/daisyui.css https://github.com/saadeghi/daisyui/releases/v5.5.19/download/daisyui.mjs
-	@test -f ./styles/daisyui-theme.mjs || curl -o ./styles/daisyui-theme.mjs https://github.com/saadeghi/daisyui/releases/v5.5.19/download/daisyui-theme.mjs
+	@test -f ./styles/daisyui.mjs || curl -o ./styles/daisyui.mjs -fsSL https://github.com/saadeghi/daisyui/releases/download/v5.5.19/daisyui.mjs
+	@test -f ./styles/daisyui-theme.mjs || curl -o ./styles/daisyui-theme.mjs -fsSL https://github.com/saadeghi/daisyui/releases/download/v5.5.19/daisyui-theme.mjs
+
+init-htmx:
+	@test -f ./static/htmx.min.js || curl -o static/htmx.min.js -fsSL https://unpkg.com/htmx.org@2.0.4
+
+init-alpine:
+	@test -f ./static/alpine.min.js || curl -o static/alpine.min.js -fsSL https://unpkg.com/alpinejs@3.15.11/dist/cdn.min.js
+
+init: init-daisyui init-htmx init-alpine
+	@test -f .env || cp example.env .env
 
 sqlc:
 	@sqlc generate
@@ -15,7 +24,7 @@ tailwind:
 	@tailwindcss -i ./styles/tailwind.css -o ./static/styles.css
 
 build: init-daisyui sqlc templ-build tailwind
-	@go build -o spotify-playlist-manager main.go
+	@go build -o stock main.go
 
 run: build
-	@./spotify-playlist-manager
+	@./stock

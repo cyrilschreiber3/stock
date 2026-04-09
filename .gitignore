@@ -8,6 +8,8 @@ stock
 
 /database/repository/*.go
 
+/static/alpine.min.js
+/static/htmx.min.js
 /static/styles.css
 /styles/daisyui*
 
