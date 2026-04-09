@@ -2,6 +2,7 @@
 
 @source not "./tailwindcss";
 @source not "./daisyui{,*}.mjs";
+@source "./tailwind-safelist.txt";
 
 @plugin "./daisyui.mjs" {
   themes:
