@@ -74,6 +74,10 @@ DROP TRIGGER IF EXISTS trg_subcategories_set_timestamps ON subcategories;
 DROP TRIGGER IF EXISTS trg_suppliers_set_timestamps ON suppliers;
 DROP TRIGGER IF EXISTS trg_products_set_timestamps ON products;
 
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS subcategories;
+DROP TABLE IF EXISTS suppliers;
 DROP TABLE IF EXISTS products;
+
 DROP INDEX IF EXISTS idx_products_name;
 -- +goose StatementEnd
