@@ -16,3 +16,12 @@ func RenderTemplate(c *gin.Context, status int, template templ.Component) {
 		c.Status(http.StatusInternalServerError)
 	}
 }
+
+func RenderTemplateFragment(c *gin.Context, status int, template templ.Component, fragments ...string) {
+	c.Status(status)
+	err := templ.RenderFragments(c.Request.Context(), c.Writer, template, fragments)
+	if err != nil {
+		log.Println("Error rendering template with fragments:", err)
+		c.Status(http.StatusInternalServerError)
+	}
+}
