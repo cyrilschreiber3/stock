@@ -13,3 +13,20 @@ templ Button(config *buttonConfig) {
 		}
 	</button>
 }
+
+templ ButtonLink(target string, config *buttonConfig) {
+	{{
+		if target == "" {
+			target = "#"
+		}
+	}}
+	<a href={ target } class={ "btn " + strings.Join(config.classes, " ") } { config.attributes... }>
+		if config.icon != nil && !config.iconAfter {
+			@config.icon
+		}
+		{ config.label }
+		if config.icon != nil && config.iconAfter {
+			@config.icon
+		}
+	</a>
+}

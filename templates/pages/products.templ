@@ -12,64 +12,10 @@ import (
 templ Products(c *gin.Context, products []repository.Product) {
 	@layouts.Base(c, "Stock") {
 		<div class="my-5 flex justify-end">
-			@components.Button(components.ButtonConfig("Create").
+			@components.ButtonLink("/products/create", components.ButtonConfig("Create").
 				Icon(icons.Plus()).
-				Color("primary").
-				OnClick("create_product_modal.showModal()"),
+				Color("primary"),
 			)
-			@components.Modal("create_product_modal", "Create a product") {
-				<form id="create-product" name="create-product" hx-post="/products/" hx-swap="none" hx-on:product-created="create_product_modal.close(); this.reset()">
-					// @components.FormField("Product Brand", true) {
-					// 	@components.TextInput("brand", "Dr. Gabs", true)
-					// }
-					// @components.FormField("Product Name", true) {
-					// 	@components.TextInput("name", "SWAF", true)
-					// }
-					// @components.FormField("Subtype", false) {
-					// 	@components.TextInput("subtype", "0.0%", false)
-					// }
-					// @components.FormField("Base price", true) {
-					// 	@components.NumberInput("default_price", "3", "CHF")
-					// }
-					// @components.FormField("Aliases", false) {
-					// 	<div x-data="{ aliases: [] }">
-					// 		<div>
-					// 			<template x-for="(alias, index) in aliases" :key="index">
-					// 				<div class="join">
-					// 					<input type="text" name="aliases" class="input join-item" x-model="aliases[index]" placeholder="Alternate product name"/>
-					// 					@components.Button(components.ButtonConfig("").
-					// 						Icon(icons.Trash()).
-					// 						Type("button").
-					// 						Color("error").
-					// 						AtClick("aliases.splice(index, 1)").
-					// 						Style("soft").
-					// 						Classes("join-item", "mb-2"),
-					// 					)
-					// 				</div>
-					// 			</template>
-					// 		</div>
-					// 		@components.Button(components.ButtonConfig("Add alias").
-					// 			Icon(icons.Plus()).
-					// 			Type("button").
-					// 			Color("success").
-					// 			Size("sm").
-					// 			Style("soft").
-					// 			AtClick("aliases.push('')"),
-					// 		)
-					// 	</div>
-					// }
-					<div class="modal-action">
-						@components.Button(components.ButtonConfig("Close").
-							Type("button").
-							OnClick("create_product_modal.close()"),
-						)
-						@components.Button(components.ButtonConfig("Create").
-							Type("submit").
-							Color("primary"),
-						)
-					</div>
-				</form>
-			}
 			// <dialog id="create_product_modal" class="modal">
 			// 	<div class="modal-box">
 			// 		<h3 class="text-lg font-bold">Create a product</h3>
@@ -135,6 +81,8 @@ templ Products(c *gin.Context, products []repository.Product) {
 						<th>Sub-type</th>
 						<th>Base price</th>
 						<th>Aliases</th>
+						<th>Created</th>
+						<th>Last updated</th>
 						<th></th>
 					</tr>
 				</thead>
@@ -145,11 +93,15 @@ templ Products(c *gin.Context, products []repository.Product) {
 							<td>{ product.Name }</td>
 							<td>{ product.Subtype }</td>
 							<td>{ utils.PgNumericToString(product.DefaultPrice, "0.00") } CHF</td>
-							<td class="space-x-2">
+							<td class="space-x-2 space-y-2">
 								for _, alias := range product.Aliases {
 									@components.Badge(components.BadgeConfig(alias).Color("primary"))
 								}
 							</td>
+							<div class="tooltip" data-tip="hello">
+								<td>{ utils.PgTimestampToNaturalLanguage(product.CreatedAt) }</td>
+							</div>
+							<td>{ utils.PgTimestampToNaturalLanguage(product.UpdatedAt) }</td>
 							<td>
 								@components.Button(components.ButtonConfig("").
 									Icon(icons.Trash()).
@@ -168,4 +120,61 @@ templ Products(c *gin.Context, products []repository.Product) {
 			</table>
 		</div>
 	}
+}
+
+templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
+	@layouts.Base(c, "Stock") {
+		if product != nil {
+			<h1 class="mb-4 text-2xl font-bold">Update product</h1>
+			@productForm("put", "/products/"+product.ID.String(), product)
+		} else {
+			<h1 class="mb-4 text-2xl font-bold">Create product</h1>
+			@productForm("post", "/products/create", nil)
+		}
+	}
+}
+
+templ productForm(method string, path string, product *repository.Product) {
+	<form id="product-form" name="product-form" { "hx-" + method }={ path } hx-swap="none">
+		@components.FormField(components.FormFieldConfig("brand").
+			Type("text").
+			Label("Product Brand").
+			Placeholder("Dr. Gabs").
+			Required(),
+		)
+		@components.FormField(components.FormFieldConfig("name").
+			Type("text").
+			Label("Product Name").
+			Placeholder("SWAF").
+			Required(),
+		)
+		@components.FormField(components.FormFieldConfig("subtype").
+			Type("text").
+			Label("Subtype").
+			Placeholder("0.0%"),
+		)
+		@components.FormField(components.FormFieldConfig("default_price").
+			Type("number").
+			Label("Base price").
+			Placeholder("4").
+			ValidationPreset("money").
+			Required(),
+		)
+		@components.FormField(components.FormFieldConfig("aliases").
+			Type("text").
+			Label("Aliases").
+			Placeholder("Alternate product name").
+			AsList().Required(),
+		)
+		<div class="mt-6 flex justify-end gap-2">
+			@components.Button(components.ButtonConfig("Back").
+				Type("button").
+				OnClick("create_product_modal.close()"),
+			)
+			@components.Button(components.ButtonConfig("Create").
+				Type("submit").
+				Color("primary"),
+			)
+		</div>
+	</form>
 }

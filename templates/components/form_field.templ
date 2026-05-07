@@ -1,6 +1,10 @@
 package components
 
-import "strings"
+import (
+	"fmt"
+	"github.com/cyrilschreiber3/stock/templates/icons"
+	"strings"
+)
 
 templ FormField(config *formFieldConfig) {
 	<fieldset class="fieldset">
@@ -24,6 +28,35 @@ templ FormField(config *formFieldConfig) {
 			@config.getInputComponent()
 		}
 	</fieldset>
+}
+
+templ listFormInput(config *formFieldConfig, inputComponent templ.Component) {
+	<div x-data={ fmt.Sprintf("{ %s: [] }", config.name) }>
+		<div class="flex flex-col">
+			<template x-for={ fmt.Sprintf("(item, index) in %s", config.name) } :key="index">
+				<div class="join">
+					// <input type="text" name="aliases" class="input join-item" x-model="aliases[index]" placeholder="Alternate product name"/>
+					@inputComponent
+					@Button(ButtonConfig("").
+						Icon(icons.Trash()).
+						Type("button").
+						Color("error").
+						AtClick(fmt.Sprintf("%s.splice(index, 1)", config.name)).
+						Style("soft").
+						Classes("join-item", "mb-2"),
+					)
+				</div>
+			</template>
+		</div>
+		@Button(ButtonConfig("Add").
+			Icon(icons.Plus()).
+			Type("button").
+			Color("success").
+			Size("sm").
+			Style("soft").
+			AtClick(fmt.Sprintf("%s.push('')", config.name)),
+		)
+	</div>
 }
 
 templ formInput(classes []string, attributes templ.Attributes) {

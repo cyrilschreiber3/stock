@@ -19,6 +19,7 @@ type formFieldConfig struct {
 	suffix          string
 	required        bool
 	checked         bool
+	asList          bool
 	validationHint  string
 	inputClasses    []string
 	inputAttributes templ.Attributes
@@ -27,37 +28,51 @@ type formFieldConfig struct {
 
 func FormFieldConfig(name string) *formFieldConfig {
 	return &formFieldConfig{
-		name:            name,
-		inputType:       "text",
-		color:           "neutral",
-		size:            "md",
-		prefix:          "",
-		suffix:          "",
-		required:        false,
-		checked:         false,
-		inputClasses:    []string{"input"},
-		inputAttributes: templ.Attributes{},
-		customInput:     nil,
+		name:         name,
+		inputType:    "text",
+		color:        "neutral",
+		size:         "md",
+		prefix:       "",
+		suffix:       "",
+		required:     false,
+		checked:      false,
+		inputClasses: []string{"validator"},
+		inputAttributes: templ.Attributes{
+			"name": name,
+		},
+		customInput: nil,
 	}
 }
 
 func (c *formFieldConfig) getInputComponent() templ.Component {
 	var classes []string
+	var component templ.Component
 	if c.prefix == "" && c.suffix == "" {
 		classes = c.inputClasses
 	}
 
+	if c.asList {
+		classes = append(classes, "join-item")
+	}
+
 	switch c.inputType {
 	case "select":
-		return selectFormInput(c.inputClasses, c.inputAttributes, c.options, c.placeholder)
+		component = selectFormInput(classes, c.inputAttributes, c.options, c.placeholder)
 	case "radio":
-		return radioFormInput(c.name, c.inputClasses, c.options)
+		component = radioFormInput(c.name, classes, c.options)
 	case "textarea":
-		return textareaFormInput(c.inputClasses, c.inputAttributes)
+		component = textareaFormInput(classes, c.inputAttributes)
 	case "custom":
-		return c.customInput
+		component = c.customInput
 	default:
-		return formInput(classes, c.inputAttributes)
+		component = formInput(classes, c.inputAttributes)
+	}
+
+	if c.asList {
+		c = c.Attributes(templ.Attributes{"x-model": fmt.Sprintf("%s[index]", c.name)})
+		return listFormInput(c, component)
+	} else {
+		return component
 	}
 
 }
@@ -125,8 +140,13 @@ func (c *formFieldConfig) Checked() *formFieldConfig {
 	return c
 }
 
-func (c *formFieldConfig) Options(options []string) *formFieldConfig {
+func (c *formFieldConfig) Options(options ...string) *formFieldConfig {
 	c.options = options
+	return c
+}
+
+func (c *formFieldConfig) AsList() *formFieldConfig {
+	c.asList = true
 	return c
 }
 
@@ -162,7 +182,6 @@ func (c *formFieldConfig) ValidationHint(hint string) *formFieldConfig {
 }
 
 func (c *formFieldConfig) TypeClass(class string) *formFieldConfig {
-	c.color = class
 	switch c.inputType {
 	case "text", "email", "password", "number":
 		c.Classes(fmt.Sprintf("input-%s", class))
