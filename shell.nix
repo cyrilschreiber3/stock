@@ -50,6 +50,7 @@ in
         gomodifytags
         gopls
         gotests
+        gotools
         impl
 
         # Templ
