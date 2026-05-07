@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
 	"github.com/gin-gonic/gin"
 )
@@ -9,6 +10,49 @@ templ Login(c *gin.Context) {
 	@layouts.Base(c, "Stock") {
 		<div class="login">
 			<div id="login-result"></div>
+			<form>
+				@components.FormField(components.FormFieldConfig("name").
+					Type("text").
+					Placeholder("this is a placeholder").
+					Label("Enter your name").Required(),
+				)
+				@components.FormField(components.FormFieldConfig("name").
+					Type("text").
+					Placeholder("this is a placeholder").
+					Label("Enter your name").
+					AsList().
+					Required(),
+				)
+				@components.FormField(components.FormFieldConfig("email").
+					Type("email").
+					Placeholder("this is a placeholder2").
+					Label("Enter your email").Suffix(".com").Required(),
+				)
+				@components.FormField(components.FormFieldConfig("message").
+					Type("textarea").
+					Placeholder("your message").
+					Label("What do you have to say").Required(),
+				)
+				@components.FormField(components.FormFieldConfig("options").
+					Type("select").
+					Placeholder("this is a select input").
+					Options("option 1", "option 2", "option 3").
+					AsList().
+					Label("what do you want").Required(),
+				)
+				@components.FormField(components.FormFieldConfig("radios").
+					Type("radio").
+					Options("option 1", "option 2", "option 3").
+					Label("what do you want").Required(),
+				)
+				@components.FormField(components.FormFieldConfig("price").
+					Type("number").
+					Placeholder("the rice").
+					Value("4.5").
+					ValidationPreset("money").
+					Suffix("CHF"),
+				)
+			</form>
 		</div>
 	}
 }
