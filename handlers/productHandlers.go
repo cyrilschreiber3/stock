@@ -10,36 +10,11 @@ import (
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
-
-type createProductForm struct {
-	Brand        string   `form:"brand" binding:"required"`
-	Name         string   `form:"name" binding:"required"`
-	Subtype      string   `form:"subtype"`
-	DefaultPrice string   `form:"default_price" binding:"required"`
-	Aliases      []string `form:"aliases"`
-}
-
-type productFormDTO struct {
-	Brand        string   `form:"brand" binding:"required"`
-	Name         string   `form:"name" binding:"required"`
-	Subtype      string   `form:"subtype"`
-	DefaultPrice string   `form:"default_price" binding:"required"`
-	Aliases      []string `form:"aliases"`
-}
-
-type productFormPayload struct {
-	Brand        string
-	Name         string
-	Subtype      string
-	DefaultPrice pgtype.Numeric
-	Aliases      []string
-}
 
 func HandleGetProducts() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		products, err := db.GetAllProducts(c.Request.Context())
+		products, err := db.GetAllProductWithDetails(c.Request.Context())
 		if err != nil {
 			slog.Error("Error retrieving products", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve products")
@@ -66,11 +41,14 @@ func HandleCreateProduct() gin.HandlerFunc {
 		}
 
 		_, err = db.CreateProduct(c.Request.Context(), repository.CreateProductParams{
-			Brand:        product.Brand,
-			Name:         product.Name,
-			Subtype:      product.Subtype,
-			Aliases:      product.Aliases,
-			DefaultPrice: product.DefaultPrice,
+			Brand:             product.Brand,
+			Name:              product.Name,
+			CategoryID:        product.CategoryID,
+			SubcategoryID:     product.SubcategoryID,
+			DefaultSupplierID: product.DefaultSupplierID,
+			DefaultBuyPrice:   product.DefaultBuyPrice,
+			DefaultSellPrice:  product.DefaultSellPrice,
+			Aliases:           product.Aliases,
 		})
 		if err != nil {
 			slog.Error("Error creating product", "error", err)
@@ -100,12 +78,15 @@ func HandleUpdateProduct() gin.HandlerFunc {
 		}
 
 		_, err = db.UpdateProduct(c.Request.Context(), repository.UpdateProductParams{
-			ID:           productIdUUID,
-			Brand:        product.Brand,
-			Name:         product.Name,
-			Subtype:      product.Subtype,
-			Aliases:      product.Aliases,
-			DefaultPrice: product.DefaultPrice,
+			ID:                productIdUUID,
+			Brand:             product.Brand,
+			Name:              product.Name,
+			CategoryID:        product.CategoryID,
+			SubcategoryID:     product.SubcategoryID,
+			DefaultSupplierID: product.DefaultSupplierID,
+			DefaultBuyPrice:   product.DefaultBuyPrice,
+			DefaultSellPrice:  product.DefaultSellPrice,
+			Aliases:           product.Aliases,
 		})
 		if err != nil {
 			slog.Error("Error updating product", "error", err)
@@ -143,35 +124,4 @@ func HandleDeleteProduct() gin.HandlerFunc {
 
 		utils.HXNotify(c, http.StatusOK, "success", "Product deleted successfully")
 	}
-}
-
-func parseProductForm(c *gin.Context) (*productFormPayload, int, error) {
-	var form productFormDTO
-
-	if err := c.ShouldBind(&form); err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	var price pgtype.Numeric
-	if err := price.Scan(form.DefaultPrice); err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	aliases := make([]string, 0, len(form.Aliases))
-	for _, alias := range form.Aliases {
-		cleanAlias := strings.TrimSpace(alias)
-		if cleanAlias != "" {
-			aliases = append(aliases, cleanAlias)
-		}
-	}
-
-	payload := productFormPayload{
-		Brand:        form.Brand,
-		Name:         form.Name,
-		Subtype:      form.Subtype,
-		DefaultPrice: price,
-		Aliases:      aliases,
-	}
-
-	return &payload, http.StatusOK, nil
 }

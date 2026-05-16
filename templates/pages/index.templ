@@ -36,13 +36,13 @@ templ Login(c *gin.Context) {
 				@components.FormField(components.FormFieldConfig("options").
 					Type("select").
 					Placeholder("this is a select input").
-					Options("option 1", "option 2", "option 3").
+					Options(map[string]string{"option 1": "Option 1", "option 2": "Option 2", "option 3": "Option 3"}).
 					AsList().
 					Label("what do you want").Required(),
 				)
 				@components.FormField(components.FormFieldConfig("radios").
 					Type("radio").
-					Options("option 1", "option 2", "option 3").
+					Options(map[string]string{"option 1": "Option 1", "option 2": "Option 2", "option 3": "Option 3"}).
 					Label("what do you want").Required(),
 				)
 				@components.FormField(components.FormFieldConfig("price").
