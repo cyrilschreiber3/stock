@@ -2,6 +2,8 @@ package components
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/a-h/templ"
 )
@@ -41,6 +43,7 @@ func FormFieldConfig(name string) *formFieldConfig {
 		checked:      false,
 		inputClasses: []string{"validator"},
 		inputAttributes: templ.Attributes{
+			"id":   name,
 			"name": name,
 		},
 		customInput: nil,
@@ -111,7 +114,17 @@ func (c *formFieldConfig) Size(size string) *formFieldConfig {
 
 func (c *formFieldConfig) Value(value string) *formFieldConfig {
 	c.value = value
-	c.inputAttributes["value"] = value
+	switch c.inputType {
+	case "checkbox":
+		c.inputAttributes["checked"] = value == "true"
+	default:
+		c.inputAttributes["value"] = value
+	}
+	return c
+}
+
+func (c *formFieldConfig) ValueList(values []string) *formFieldConfig {
+	c.valueList = values
 	return c
 }
 
@@ -143,8 +156,56 @@ func (c *formFieldConfig) Checked() *formFieldConfig {
 	return c
 }
 
-func (c *formFieldConfig) Options(options ...string) *formFieldConfig {
+func (c *formFieldConfig) Options(options map[string]string) *formFieldConfig {
 	c.options = options
+	return c
+}
+
+func (c *formFieldConfig) OptionsFromEndpoint(endpoint string) *formFieldConfig {
+	query := url.Values{}
+	if c.placeholder != "" {
+		query.Set("placeholder", c.placeholder)
+	}
+	if c.value != "" {
+		query.Set("value", c.value)
+	}
+
+	if len(query) > 0 {
+		c.optionsEndpoint = fmt.Sprintf("%s?%s", endpoint, query.Encode())
+	} else {
+		c.optionsEndpoint = endpoint
+	}
+
+	c.inputAttributes["hx-get"] = c.optionsEndpoint
+	c.inputAttributes["hx-trigger"] = "load"
+	c.inputAttributes["hx-target"] = "this"
+	c.inputAttributes["hx-swap"] = "innerHTML"
+	// c.inputAttributes["hx-on:htmx:afterSwap"] = `this.dispatchEvent(new CustomEvent("change", { bubbles: true }))`
+	return c
+}
+
+func (c *formFieldConfig) DependsOn(fieldName string) *formFieldConfig {
+	c.dependsOn = fieldName
+	c.inputAttributes["hx-trigger"] = fmt.Sprintf("load, change from:#%s, htmx:afterSwap from:#%s", fieldName, fieldName)
+	c.inputAttributes["hx-target"] = "this"
+	c.inputAttributes["hx-swap"] = "innerHTML"
+
+	// If endpoint contains a path token like :id, replace it at request time.
+	// Example: /categories/:id/subcategories/options
+	if strings.Contains(c.optionsEndpoint, ":id") {
+		c.inputAttributes["hx-on:htmx:config-request"] = fmt.Sprintf(
+			`event.detail.path = %q.replace(":id", encodeURIComponent(document.getElementById(%q)?.value || ""))`,
+			c.optionsEndpoint,
+			fieldName,
+		)
+	} else {
+		// Otherwise pass parent value as query param (e.g. ?category_id=...)
+		c.inputAttributes["hx-vals"] = fmt.Sprintf(
+			`js:{ %q: document.getElementById(%q)?.value || "" }`,
+			fieldName,
+			fieldName,
+		)
+	}
 	return c
 }
 

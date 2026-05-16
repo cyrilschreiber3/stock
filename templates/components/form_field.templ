@@ -77,22 +77,40 @@ templ formInput(classes []string, attributes templ.Attributes) {
 	<input class={ strings.Join(classes, " ") } { attributes... }/>
 }
 
-templ selectFormInput(classes []string, attributes templ.Attributes, options []string, placeholder string) {
+templ selectFormInput(classes []string, attributes templ.Attributes, options map[string]string, placeholder string) {
 	<select class={ strings.Join(classes, " ") } { attributes... }>
-		if placeholder != "" {
-			<option disabled selected>{ placeholder }</option>
-		}
-		for _, option := range options {
-			<option value={ option }>{ option }</option>
-		}
+		@SelectOptions(placeholder, "", options)
 	</select>
 }
 
-templ radioFormInput(name string, classes []string, options []string) {
-	for index, option := range options {
+templ SelectOptions(placeholder string, selectedId string, options map[string]string) {
+	{{
+		selectedExists := false
+		if selectedId != "" {
+			_, selectedExists = options[selectedId]
+		}
+	}}
+	if placeholder != "" {
+		if selectedId == "" || !selectedExists {
+			<option disabled selected value="">{ placeholder }</option>
+		} else {
+			<option disabled value="">{ placeholder }</option>
+		}
+	}
+	for key, value := range options {
+		if key == selectedId && selectedExists {
+			<option value={ key } selected>{ value }</option>
+		} else {
+			<option value={ key }>{ value }</option>
+		}
+	}
+}
+
+templ radioFormInput(name string, classes []string, options map[string]string) {
+	for key, value := range options {
 		<label class="label">
-			<input type="radio" class={ strings.Join(classes, " ") } name={ name } value={ option } checked?={ index == 0 }/>
-			<span class="label-text">{ option }</span>
+			<input type="radio" class={ strings.Join(classes, " ") } name={ name } value={ key }/>
+			<span class="label-text">{ value }</span>
 		</label>
 	}
 }
