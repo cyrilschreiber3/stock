@@ -11,7 +11,10 @@ type formFieldConfig struct {
 	label           string
 	inputType       string
 	value           string
-	options         []string
+	valueList       []string
+	options         map[string]string
+	optionsEndpoint string
+	dependsOn       string
 	placeholder     string
 	color           string // neutral, primary, secondary, accent, info, success, warning, error
 	size            string // xs, sm, md, lg, xl
