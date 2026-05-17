@@ -43,7 +43,7 @@ func SetupRoutes(router *gin.Engine) {
 
 	supplierGroup := router.Group("/suppliers")
 	{
-		supplierGroup.GET("")
+		supplierGroup.GET("", handlers.HandleGetSuppliers())
 		supplierGroup.GET("/options", handlers.HandleGetSupplierOptions())
 		supplierGroup.GET("/create")
 		supplierGroup.POST("/create")

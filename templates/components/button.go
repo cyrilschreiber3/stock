@@ -101,6 +101,21 @@ func (c *buttonConfig) Size(size string) *buttonConfig {
 	return c
 }
 
+func (c *buttonConfig) iconSizeClass() string {
+	switch c.size {
+	case "xs":
+		return "[&>svg]:!size-4"
+	case "sm":
+		return "[&>svg]:!size-5"
+	case "lg":
+		return "[&>svg]:!size-6"
+	case "xl":
+		return "[&>svg]:!size-7"
+	default: // md
+		return "[&>svg]:!size-6"
+	}
+}
+
 func (c *buttonConfig) Style(style string) *buttonConfig {
 	c.style = style
 	addButtonClass(c, style)

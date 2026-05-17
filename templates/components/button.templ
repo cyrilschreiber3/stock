@@ -22,11 +22,15 @@ templ ButtonLink(target string, config *buttonConfig) {
 	}}
 	<a href={ target } class={ "btn " + strings.Join(config.classes, " ") } { config.attributes... }>
 		if config.icon != nil && !config.iconAfter {
-			@config.icon
+			<span class={ config.iconSizeClass() }>
+				@config.icon
+			</span>
 		}
 		{ config.label }
 		if config.icon != nil && config.iconAfter {
-			@config.icon
+			<span class={ config.iconSizeClass() }>
+				@config.icon
+			</span>
 		}
 	</a>
 }

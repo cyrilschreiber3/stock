@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/templates/components"
+	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -27,6 +28,20 @@ func HandleGetSupplierOptions() gin.HandlerFunc {
 
 		component := components.SelectOptions("Select a supplier", selectedId, supplierOptions)
 
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
+func HandleGetSuppliers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		suppliers, err := db.GetAllSuppliers(c.Request.Context())
+		if err != nil {
+			slog.Error("Error retrieving suppliers", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve suppliers")
+			return
+		}
+
+		component := pages.Suppliers(c, suppliers)
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }
