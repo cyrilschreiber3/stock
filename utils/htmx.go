@@ -16,6 +16,11 @@ type NotificationTrigger struct {
 	TTLMS    int    `json:"ttlMs"`
 }
 
+type MessageTrigger struct {
+	Severity string `json:"severity"`
+	Content  string `json:"content"`
+}
+
 func SetJSONHeader(c *gin.Context, header string, payload any) {
 	encodedPayload, err := json.Marshal(payload)
 	if err != nil {
@@ -71,11 +76,35 @@ func HXNotifyWithEvents(c *gin.Context, status int, severity string, message str
 	c.Status(status)
 }
 
-func HXNotifyWithRedirect(c *gin.Context, status int, severity string, message string, redirectURL string) {
+func HXRedirectWithNotify(c *gin.Context, status int, severity string, message string, redirectURL string) {
 	trigger := NewNotificationTrigger(severity, message)
-	SetHXTrigger(c, map[string]any{
-		"notify": trigger,
-	})
-	c.Header("HX-Location", redirectURL)
+	cookie_body, err := json.Marshal(trigger)
+	if err != nil {
+		log.Printf("could not marshal notification trigger: %v", err)
+		return
+	}
 
+	c.SetCookie("notification-toast", string(cookie_body), 15, "/", "", false, false)
+	c.Header("HX-Location", redirectURL)
+	c.Status(status)
+}
+
+func NewMessageTrigger(severity string, content string) MessageTrigger {
+	return MessageTrigger{
+		Severity: severity,
+		Content:  content,
+	}
+}
+
+func HXRedirectWithMessage(c *gin.Context, status int, severity string, message string, redirectURL string) {
+	trigger := NewMessageTrigger(severity, message)
+	cookie_body, err := json.Marshal(trigger)
+	if err != nil {
+		log.Printf("could not marshal message trigger: %v", err)
+		return
+	}
+
+	c.SetCookie("notification-message", string(cookie_body), 15, "/", "", false, false)
+	c.Header("HX-Location", redirectURL)
+	c.Status(status)
 }
