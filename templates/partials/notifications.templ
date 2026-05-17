@@ -45,6 +45,38 @@ templ NotificationHandler(c *gin.Context) {
 			</div>
 		</template>
 		<script>
+            (function () {
+                function getCookie(name) {
+                    const m = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+                    return m ? m[2] : null;
+                }
+
+                const raw = getCookie("notification-toast");
+                if (!raw) return;
+
+                let data;
+                try {
+                    data = JSON.parse(decodeURIComponent(raw.replace(/\+/g, "%20")));
+                } catch (e) {
+                    console.error("Failed to parse notification toast cookie", e);
+                    return;
+                }
+
+                // clear one-shot cookie
+                // document.cookie = "notification-toast=; Max-Age=0; Path=/";
+
+                const dispatchNotify = () => {
+                    window.dispatchEvent(new CustomEvent("notify", { detail: data }));
+                };
+
+                // Ensure Alpine listeners are attached first
+                if (window.Alpine) {
+                    requestAnimationFrame(dispatchNotify);
+                } else {
+                    document.addEventListener("alpine:initialized", dispatchNotify, { once: true });
+                }
+            })();
+
             function getIcon(severity) {
                 const el = document.getElementById('icon-' + severity);
                 return el?.innerHTML || document.getElementById('icon-default')?.innerHTML;

@@ -15,9 +15,9 @@ func PgNumericToString(num pgtype.Numeric, def string) string {
 	return value.(string)
 }
 
-func PgTimestampToString(ts pgtype.Timestamptz, def string) string {
+func PgTimestampToString(ts pgtype.Timestamptz) string {
 	if !ts.Valid {
-		return def
+		return "unknown"
 	}
 	return ts.Time.Format(time.RFC3339)
 }

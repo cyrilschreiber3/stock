@@ -3,7 +3,6 @@ package handlers
 import (
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/cyrilschreiber3/stock/database/repository"
 	"github.com/cyrilschreiber3/stock/templates/pages"
@@ -32,6 +31,28 @@ func HandleShowCreateProductForm() gin.HandlerFunc {
 	}
 }
 
+func HandleShowUpdateProductForm() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		productIdStr := c.Param("id")
+
+		productIdUUID, err := uuid.Parse(productIdStr)
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Could not parse product ID")
+			return
+		}
+
+		product, err := db.GetProductByID(c.Request.Context(), productIdUUID)
+		if err != nil {
+			slog.Error("Error retrieving product", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve product")
+			return
+		}
+
+		component := pages.CreateUpdateProduct(c, &product)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleCreateProduct() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		product, httpCode, err := parseProductForm(c)
@@ -56,7 +77,7 @@ func HandleCreateProduct() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXNotifyWithRedirect(c, http.StatusCreated, "success", "Product created successfully", "/products")
+		utils.HXRedirectWithNotify(c, http.StatusCreated, "success", "Product created successfully", "/products")
 
 	}
 }
@@ -94,9 +115,8 @@ func HandleUpdateProduct() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXNotifyWithEvents(c, http.StatusOK, "success", "Product updated successfully", map[string]any{
-			"product-updated": true,
-		})
+		// utils.HXRedirectWithNotify(c, http.StatusOK, "success", "Product updated successfully", "/products")
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product updated successfully", "/products")
 	}
 }
 
