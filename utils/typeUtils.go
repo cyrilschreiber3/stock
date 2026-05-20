@@ -53,3 +53,11 @@ func PgTimestampToNaturalLanguage(ts pgtype.Timestamptz) string {
 	t := ts.Time
 	return TimeToNaturalLanguage(t)
 }
+
+func StringToPgText(s string) pgtype.Text {
+	var text pgtype.Text
+	if err := text.Scan(s); err != nil {
+		return pgtype.Text{String: "", Valid: false}
+	}
+	return text
+}
