@@ -5,11 +5,15 @@ import "strings"
 templ Button(config *buttonConfig) {
 	<button class={ "btn " + strings.Join(config.classes, " ") } { config.attributes... }>
 		if config.icon != nil && !config.iconAfter {
-			@config.icon
+			<span class={ config.iconSizeClass() }>
+				@config.icon
+			</span>
 		}
 		{ config.label }
 		if config.icon != nil && config.iconAfter {
-			@config.icon
+			<span class={ config.iconSizeClass() }>
+				@config.icon
+			</span>
 		}
 	</button>
 }
