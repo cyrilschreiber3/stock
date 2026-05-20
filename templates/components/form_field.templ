@@ -115,8 +115,8 @@ templ radioFormInput(name string, classes []string, options map[string]string) {
 	}
 }
 
-templ textareaFormInput(classes []string, attributes templ.Attributes) {
-	<textarea class={ strings.Join(classes, " ") } { attributes... }></textarea>
+templ textareaFormInput(classes []string, attributes templ.Attributes, value string) {
+	<textarea class={ strings.Join(classes, " ") } { attributes... }>{ value }</textarea>
 }
 
 // templ TextInput(name string, placeholder string, value string, required bool) {

@@ -67,7 +67,7 @@ func (c *formFieldConfig) getInputComponent() templ.Component {
 	case "radio":
 		component = radioFormInput(c.name, classes, c.options)
 	case "textarea":
-		component = textareaFormInput(classes, c.inputAttributes)
+		component = textareaFormInput(classes, c.inputAttributes, c.value)
 	case "custom":
 		component = c.customInput
 	default:
