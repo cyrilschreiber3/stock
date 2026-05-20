@@ -67,3 +67,55 @@ templ Suppliers(c *gin.Context, suppliers []repository.Supplier) {
 		</div>
 	}
 }
+
+templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
+	{{
+		title := "Create supplier"
+		formMethod := "post"
+		formAction := "/suppliers/create"
+		submitButtonText := "Create"
+
+		name := ""
+		description := ""
+
+		if supplier != nil {
+			title = "Update supplier: " + supplier.Name
+			formMethod = "put"
+			formAction = fmt.Sprintf("/suppliers/%s/update", supplier.ID.String())
+			submitButtonText = "Update"
+
+			name = supplier.Name
+			description = supplier.Description.String
+		}
+	}}
+	@layouts.Base(c, title) {
+		<h1 class="mb-4 text-2xl font-bold">{ title }</h1>
+		<form id="supplier-form" name="supplier-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
+			@components.FormField(components.FormFieldConfig("name").
+				Type("text").
+				Label("Supplier name").
+				Placeholder("Coop").
+				Value(name).
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("description").
+				Type("textarea").
+				Label("Description").
+				Placeholder("Supplier description").
+				Value(description).
+				Required(),
+			)
+			<div class="flex justify-end space-x-2">
+				@components.ButtonLink("/suppliers", components.ButtonConfig("Back").
+					Icon(icons.ArrowLeft()).
+					Color("neutral"),
+				)
+				@components.Button(components.ButtonConfig(submitButtonText).
+					Type("submit").
+					Icon(icons.FloppyDisk()).
+					Color("primary"),
+				)
+			</div>
+		</form>
+	}
+}
