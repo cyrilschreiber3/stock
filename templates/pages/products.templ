@@ -1,6 +1,7 @@
 package pages
 
 import (
+	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
@@ -62,18 +63,18 @@ templ Products(c *gin.Context, products []repository.GetAllProductWithDetailsRow
 							</td>
 							<td>
 								<div class="flex space-x-2">
-									@components.ButtonLink("/products/"+product.ID.String(), components.ButtonConfig("Edit").
+									@components.ButtonLink(fmt.Sprintf("/products/%s/edit", product.ID.String()), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Style("soft").
 										Size("sm").
-										Color("secondary"),
+										Color("info"),
 									)
 									@components.Button(components.ButtonConfig("Delete").
 										Icon(icons.Trash()).
 										Color("error").
 										Style("soft").
 										Size("sm").
-										HxDelete("/products/" + product.ID.String()).
+										HxDelete(fmt.Sprintf("/products/%s/delete", product.ID.String())).
 										HxConfirm("Are you sure you want to delete this product?").
 										HxTarget("closest tr").
 										HxSwap("delete"),
