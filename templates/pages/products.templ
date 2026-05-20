@@ -89,117 +89,115 @@ templ Products(c *gin.Context, products []repository.GetAllProductWithDetailsRow
 
 templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 	@layouts.Base(c, "Stock") {
-		if product != nil {
-			<h1 class="mb-4 text-2xl font-bold">Update product</h1>
-			@productForm("put", "/products/"+product.ID.String(), product)
-		} else {
-			<h1 class="mb-4 text-2xl font-bold">Create product</h1>
-			@productForm("post", "/products/create", nil)
-		}
+		{{
+			title := "Create product"
+			formMethod := "post"
+			formAction := "/products/create"
+			submitButtonText := "Create"
+
+			brand := ""
+			name := ""
+			categoryID := ""
+			subcategoryID := ""
+			supplierID := ""
+			defaultBuy := ""
+			defaultSell := ""
+			aliases := []string{}
+
+			if product != nil {
+				title = "Update product: " + product.Name
+				formMethod = "put"
+				formAction = fmt.Sprintf("/products/%s/update", product.ID.String())
+				submitButtonText = "Update"
+
+				brand = product.Brand
+				name = product.Name
+				categoryID = product.CategoryID.String()
+				subcategoryID = product.SubcategoryID.String()
+				supplierID = product.DefaultSupplierID.String()
+				defaultBuy = utils.PgNumericToString(product.DefaultBuyPrice, "0.00")
+				defaultSell = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
+				aliases = product.Aliases
+			}
+		}}
+		<h1 class="mb-4 text-2xl font-bold">{ title }</h1>
+		<form id="product-form" name="product-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
+			@components.FormField(components.FormFieldConfig("brand").
+				Type("text").
+				Label("Product Brand").
+				Placeholder("Dr. Gabs").
+				Value(brand).
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("name").
+				Type("text").
+				Label("Product Name").
+				Placeholder("SWAF").
+				Value(name).
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("category_id").
+				Type("select").
+				Label("Category").
+				Placeholder("Select a category").
+				Value(categoryID).
+				OptionsFromEndpoint("/categories/options").
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("subcategory_id").
+				Type("select").
+				Label("Sub-category").
+				Placeholder("Select a sub-category").
+				Value(subcategoryID).
+				OptionsFromEndpoint("/categories/:id/subcategories/options").
+				DependsOn("category_id").
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("default_supplier_id").
+				Type("select").
+				Label("Default Supplier").
+				Placeholder("Select a supplier").
+				Value(supplierID).
+				OptionsFromEndpoint("/suppliers/options").
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("default_buy_price").
+				Type("number").
+				Label("Base Buy Price").
+				Placeholder("3.00").
+				Value(defaultBuy).
+				ValidationPreset("money").
+				Suffix("CHF").
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("default_sell_price").
+				Type("number").
+				Label("Base Sell Price").
+				Placeholder("4.50").
+				Value(defaultSell).
+				ValidationPreset("money").
+				Suffix("CHF").
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("aliases").
+				Type("text").
+				Label("Aliases").
+				Placeholder("Alternate product name").
+				AsList().
+				ValueList(aliases).
+				Required(),
+			)
+			<div class="mt-6 flex justify-end gap-2">
+				@components.ButtonLink("/products", components.ButtonConfig("Back").
+					Icon(icons.ArrowLeft()).
+					Color("neutral"),
+				)
+				@components.Button(components.ButtonConfig(submitButtonText).
+					Type("submit").
+					Icon(icons.DocumentCheck()).
+					Color("primary"),
+				)
+			</div>
+		</form>
 	}
-}
-
-templ productForm(method string, path string, product *repository.Product) {
-	{{
-		isUpdate := product != nil
-
-		brand := ""
-		name := ""
-		categoryID := ""
-		subcategoryID := ""
-		supplierID := ""
-		defaultBuy := ""
-		defaultSell := ""
-		aliases := []string{}
-		submitLabel := "Create"
-
-		if isUpdate {
-			brand = product.Brand
-			name = product.Name
-			categoryID = product.CategoryID.String()
-			subcategoryID = product.SubcategoryID.String()
-			supplierID = product.DefaultSupplierID.String()
-			defaultBuy = utils.PgNumericToString(product.DefaultBuyPrice, "0.00")
-			defaultSell = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
-			aliases = product.Aliases
-			submitLabel = "Update"
-		}
-	}}
-	<form id="product-form" name="product-form" { "hx-" + method }={ path } hx-swap="none">
-		@components.FormField(components.FormFieldConfig("brand").
-			Type("text").
-			Label("Product Brand").
-			Placeholder("Dr. Gabs").
-			Value(brand).
-			Required(),
-		)
-		@components.FormField(components.FormFieldConfig("name").
-			Type("text").
-			Label("Product Name").
-			Placeholder("SWAF").
-			Value(name).
-			Required(),
-		)
-		@components.FormField(components.FormFieldConfig("category_id").
-			Type("select").
-			Label("Category").
-			Placeholder("Select a category").
-			Value(categoryID).
-			OptionsFromEndpoint("/categories/options").
-			Required(),
-		)
-		@components.FormField(components.FormFieldConfig("subcategory_id").
-			Type("select").
-			Label("Sub-category").
-			Placeholder("Select a sub-category").
-			Value(subcategoryID).
-			OptionsFromEndpoint("/categories/:id/subcategories/options").
-			DependsOn("category_id").
-			Required(),
-		)
-		@components.FormField(components.FormFieldConfig("default_supplier_id").
-			Type("select").
-			Label("Default Supplier").
-			Placeholder("Select a supplier").
-			Value(supplierID).
-			OptionsFromEndpoint("/suppliers/options").
-			Required(),
-		)
-		@components.FormField(components.FormFieldConfig("default_buy_price").
-			Type("number").
-			Label("Base Buy Price").
-			Placeholder("3.00").
-			Value(defaultBuy).
-			ValidationPreset("money").
-			Suffix("CHF").
-			Required(),
-		)
-		@components.FormField(components.FormFieldConfig("default_sell_price").
-			Type("number").
-			Label("Base Sell Price").
-			Placeholder("4.50").
-			Value(defaultSell).
-			ValidationPreset("money").
-			Suffix("CHF").
-			Required(),
-		)
-		@components.FormField(components.FormFieldConfig("aliases").
-			Type("text").
-			Label("Aliases").
-			Placeholder("Alternate product name").
-			AsList().
-			ValueList(aliases).
-			Required(),
-		)
-		<div class="mt-6 flex justify-end gap-2">
-			@components.Button(components.ButtonConfig("Back").
-				Type("button").
-				OnClick("history.back()"),
-			)
-			@components.Button(components.ButtonConfig(submitLabel).
-				Type("submit").
-				Color("primary"),
-			)
-		</div>
-	</form>
 }

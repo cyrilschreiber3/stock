@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func HandleGetProducts() gin.HandlerFunc {
@@ -75,9 +77,9 @@ func HandleCreateProduct() gin.HandlerFunc {
 			slog.Error("Error creating product", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not create product")
 			return
-		}
+		} // utils.HXRedirectWithNotify(c, http.StatusOK, "success", "Product updated successfully", "/products")
 
-		utils.HXRedirectWithNotify(c, http.StatusCreated, "success", "Product created successfully", "/products")
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Product created successfully", "/products")
 
 	}
 }
@@ -115,7 +117,6 @@ func HandleUpdateProduct() gin.HandlerFunc {
 			return
 		}
 
-		// utils.HXRedirectWithNotify(c, http.StatusOK, "success", "Product updated successfully", "/products")
 		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product updated successfully", "/products")
 	}
 }
@@ -132,6 +133,12 @@ func HandleDeleteProduct() gin.HandlerFunc {
 
 		result, err := db.DeleteProduct(c.Request.Context(), productIdUUID)
 		if err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && (pgErr.Code == "23503" || pgErr.Code == "23001") {
+				utils.HXNotify(c, http.StatusConflict, "error", "Cannot delete supplier because it is referenced by products")
+				return
+			}
+
 			slog.Error("Error deleting product", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not delete product")
 			return
