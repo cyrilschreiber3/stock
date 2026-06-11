@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -36,7 +38,11 @@ func TimeToNaturalLanguage(t time.Time) string {
 	if duration < time.Minute {
 		return "just now"
 	} else if duration < time.Hour {
-		return fmt.Sprintf("%d minutes ago", int(duration.Minutes()))
+		minutes := int(duration.Minutes())
+		if minutes == 1 {
+			return "1 minute ago"
+		}
+		return fmt.Sprintf("%d minutes ago", minutes)
 	} else if t.Year() == now.Year() && t.Month() == now.Month() && t.Day() == now.Day() {
 		return fmt.Sprintf("today at %s", t.Format("15:04"))
 	} else if t.Year() == now.Year() {
@@ -60,4 +66,15 @@ func StringToPgText(s string) pgtype.Text {
 		return pgtype.Text{String: "", Valid: false}
 	}
 	return text
+}
+
+func IsForeignKeyViolation(err error) bool {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return false
+	}
+	if pgErr.Code == "23503" || pgErr.Code == "23001" {
+		return true
+	}
+	return false
 }

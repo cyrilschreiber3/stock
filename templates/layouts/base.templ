@@ -20,7 +20,7 @@ templ Base(c *gin.Context, title string) {
 		</head>
 		<body class="mx-auto max-w-[90rem]">
 			@partials.Header()
-			<main class="mx-auto mt-8 max-w-5xl p-4">
+			<main class="mx-auto mt-8 max-w-6xl p-4">
 				@partials.MessagesHandler(c)
 				{ children... }
 			</main>

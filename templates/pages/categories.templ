@@ -1,0 +1,133 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/templates/components"
+	"github.com/cyrilschreiber3/stock/templates/icons"
+	"github.com/cyrilschreiber3/stock/templates/layouts"
+	"github.com/cyrilschreiber3/stock/utils"
+	"github.com/gin-gonic/gin"
+)
+
+templ Categories(c *gin.Context, categories []repository.Category) {
+	@layouts.Base(c, "Stock") {
+		<div class="my-5 flex justify-between">
+			<h1 class="text-2xl font-bold">Categories</h1>
+			@components.ButtonLink("/categories/create", components.ButtonConfig("Create").
+				Icon(icons.Plus()).
+				Color("primary"),
+			)
+		</div>
+		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Description</th>
+						<th>Created</th>
+						<th>Last updated</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					for _, category := range categories {
+						<tr>
+							<td>{ category.Name }</td>
+							<td>{ category.Description.String }</td>
+							<td>
+								<div class="tooltip" data-tip={ utils.PgTimestampToString(category.CreatedAt) }>
+									{ utils.PgTimestampToNaturalLanguage(category.CreatedAt) }
+								</div>
+							</td>
+							<td>
+								<div class="tooltip" data-tip={ utils.PgTimestampToString(category.UpdatedAt) }>
+									{ utils.PgTimestampToNaturalLanguage(category.UpdatedAt) }
+								</div>
+							</td>
+							<td>
+								<div class="flex justify-end space-x-2">
+									@components.ButtonLink(fmt.Sprintf("/categories/%s/edit", category.ID.String()), components.ButtonConfig("Edit").
+										Icon(icons.PencilSquare()).
+										Color("info").
+										Style("soft").
+										Size("sm"),
+									)
+									@components.ButtonLink(fmt.Sprintf("/categories/%s/subcategories", category.ID.String()), components.ButtonConfig("Sub-categories").
+										Icon(icons.Cube()).
+										Color("secondary").
+										Style("soft").
+										Size("sm"),
+									)
+									@components.Button(components.ButtonConfig("Delete").
+										Type("button").
+										Icon(icons.Trash()).
+										Color("error").
+										Style("soft").
+										Size("sm").
+										HxDelete(fmt.Sprintf("/categories/%s/delete", category.ID.String())).
+										HxConfirm("Are you sure you want to delete this category?").
+										HxTarget("closest tr").
+										HxSwap("delete"),
+									)
+								</div>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+}
+
+templ CreateUpdateCategory(c *gin.Context, category *repository.Category) {
+	{{
+		title := "Create category"
+		formMethod := "post"
+		formAction := "/categories/create"
+		submitButtonText := "Create"
+
+		name := ""
+		description := ""
+
+		if category != nil {
+			title = "Update category: " + category.Name
+			formMethod = "put"
+			formAction = fmt.Sprintf("/categories/%s/update", category.ID.String())
+			submitButtonText = "Update"
+
+			name = category.Name
+			description = category.Description.String
+		}
+	}}
+	@layouts.Base(c, title) {
+		<h1 class="mb-4 text-2xl font-bold">{ title }</h1>
+		<form id="category-form" name="category-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
+			@components.FormField(components.FormFieldConfig("name").
+				Type("text").
+				Label("Category name").
+				Placeholder("Meals").
+				Value(name).
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("description").
+				Type("textarea").
+				Label("Description").
+				Placeholder("Category description").
+				Value(description).
+				Required(),
+			)
+			<div class="flex justify-end space-x-2">
+				@components.ButtonLink("/categories", components.ButtonConfig("Back").
+					Icon(icons.ArrowLeft()).
+					Color("neutral"),
+				)
+				@components.Button(components.ButtonConfig(submitButtonText).
+					Type("submit").
+					Icon(icons.FloppyDisk()).
+					Color("primary"),
+				)
+			</div>
+		</form>
+	}
+}

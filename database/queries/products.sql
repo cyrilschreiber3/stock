@@ -56,7 +56,7 @@ RETURNING *;
 
 -- name: UpdateSubcategory :one
 UPDATE subcategories
-SET name = $2, description = $3, category_id = $4
+SET name = $2, description = $3
 WHERE id = $1
 RETURNING *;
 
@@ -92,6 +92,26 @@ SELECT * FROM subcategories WHERE category_id = $1;
 
 -- name: DeleteSubcategoriesByCategoryID :execrows
 DELETE FROM subcategories WHERE category_id = $1;
+
+-- Subcategory by category id with details
+
+-- name: GetSubcategoriesWithCategoryDetailsByCategoryID :many
+SELECT
+    sc.*,
+    c.name AS category_name,
+    c.description AS category_description
+FROM subcategories sc
+INNER JOIN categories c ON sc.category_id = c.id
+WHERE sc.category_id = $1;
+
+-- name: GetSubcategoryWithCategoryDetailsBySubcategoryID :one
+SELECT
+    sc.*,
+    c.name AS category_name,
+    c.description AS category_description
+FROM subcategories sc
+INNER JOIN categories c ON sc.category_id = c.id
+WHERE sc.id = $1;
 
 -- Product queries by category and subcategory
 

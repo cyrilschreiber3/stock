@@ -22,25 +22,25 @@ func SetupRoutes(router *gin.Engine) {
 
 	categoryGroup := router.Group("/categories")
 	{
-		categoryGroup.GET("")
+		categoryGroup.GET("", handlers.HandleGetCategories())
 		categoryGroup.GET("/options", handlers.HandleGetCategoryOptions())
-		categoryGroup.GET("/create")
-		categoryGroup.POST("/create")
+		categoryGroup.GET("/create", handlers.HandleShowCreateCategoryForm())
+		categoryGroup.POST("/create", handlers.HandleCreateCategory())
 		categoryGroup.GET("/:id/show")
-		categoryGroup.GET("/:id/edit")
-		categoryGroup.PUT("/:id/update")
-		categoryGroup.DELETE("/:id/delete")
+		categoryGroup.GET("/:id/edit", handlers.HandleShowUpdateCategoryForm())
+		categoryGroup.PUT("/:id/update", handlers.HandleUpdateCategory())
+		categoryGroup.DELETE("/:id/delete", handlers.HandleDeleteCategory())
 
 		subcategoryGroup := categoryGroup.Group("/:id/subcategories")
 		{
-			subcategoryGroup.GET("")
+			subcategoryGroup.GET("", handlers.HandleGetSubcategories())
 			subcategoryGroup.GET("/options", handlers.HandleGetSubcategoryOptions())
-			subcategoryGroup.GET("/create")
-			subcategoryGroup.POST("/create")
-			subcategoryGroup.GET("/:id/show")
-			subcategoryGroup.GET("/:id/edit")
-			subcategoryGroup.PUT("/:id/update")
-			subcategoryGroup.DELETE("/:id/delete")
+			subcategoryGroup.GET("/create", handlers.HandleShowCreateSubcategoryForm())
+			subcategoryGroup.POST("/create", handlers.HandleCreateSubcategory())
+			subcategoryGroup.GET("/:subcategory_id/show")
+			subcategoryGroup.GET("/:subcategory_id/edit", handlers.HandleShowUpdateSubcategoryForm())
+			subcategoryGroup.PUT("/:subcategory_id/update", handlers.HandleUpdateSubcategory())
+			subcategoryGroup.DELETE("/:subcategory_id/delete", handlers.HandleDeleteSubcategory())
 		}
 	}
 
