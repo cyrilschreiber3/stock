@@ -41,9 +41,9 @@ templ Products(c *gin.Context, products []repository.GetAllProductWithDetailsRow
 						<tr>
 							<td>{ product.Brand }</td>
 							<td>{ product.Name }</td>
-							<td>{ product.CategoryName }</td>
-							<td>{ product.SubcategoryName }</td>
-							<td>{ product.DefaultSupplierName }</td>
+							<td>{ product.Category.Name }</td>
+							<td>{ product.Subcategory.Name }</td>
+							<td>{ product.Supplier.Name }</td>
 							<td>{ utils.PgNumericToString(product.DefaultBuyPrice, "0.00") } CHF</td>
 							<td>{ utils.PgNumericToString(product.DefaultSellPrice, "0.00") } CHF</td>
 							<td class="space-x-2 space-y-2">

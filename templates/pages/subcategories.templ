@@ -15,14 +15,14 @@ templ Subcategories(c *gin.Context, subcategories []repository.GetSubcategoriesW
 		<div class="my-5 flex flex-wrap items-center justify-between gap-3">
 			<div>
 				<h1 class="text-2xl font-bold">Sub-categories</h1>
-				<p class="text-base-content/70 text-sm">Category: { subcategories[0].CategoryName }</p>
+				<p class="text-base-content/70 text-sm">Category: { subcategories[0].Category.Name }</p>
 			</div>
 			<div class="flex gap-2">
 				@components.ButtonLink("/categories", components.ButtonConfig("Back to categories").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
-				@components.ButtonLink(fmt.Sprintf("/categories/%s/subcategories/create", subcategories[0].CategoryID.String()), components.ButtonConfig("Create").
+				@components.ButtonLink(fmt.Sprintf("/categories/%s/subcategories/create", subcategories[0].Category.ID.String()), components.ButtonConfig("Create").
 					Icon(icons.Plus()).
 					Color("primary"),
 				)
@@ -56,7 +56,7 @@ templ Subcategories(c *gin.Context, subcategories []repository.GetSubcategoriesW
 							</td>
 							<td>
 								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(fmt.Sprintf("/categories/%s/subcategories/%s/edit", subcategories[0].CategoryID.String(), subcategory.ID.String()), components.ButtonConfig("Edit").
+									@components.ButtonLink(fmt.Sprintf("/categories/%s/subcategories/%s/edit", subcategories[0].Category.ID.String(), subcategory.ID.String()), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Color("info").
 										Style("soft").
@@ -68,7 +68,7 @@ templ Subcategories(c *gin.Context, subcategories []repository.GetSubcategoriesW
 										Color("error").
 										Style("soft").
 										Size("sm").
-										HxDelete(fmt.Sprintf("/categories/%s/subcategories/%s/delete", subcategories[0].CategoryID.String(), subcategory.ID.String())).
+										HxDelete(fmt.Sprintf("/categories/%s/subcategories/%s/delete", subcategories[0].Category.ID.String(), subcategory.ID.String())).
 										HxConfirm("Are you sure you want to delete this sub-category?").
 										HxTarget("closest tr").
 										HxSwap("delete"),

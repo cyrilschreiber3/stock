@@ -98,19 +98,17 @@ DELETE FROM subcategories WHERE category_id = $1;
 -- name: GetSubcategoriesWithCategoryDetailsByCategoryID :many
 SELECT
     sc.*,
-    c.name AS category_name,
-    c.description AS category_description
+    sqlc.embed(categories)
 FROM subcategories sc
-INNER JOIN categories c ON sc.category_id = c.id
+INNER JOIN categories ON sc.category_id = categories.id
 WHERE sc.category_id = $1;
 
 -- name: GetSubcategoryWithCategoryDetailsBySubcategoryID :one
 SELECT
     sc.*,
-    c.name AS category_name,
-    c.description AS category_description
+    sqlc.embed(categories)
 FROM subcategories sc
-INNER JOIN categories c ON sc.category_id = c.id
+INNER JOIN categories ON sc.category_id = categories.id
 WHERE sc.id = $1;
 
 -- Product queries by category and subcategory
@@ -131,22 +129,22 @@ SELECT * FROM products WHERE default_supplier_id = $1;
 -- name: GetAllProductWithDetails :many
 SELECT
     p.*,
-    c.name AS category_name,
-    sc.name AS subcategory_name,
-    s.name AS default_supplier_name
+    sqlc.embed(categories),
+    sqlc.embed(subcategories),
+    sqlc.embed(suppliers)
 FROM products p
-INNER JOIN categories c ON p.category_id = c.id
-INNER JOIN subcategories sc ON p.subcategory_id = sc.id
-INNER JOIN suppliers s ON p.default_supplier_id = s.id;
+INNER JOIN categories ON p.category_id = categories.id
+INNER JOIN subcategories ON p.subcategory_id = subcategories.id
+INNER JOIN suppliers ON p.default_supplier_id = suppliers.id;
 
 -- name: GetProductWithDetailsByID :one
 SELECT
     p.*,
-    c.name AS category_name,
-    sc.name AS subcategory_name,
-    s.name AS default_supplier_name
+    sqlc.embed(categories),
+    sqlc.embed(subcategories),
+    sqlc.embed(suppliers)
 FROM products p
-INNER JOIN categories c ON p.category_id = c.id
-INNER JOIN subcategories sc ON p.subcategory_id = sc.id
-INNER JOIN suppliers s ON p.default_supplier_id = s.id
+INNER JOIN categories ON p.category_id = categories.id
+INNER JOIN subcategories ON p.subcategory_id = subcategories.id
+INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
 WHERE p.id = $1;
