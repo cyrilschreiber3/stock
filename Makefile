@@ -8,11 +8,11 @@ init-htmx:
 init-alpine:
 	@test -f ./static/alpine.min.js || curl -o static/alpine.min.js -fsSL https://unpkg.com/alpinejs@3.15.11/dist/cdn.min.js
 
-init: init-daisyui init-htmx init-alpine
-	@test -f .env || cp example.env .env
-
 sqlc:
 	@sqlc generate
+
+init: init-daisyui init-htmx init-alpine sqlc
+	@test -f .env || cp example.env .env
 
 templ:
 	@templ generate -watch -proxy=http://127.0.0.1:8080 -proxyport=8081

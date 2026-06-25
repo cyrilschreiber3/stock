@@ -143,25 +143,25 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 				Label("Category").
 				Placeholder("Select a category").
 				Value(categoryID).
-				OptionsFromEndpoint("/categories/options").
-				Required(),
+				Required().
+				OptionsFromEndpoint("/categories/options"),
 			)
 			@components.FormField(components.FormFieldConfig("subcategory_id").
 				Type("select").
 				Label("Sub-category").
 				Placeholder("Select a sub-category").
 				Value(subcategoryID).
+				Required().
 				OptionsFromEndpoint("/categories/:id/subcategories/options").
-				DependsOn("category_id").
-				Required(),
+				DependsOn("category_id"),
 			)
 			@components.FormField(components.FormFieldConfig("default_supplier_id").
 				Type("select").
 				Label("Default Supplier").
 				Placeholder("Select a supplier").
 				Value(supplierID).
-				OptionsFromEndpoint("/suppliers/options").
-				Required(),
+				Required().
+				OptionsFromEndpoint("/suppliers/options"),
 			)
 			@components.FormField(components.FormFieldConfig("default_buy_price").
 				Type("number").

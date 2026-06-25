@@ -1,0 +1,17 @@
+.dropdown-element:first-child:not(:last-child) {
+  button {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+.dropdown-element:last-child:not(:first-child) {
+  button {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+.dropdown-element:not(:first-child):not(:last-child) {
+  button {
+    border-radius: 0;
+  }
+}

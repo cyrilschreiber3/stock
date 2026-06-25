@@ -24,13 +24,18 @@ func HandleGetCategoryOptions() gin.HandlerFunc {
 
 		placeholder := c.Query("placeholder")
 		selectedId := c.Query("value")
+		required := c.Query("required") == "true"
+
+		if placeholder == "" {
+			placeholder = "Select a category"
+		}
 
 		categoryOptions := make(map[string]string, len(categories))
 		for _, category := range categories {
 			categoryOptions[category.ID.String()] = category.Name
 		}
 
-		component := components.SelectOptions(placeholder, selectedId, categoryOptions)
+		component := components.SelectOptions(placeholder, selectedId, categoryOptions, required)
 
 		utils.RenderTemplate(c, statusCode, component)
 	}

@@ -42,11 +42,11 @@ templ MessagesHandler(c *gin.Context) {
                         const m = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
                         return m ? m[2] : null;
                     }
-                    console.log("Initializing page messages");
-                    console.log("Cookies:", document.cookie);
+                    // console.log("Initializing page messages");
+                    // console.log("Cookies:", document.cookie);
                     const raw = getCookie("notification-message");
                     if (!raw) return;
-                    console.log("Found page message cookie:", raw);
+                    // console.log("Found page message cookie:", raw);
 
                     try {
                         const data = JSON.parse(decodeURIComponent(raw.replace(/\+/g, "%20")));

@@ -31,6 +31,20 @@ func PgTimestampToTime(ts pgtype.Timestamptz) (time.Time, error) {
 	return ts.Time, nil
 }
 
+func PgDateToString(date pgtype.Date) string {
+	if !date.Valid {
+		return "Unknown"
+	}
+	return date.Time.Format("02-01-2006")
+}
+
+func PgDateToFormString(date pgtype.Date) string {
+	if !date.Valid {
+		return ""
+	}
+	return date.Time.Format("2006-01-02")
+}
+
 func TimeToNaturalLanguage(t time.Time) string {
 	now := time.Now()
 	duration := time.Since(t)

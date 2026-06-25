@@ -4,31 +4,38 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/a-h/templ"
 )
 
 type formFieldConfig struct {
-	name            string
-	label           string
-	inputType       string
-	value           string
-	valueList       []string
-	options         map[string]string
-	optionsEndpoint string
-	dependsOn       string
-	placeholder     string
-	color           string // neutral, primary, secondary, accent, info, success, warning, error
-	size            string // xs, sm, md, lg, xl
-	prefix          string
-	suffix          string
-	required        bool
-	checked         bool
-	asList          bool
-	validationHint  string
-	inputClasses    []string
-	inputAttributes templ.Attributes
-	customInput     templ.Component
+	name             string
+	label            string
+	inputType        string
+	value            string
+	valueList        []string
+	multiValueList   []map[string]string
+	options          map[string]string
+	optionsEndpoint  string
+	valueEndpoint    string
+	dependsOn        string
+	placeholder      string
+	color            string // neutral, primary, secondary, accent, info, success, warning, error
+	size             string // xs, sm, md, lg, xl
+	prefix           string
+	suffix           string
+	required         bool
+	checked          bool
+	asList           bool
+	asMultiFieldList bool
+	rowFields        []*formFieldConfig
+	isRowField       bool
+	defaultRowValue  string
+	validationHint   string
+	inputClasses     []string
+	inputAttributes  templ.Attributes
+	customInput      templ.Component
 }
 
 func FormFieldConfig(name string) *formFieldConfig {
@@ -50,6 +57,10 @@ func FormFieldConfig(name string) *formFieldConfig {
 	}
 }
 
+func NewFormFieldConfigList(inputs ...*formFieldConfig) []*formFieldConfig {
+	return inputs
+}
+
 func (c *formFieldConfig) getInputComponent() templ.Component {
 	var classes []string
 	var component templ.Component
@@ -58,12 +69,17 @@ func (c *formFieldConfig) getInputComponent() templ.Component {
 	}
 
 	if c.asList {
+		delete(c.inputAttributes, "id")
+		c.inputAttributes[":id"] = fmt.Sprintf("'%s-' + index", c.name)
 		classes = append(classes, "join-item")
+	} else if c.asMultiFieldList {
+		delete(c.inputAttributes, "id")
+		c.inputAttributes[":id"] = fmt.Sprintf("'%s-' + index", c.name)
 	}
 
 	switch c.inputType {
 	case "select":
-		component = selectFormInput(classes, c.inputAttributes, c.options, c.placeholder)
+		component = selectFormInput(classes, c.inputAttributes, c.options, c.value, c.placeholder, c.required)
 	case "radio":
 		component = radioFormInput(c.name, classes, c.options)
 	case "textarea":
@@ -77,6 +93,8 @@ func (c *formFieldConfig) getInputComponent() templ.Component {
 	if c.asList {
 		c = c.Attributes(templ.Attributes{"x-model": fmt.Sprintf("%s[index]", c.name)})
 		return listFormInput(c, component)
+	} else if c.asMultiFieldList {
+		return multiFieldListFormInput(c)
 	} else {
 		return component
 	}
@@ -92,7 +110,7 @@ func (c *formFieldConfig) Type(inputType string) *formFieldConfig {
 	c.inputType = inputType
 	c.inputAttributes["type"] = inputType
 	switch inputType {
-	case "text", "email", "password", "number":
+	case "text", "email", "password", "number", "date":
 		c.Classes("input")
 	case "checkbox":
 		c.Classes("toggle")
@@ -125,6 +143,11 @@ func (c *formFieldConfig) Value(value string) *formFieldConfig {
 
 func (c *formFieldConfig) ValueList(values []string) *formFieldConfig {
 	c.valueList = values
+	return c
+}
+
+func (c *formFieldConfig) MultiValueList(values []map[string]string) *formFieldConfig {
+	c.multiValueList = values
 	return c
 }
 
@@ -169,6 +192,9 @@ func (c *formFieldConfig) OptionsFromEndpoint(endpoint string) *formFieldConfig 
 	if c.value != "" {
 		query.Set("value", c.value)
 	}
+	if c.required {
+		query.Set("required", "true")
+	}
 
 	if len(query) > 0 {
 		c.optionsEndpoint = fmt.Sprintf("%s?%s", endpoint, query.Encode())
@@ -177,25 +203,39 @@ func (c *formFieldConfig) OptionsFromEndpoint(endpoint string) *formFieldConfig 
 	}
 
 	c.inputAttributes["hx-get"] = c.optionsEndpoint
-	c.inputAttributes["hx-trigger"] = "load"
+	c.inputAttributes["hx-trigger"] = "load, refreshOptions"
 	c.inputAttributes["hx-target"] = "this"
 	c.inputAttributes["hx-swap"] = "innerHTML"
 	// c.inputAttributes["hx-on:htmx:afterSwap"] = `this.dispatchEvent(new CustomEvent("change", { bubbles: true }))`
 	return c
 }
 
+func (c *formFieldConfig) ValueFromEndpoint(endpoint string) *formFieldConfig {
+	c.valueEndpoint = endpoint
+	c.inputAttributes["hx-get"] = endpoint
+	c.inputAttributes["hx-trigger"] = "load, refreshValue"
+	c.inputAttributes["hx-on:htmx:after-request"] = "if(event.detail.successful) { this.value = event.detail.xhr.responseText; }"
+	return c
+}
+
 func (c *formFieldConfig) DependsOn(fieldName string) *formFieldConfig {
 	c.dependsOn = fieldName
-	c.inputAttributes["hx-trigger"] = fmt.Sprintf("load, change from:#%s, htmx:afterSwap from:#%s", fieldName, fieldName)
-	c.inputAttributes["hx-target"] = "this"
-	c.inputAttributes["hx-swap"] = "innerHTML"
+	c.inputAttributes["hx-trigger"] = fmt.Sprintf("change from:previous #%s, htmx:afterSwap from:previous #%s", fieldName, fieldName)
 
 	// If endpoint contains a path token like :id, replace it at request time.
 	// Example: /categories/:id/subcategories/options
 	if strings.Contains(c.optionsEndpoint, ":id") {
+		fmt.Println("Setting up dynamic path replacement for endpoint:", c.optionsEndpoint)
 		c.inputAttributes["hx-on:htmx:config-request"] = fmt.Sprintf(
 			`event.detail.path = %q.replace(":id", encodeURIComponent(document.getElementById(%q)?.value || ""))`,
 			c.optionsEndpoint,
+			fieldName,
+		)
+	} else if strings.Contains(c.valueEndpoint, ":id") {
+		fmt.Println("Setting up dynamic path replacement for value endpoint:", c.valueEndpoint)
+		c.inputAttributes["hx-on:htmx:config-request"] = fmt.Sprintf(
+			`event.detail.path = %q.replace(":id", encodeURIComponent(document.getElementById(%q)?.value || ""))`,
+			c.valueEndpoint,
 			fieldName,
 		)
 	} else {
@@ -211,6 +251,18 @@ func (c *formFieldConfig) DependsOn(fieldName string) *formFieldConfig {
 
 func (c *formFieldConfig) AsList() *formFieldConfig {
 	c.asList = true
+	return c
+}
+
+func (c *formFieldConfig) AsMultiFieldList(rowFields []*formFieldConfig, defaultRowValue string) *formFieldConfig {
+	c.asMultiFieldList = true
+	c.rowFields = rowFields
+	c.defaultRowValue = defaultRowValue
+	return c
+}
+
+func (c *formFieldConfig) AsRowField() *formFieldConfig {
+	c.isRowField = true
 	return c
 }
 
@@ -235,6 +287,10 @@ func (c *formFieldConfig) ValidationPreset(preset string) *formFieldConfig {
 	case "positive":
 		c.ValidationAttributes(map[string]string{
 			"min": "0",
+		})
+	case "dateInPast":
+		c.ValidationAttributes(map[string]string{
+			"max": time.Now().Format("2006-01-02"),
 		})
 	}
 	return c

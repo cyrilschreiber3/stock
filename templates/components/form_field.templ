@@ -73,17 +73,133 @@ templ listFormInput(config *formFieldConfig, inputComponent templ.Component) {
 	</div>
 }
 
+func multiFieldListFormInputState(config *formFieldConfig) string {
+	if len(config.multiValueList) == 0 && config.required {
+		return fmt.Sprintf("{ %s: [%s] }", config.name, config.defaultRowValue)
+	} else if len(config.multiValueList) == 0 && !config.required {
+		return fmt.Sprintf("{ %s: [] }", config.name)
+	}
+
+	b, err := json.Marshal(config.multiValueList)
+	if err != nil {
+		return fmt.Sprintf("{ %s: [] }", config.name)
+	}
+
+	return fmt.Sprintf("{ %s: %s }", config.name, string(b))
+}
+
+templ multiFieldListFormInput(config *formFieldConfig) {
+	<div x-data={ multiFieldListFormInputState(config) }>
+		<div class="flex flex-col">
+			<template x-for={ fmt.Sprintf("(item, index) in %s", config.name) } :key="index">
+				<div class="join" data-form-row>
+					{{
+						dependentsByField := map[string][]string{}
+						for _, field := range config.rowFields {
+							if field.dependsOn != "" {
+								dependentsByField[field.dependsOn] = append(dependentsByField[field.dependsOn], field.name)
+							}
+						}
+					}}
+					for _, field := range config.rowFields {
+						{{
+							field.inputAttributes["data-field-name"] = field.name
+
+							if len(dependentsByField[field.name]) > 0 {
+								eventName := fmt.Sprintf("field-changed-%s", field.name)
+								dispatchScript := fmt.Sprintf(`this.dispatchEvent(new CustomEvent(%q, { bubbles: true }))`, eventName)
+								field.inputAttributes["hx-on:change"] = dispatchScript
+								field.inputAttributes["hx-on:htmx:after-swap"] = dispatchScript
+							}
+
+							modelExpression := fmt.Sprintf("%s[index].%s", config.name, field.name)
+							optionsQuerySeparator := "?"
+							if strings.Contains(field.optionsEndpoint, "?") {
+								optionsQuerySeparator = "&"
+							}
+							field = field.Classes("join-item").
+								Attributes(templ.Attributes{"x-model": modelExpression})
+
+							if field.optionsEndpoint != "" {
+								field.Attributes(templ.Attributes{
+									"x-bind:hx-get": fmt.Sprintf("'%s%svalue=' + encodeURIComponent(%s || '')", field.optionsEndpoint, optionsQuerySeparator, modelExpression)})
+								delete(field.inputAttributes, "hx-get")
+							}
+
+							if field.dependsOn != "" {
+								triggerName := fmt.Sprintf("field-changed-%s", field.dependsOn)
+								if field.valueEndpoint != "" {
+									field.inputAttributes["hx-trigger"] = fmt.Sprintf("load, refreshValue, %s from:closest [data-form-row]", triggerName)
+								} else {
+									field.inputAttributes["hx-trigger"] = fmt.Sprintf("load, refreshOptions, %s from:closest [data-form-row]", triggerName)
+								}
+
+								lookupExpression := fmt.Sprintf(`this.closest('[data-form-row]')?.querySelector('[data-field-name=%q]')?.value || ""`, field.dependsOn)
+								if strings.Contains(field.optionsEndpoint, ":id") {
+									field.inputAttributes["hx-on:htmx:config-request"] = fmt.Sprintf(
+										`event.detail.path = %q.replace(":id", encodeURIComponent(%s))`,
+										field.optionsEndpoint,
+										lookupExpression,
+									)
+								} else if strings.Contains(field.valueEndpoint, ":id") {
+									field.inputAttributes["hx-on:htmx:config-request"] = fmt.Sprintf(
+										`event.detail.path = %q.replace(":id", encodeURIComponent(%s))`,
+										field.valueEndpoint,
+										lookupExpression,
+									)
+								} else {
+									field.inputAttributes["hx-vals"] = fmt.Sprintf(
+										`js:{ %q: %s }`,
+										field.dependsOn,
+										lookupExpression,
+									)
+								}
+							}
+						}}
+						@field.getInputComponent()
+					}
+					@Button(ButtonConfig("").
+						Icon(icons.Trash()).
+						Type("button").
+						Color("error").
+						AtClick(fmt.Sprintf("%s.splice(index, 1)", config.name)).
+						Style("soft").
+						Classes("join-item", "mb-2"),
+					)
+				</div>
+			</template>
+		</div>
+		@Button(ButtonConfig("Add").
+			Icon(icons.Plus()).
+			Type("button").
+			Color("success").
+			Size("sm").
+			Style("soft").
+			AtClick(fmt.Sprintf(
+				`%s.push(%s);
+         setTimeout(() => {
+           const newRow = document.querySelector('[x-for*="%s"]').parentElement.lastElementChild;
+           newRow?.querySelectorAll('*').forEach(el => htmx.process(el));
+         }, 0)`,
+				config.name,
+				config.defaultRowValue,
+				config.name,
+			)),
+		)
+	</div>
+}
+
 templ formInput(classes []string, attributes templ.Attributes) {
 	<input class={ strings.Join(classes, " ") } { attributes... }/>
 }
 
-templ selectFormInput(classes []string, attributes templ.Attributes, options map[string]string, placeholder string) {
+templ selectFormInput(classes []string, attributes templ.Attributes, options map[string]string, selectedId string, placeholder string, required bool) {
 	<select class={ strings.Join(classes, " ") } { attributes... }>
-		@SelectOptions(placeholder, "", options)
+		@SelectOptions(placeholder, selectedId, options, required)
 	</select>
 }
 
-templ SelectOptions(placeholder string, selectedId string, options map[string]string) {
+templ SelectOptions(placeholder string, selectedId string, options map[string]string, required bool) {
 	{{
 		selectedExists := false
 		if selectedId != "" {
@@ -91,10 +207,9 @@ templ SelectOptions(placeholder string, selectedId string, options map[string]st
 		}
 	}}
 	if placeholder != "" {
-		if selectedId == "" || !selectedExists {
-			<option disabled selected value="">{ placeholder }</option>
-		} else {
-			<option disabled value="">{ placeholder }</option>
+		<option disabled?={ required } selected?={ selectedId == "" || !selectedExists } value="">{ placeholder }</option>
+		if !required {
+			<option disabled value="">--------</option>
 		}
 	}
 	for key, value := range options {

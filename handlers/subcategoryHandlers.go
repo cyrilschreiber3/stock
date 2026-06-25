@@ -16,9 +16,10 @@ func HandleGetSubcategoryOptions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		statusCode := http.StatusOK
 		placeholder := c.Query("placeholder")
+		required := c.Query("required") == "true"
 
 		if c.Param("id") == ":id" || c.Param("id") == "" {
-			utils.RenderTemplate(c, statusCode, components.SelectOptions(placeholder, "", map[string]string{}))
+			utils.RenderTemplate(c, statusCode, components.SelectOptions(placeholder, "", map[string]string{}, required))
 			return
 		}
 
@@ -44,7 +45,11 @@ func HandleGetSubcategoryOptions() gin.HandlerFunc {
 
 		selectedId := c.Query("value")
 
-		component := components.SelectOptions(placeholder, selectedId, subcategoryOptions)
+		if placeholder == "" {
+			placeholder = "Select a subcategory"
+		}
+
+		component := components.SelectOptions(placeholder, selectedId, subcategoryOptions, required)
 
 		utils.RenderTemplate(c, statusCode, component)
 	}

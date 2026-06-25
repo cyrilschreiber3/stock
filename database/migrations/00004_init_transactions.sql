@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    transaction_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    transaction_date DATE NOT NULL DEFAULT NOW(),
     transaction_type TEXT NOT NULL CHECK (transaction_type IN ('buy', 'sell', 'adjustment', 'correction')),
     state TEXT NOT NULL CHECK (state IN ('draft', 'pendingRefund', 'completed')),
     supplier_id UUID REFERENCES suppliers(id),
@@ -20,9 +20,7 @@ CREATE TABLE IF NOT EXISTS transaction_items (
     transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
     base_unit_price NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (base_unit_price >= 0),
     final_unit_price NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (final_unit_price >= 0),
-    total_price NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (total_price >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    applied_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

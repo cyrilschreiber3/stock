@@ -1,6 +1,9 @@
 package components
 
-import "strings"
+import (
+	"github.com/cyrilschreiber3/stock/templates/icons"
+	"strings"
+)
 
 templ Button(config *buttonConfig) {
 	<button class={ "btn " + strings.Join(config.classes, " ") } { config.attributes... }>
@@ -37,4 +40,24 @@ templ ButtonLink(target string, config *buttonConfig) {
 			</span>
 		}
 	</a>
+}
+
+templ ButtonDropdown(config *buttonConfig, dropdownItems ...templ.Component) {
+	<div class="join">
+		@Button(config)
+		<div class="dropdown dropdown-end join-item group">
+			<div tabindex="0" role="button" class={ "btn join-item px-3 btn-" + config.color } aria-label="Open apply options">
+				<span class="transition-transform group-focus-within:rotate-180">
+					@icons.ChevronDown()
+				</span>
+			</div>
+			<ul tabindex="-1" class="dropdown-content menu bg-base-100 rounded-box z-1 w-max min-w-full px-0 shadow-sm">
+				for _, item := range dropdownItems {
+					<li class="dropdown-element">
+						@item
+					</li>
+				}
+			</ul>
+		</div>
+	</div>
 }

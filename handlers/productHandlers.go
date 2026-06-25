@@ -6,12 +6,91 @@ import (
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 )
+
+func HandleGetProductOptions() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		statusCode := http.StatusOK
+		products, err := db.GetAllProducts(c.Request.Context())
+		if err != nil {
+			statusCode = http.StatusInternalServerError
+			slog.Error("Error retrieving products", "error", err)
+			utils.HXNotify(c, statusCode, "error", "Could not retrieve products")
+			return
+		}
+
+		placeholder := c.Query("placeholder")
+		selectedId := c.Query("value")
+		required := c.Query("required") == "true"
+
+		if placeholder == "" {
+			placeholder = "Select a product"
+		}
+
+		productOptions := make(map[string]string, len(products))
+		for _, product := range products {
+			productOptions[product.ID.String()] = product.Name
+		}
+
+		component := components.SelectOptions(placeholder, selectedId, productOptions, required)
+
+		utils.RenderTemplate(c, statusCode, component)
+	}
+}
+
+func HandleGetProductFieldValue() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		productIdStr := c.Param("id")
+		fieldName := c.Param("field")
+
+		if c.Param("id") == ":id" || c.Param("id") == "" {
+			c.String(http.StatusOK, "")
+			return
+		}
+
+		productIdUUID, err := uuid.Parse(productIdStr)
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Could not parse product ID")
+			return
+		}
+
+		product, err := db.GetProductByID(c.Request.Context(), productIdUUID)
+		if err != nil {
+			slog.Error("Error retrieving product", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve product")
+			return
+		}
+
+		var fieldValue string
+		switch fieldName {
+		case "brand":
+			fieldValue = product.Brand
+		case "name":
+			fieldValue = product.Name
+		case "category_id":
+			fieldValue = product.CategoryID.String()
+		case "subcategory_id":
+			fieldValue = product.SubcategoryID.String()
+		case "default_supplier_id":
+			fieldValue = product.DefaultSupplierID.String()
+		case "default_buy_price":
+			fieldValue = utils.PgNumericToString(product.DefaultBuyPrice, "0.00")
+		case "default_sell_price":
+			fieldValue = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
+		default:
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid field name")
+			return
+		}
+
+		c.String(http.StatusOK, fieldValue)
+	}
+}
 
 func HandleGetProducts() gin.HandlerFunc {
 	return func(c *gin.Context) {

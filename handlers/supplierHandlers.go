@@ -10,8 +10,8 @@ import (
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func HandleGetSupplierOptions() gin.HandlerFunc {
@@ -28,9 +28,15 @@ func HandleGetSupplierOptions() gin.HandlerFunc {
 			supplierOptions[supplier.ID.String()] = supplier.Name
 		}
 
+		placeholder := c.Query("placeholder")
 		selectedId := c.Query("value")
+		required := c.Query("required") == "true"
 
-		component := components.SelectOptions("Select a supplier", selectedId, supplierOptions)
+		if placeholder == "" {
+			placeholder = "Select a supplier"
+		}
+
+		component := components.SelectOptions(placeholder, selectedId, supplierOptions, required)
 
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}

@@ -12,9 +12,11 @@ func SetupRoutes(router *gin.Engine) {
 	productGroup := router.Group("/products")
 	{
 		productGroup.GET("", handlers.HandleGetProducts())
+		productGroup.GET("/options", handlers.HandleGetProductOptions())
 		productGroup.GET("/create", handlers.HandleShowCreateProductForm())
 		productGroup.POST("/create", handlers.HandleCreateProduct())
 		productGroup.GET("/:id/show")
+		productGroup.GET("/:id/values/:field", handlers.HandleGetProductFieldValue())
 		productGroup.GET("/:id/edit", handlers.HandleShowUpdateProductForm())
 		productGroup.PUT("/:id/update", handlers.HandleUpdateProduct())
 		productGroup.DELETE("/:id/delete", handlers.HandleDeleteProduct())
@@ -54,6 +56,36 @@ func SetupRoutes(router *gin.Engine) {
 		supplierGroup.GET("/:id/edit", handlers.HandleShowUpdateSupplierForm())
 		supplierGroup.PUT("/:id/update", handlers.HandleUpdateSupplier())
 		supplierGroup.DELETE("/:id/delete", handlers.HandleDeleteSupplier())
+	}
+
+	transactionGroup := router.Group("/transactions")
+	{
+		transactionGroup.GET("", handlers.HandleGetTransactions())
+		transactionGroup.GET("/create", handlers.HandleShowCreateTransactionForm())
+		transactionGroup.POST("/create")
+		transactionGroup.GET("/:id/show", handlers.HandleGetTransactionDetails())
+		transactionGroup.GET("/:id/edit", handlers.HandleShowUpdateTransactionForm())
+		transactionGroup.PUT("/:id/update")
+		transactionGroup.DELETE("/:id/delete")
+
+		transactionGroup.POST("/:id/apply")
+
+		// transactionItemGroup := transactionGroup.Group("/:id/items")
+		// {
+		// 	transactionItemGroup.GET("")
+		// 	transactionItemGroup.GET("/create")
+		// 	transactionItemGroup.POST("/create")
+		// 	transactionItemGroup.GET("/:item_id/show")
+		// 	transactionItemGroup.GET("/:item_id/edit")
+		// 	transactionItemGroup.PUT("/:item_id/update")
+		// 	transactionItemGroup.DELETE("/:item_id/delete")
+		// }
+	}
+
+	inventoryGroup := router.Group("/inventory")
+	{
+		inventoryGroup.GET("")
+		inventoryGroup.GET("/:product_id/lots")
 	}
 
 	router.GET("/", handlers.Index())
