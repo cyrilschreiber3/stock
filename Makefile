@@ -14,6 +14,12 @@ sqlc:
 init: init-daisyui init-htmx init-alpine sqlc
 	@test -f .env || cp example.env .env
 
+seed:
+	@goose -dir ./database/seed -no-versioning up
+
+resetseed:
+	@goose -dir ./database/seed -no-versioning reset
+
 templ:
 	@templ generate -watch -proxy=http://127.0.0.1:8080 -proxyport=8081
 
