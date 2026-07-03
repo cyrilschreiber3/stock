@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 
+	"github.com/cyrilschreiber3/stock/database/repository"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func HandleGetTransactions() gin.HandlerFunc {
@@ -77,15 +80,98 @@ func HandleShowUpdateTransactionForm() gin.HandlerFunc {
 }
 
 func HandleCreateTransaction() gin.HandlerFunc {
-	return func(c *gin.Context) {}
+	return func(c *gin.Context) {
+		transaction, httpCode, err := parseTransactionForm(c)
+		if err != nil {
+			utils.HXNotify(c, httpCode, "error", err.Error())
+			return
+		}
+
+		var pgNumericZero pgtype.Numeric
+		if err := pgNumericZero.Scan("0.00"); err != nil {
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not initialize numeric value")
+			return
+		}
+
+		_, err = db.CreateTransaction(c.Request.Context(), repository.CreateTransactionParams{
+			TransactionDate: transaction.TransactionDate,
+			TransactionType: transaction.TransactionType,
+			SupplierID:      transaction.SupplierId,
+			State:           "draft",
+			BasePrice:       pgNumericZero,
+			FinalPrice:      pgNumericZero,
+		})
+		if err != nil {
+			slog.Error("Error creating transaction", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not create transaction")
+			return
+		}
+
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Transaction created successfully", "/transactions")
+
+	}
 }
 
 func HandleUpdateTransaction() gin.HandlerFunc {
-	return func(c *gin.Context) {}
+	return func(c *gin.Context) {
+		if !checkTransactionWritable(c) {
+			return
+		}
+
+		transaction, httpCode, err := parseTransactionForm(c)
+		if err != nil {
+			utils.HXNotify(c, httpCode, "error", err.Error())
+			return
+		}
+
+		transactionId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid transaction ID")
+			return
+		}
+
+		_, err = db.UpdateTransaction(c.Request.Context(), repository.UpdateTransactionParams{
+			ID:              transactionId,
+			TransactionDate: transaction.TransactionDate,
+			TransactionType: transaction.TransactionType,
+			SupplierID:      transaction.SupplierId,
+		})
+		if err != nil {
+			slog.Error("Error updating transaction", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not update transaction")
+			return
+		}
+
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction updated successfully", fmt.Sprintf("/transactions/%s/show", transactionId))
+	}
 }
 
 func HandleDeleteTransaction() gin.HandlerFunc {
-	return func(c *gin.Context) {}
+	return func(c *gin.Context) {
+		if !checkTransactionWritable(c) {
+			return
+		}
+
+		transactionId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid transaction ID")
+			return
+		}
+
+		result, err := db.DeleteTransaction(c.Request.Context(), transactionId)
+		if err != nil {
+			slog.Error("Error deleting transaction", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not delete transaction")
+			return
+		}
+
+		if result == 0 {
+			utils.HXNotify(c, http.StatusNotFound, "error", "Transaction not found")
+			return
+		}
+
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction deleted successfully", "/transactions")
+	}
 }
 
 func HandleApplyTransaction() gin.HandlerFunc {

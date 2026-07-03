@@ -137,9 +137,17 @@ templ TransactionDetails(c *gin.Context, transaction repository.GetTransactionWi
 					@transactionStateBadge(transaction.State)
 				</p>
 				<p><strong>Supplier:</strong> { supplierName }</p>
-				<p><strong>Base price:</strong> { utils.PgNumericToString(transaction.BasePrice, "0.00") } CHF</p>
-				<p><strong>Final price:</strong> { utils.PgNumericToString(transaction.FinalPrice, "0.00") } CHF</p>
+				<p><strong>Base price:</strong> <span id="transaction-base-price">{ utils.PgNumericToString(transaction.BasePrice, "0.00") } CHF</span></p>
+				<p><strong>Final price:</strong> <span id="transaction-final-price">{ utils.PgNumericToString(transaction.FinalPrice, "0.00") } CHF</span></p>
 			</div>
+		</div>
+		<div class="my-5 flex justify-between">
+			<h2 class="text-xl font-bold">Transaction items</h2>
+			@components.Button(components.ButtonConfig("Add product").
+				Icon(icons.Plus()).
+				Color("secondary").
+				OnClick("document.querySelector('#add_transaction_item_modal #modal-box').dispatchEvent(new Event('resetAddTransactionItemModal')); add_transaction_item_modal.showModal()"),
+			)
 		</div>
 		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
 			<table class="table">
@@ -149,19 +157,21 @@ templ TransactionDetails(c *gin.Context, transaction repository.GetTransactionWi
 						<th>Quantity</th>
 						<th>Base unit price</th>
 						<th>Final unit price</th>
+						<th></th>
 					</tr>
 				</thead>
-				<tbody>
+				<tbody id="transaction-items">
 					for _, item := range transactionItems {
-						<tr>
-							<td>{ item.Product.Name }</td>
-							<td>{ item.Quantity }</td>
-							<td>{ utils.PgNumericToString(item.BaseUnitPrice, "0.00") } CHF</td>
-							<td>{ utils.PgNumericToString(item.FinalUnitPrice, "0.00") } CHF</td>
-						</tr>
+						@TransactionItemRow(c, item)
 					}
 				</tbody>
 			</table>
+			<dialog id="edit_transaction_item_modal" class="modal">
+				<div id="modal-box" class="modal-box" hx-on:htmx:after-swap="if(event.detail.successful) { edit_transaction_item_modal.showModal(); }"></div>
+				<form method="dialog" class="modal-backdrop">
+					<button>close</button>
+				</form>
+			</dialog>
 		</div>
 		<div class="my-5 flex justify-end space-x-2">
 			@components.ButtonLink("/transactions", components.ButtonConfig("Back to transactions").
@@ -198,6 +208,12 @@ templ TransactionDetails(c *gin.Context, transaction repository.GetTransactionWi
 				)
 			}
 		</div>
+		<dialog id="add_transaction_item_modal" class="modal">
+			<div id="modal-box" class="modal-box" hx-get={ fmt.Sprintf("/transactions/%s/show-search-products", transaction.ID.String()) } hx-trigger="load, resetAddTransactionItemModal"></div>
+			<form method="dialog" class="modal-backdrop">
+				<button>close</button>
+			</form>
+		</dialog>
 	}
 }
 

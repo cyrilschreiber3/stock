@@ -18,6 +18,23 @@ RETURNING *;
 -- name: DeleteProduct :execrows
 DELETE FROM products WHERE id = $1;
 
+-- name: SearchProducts :many
+SELECT
+    p.*,
+    sqlc.embed(categories),
+    sqlc.embed(subcategories),
+    sqlc.embed(suppliers)
+FROM products p
+INNER JOIN categories ON p.category_id = categories.id
+INNER JOIN subcategories ON p.subcategory_id = subcategories.id
+INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
+WHERE
+    (p.name ILIKE '%' || sqlc.arg(search)::text || '%' OR p.brand ILIKE '%' || sqlc.arg(search)::text || '%')
+    AND (sqlc.arg(category_id)::UUID = '00000000-0000-0000-0000-000000000000'::UUID OR p.category_id = sqlc.arg(category_id)::UUID)
+    AND (sqlc.arg(subcategory_id)::UUID = '00000000-0000-0000-0000-000000000000'::UUID OR p.subcategory_id = sqlc.arg(subcategory_id)::UUID)
+    AND (sqlc.arg(supplier_id)::UUID = '00000000-0000-0000-0000-000000000000'::UUID OR p.default_supplier_id = sqlc.arg(supplier_id)::UUID)
+ORDER BY p.name ASC
+LIMIT $1 OFFSET $2;
 
 -- Category queries
 

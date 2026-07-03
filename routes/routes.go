@@ -13,6 +13,7 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		productGroup.GET("", handlers.HandleGetProducts())
 		productGroup.GET("/options", handlers.HandleGetProductOptions())
+		productGroup.GET("/search")
 		productGroup.GET("/create", handlers.HandleShowCreateProductForm())
 		productGroup.POST("/create", handlers.HandleCreateProduct())
 		productGroup.GET("/:id/show")
@@ -62,24 +63,27 @@ func SetupRoutes(router *gin.Engine) {
 	{
 		transactionGroup.GET("", handlers.HandleGetTransactions())
 		transactionGroup.GET("/create", handlers.HandleShowCreateTransactionForm())
-		transactionGroup.POST("/create")
+		transactionGroup.POST("/create", handlers.HandleCreateTransaction())
+		transactionGroup.GET("/:id/show-search-products", handlers.HandleShowSearchProductsForTransactionItems())
+		transactionGroup.GET("/:id/search-products", handlers.HandleSearchProductsForTransactionItems())
+		transactionGroup.GET("/:id/select-product/:product_id", handlers.HandleSelectProductForTransactionItem())
 		transactionGroup.GET("/:id/show", handlers.HandleGetTransactionDetails())
 		transactionGroup.GET("/:id/edit", handlers.HandleShowUpdateTransactionForm())
-		transactionGroup.PUT("/:id/update")
-		transactionGroup.DELETE("/:id/delete")
+		transactionGroup.PUT("/:id/update", handlers.HandleUpdateTransaction())
+		transactionGroup.DELETE("/:id/delete", handlers.HandleDeleteTransaction())
 
-		transactionGroup.POST("/:id/apply")
+		transactionGroup.POST("/:id/apply", handlers.HandleApplyTransaction())
 
-		// transactionItemGroup := transactionGroup.Group("/:id/items")
-		// {
-		// 	transactionItemGroup.GET("")
-		// 	transactionItemGroup.GET("/create")
-		// 	transactionItemGroup.POST("/create")
-		// 	transactionItemGroup.GET("/:item_id/show")
-		// 	transactionItemGroup.GET("/:item_id/edit")
-		// 	transactionItemGroup.PUT("/:item_id/update")
-		// 	transactionItemGroup.DELETE("/:item_id/delete")
-		// }
+		transactionItemGroup := transactionGroup.Group("/:id/items")
+		{
+			transactionItemGroup.GET("")
+			transactionItemGroup.GET("/create")
+			transactionItemGroup.POST("/create", handlers.HandleCreateTransactionItem())
+			transactionItemGroup.GET("/:item_id/show")
+			transactionItemGroup.GET("/:item_id/edit", handlers.HandleShowUpdateTransactionItemForm())
+			transactionItemGroup.PUT("/:item_id/update", handlers.HandleUpdateTransactionItem())
+			transactionItemGroup.DELETE("/:item_id/delete", handlers.HandleDeleteTransactionItem())
+		}
 	}
 
 	inventoryGroup := router.Group("/inventory")

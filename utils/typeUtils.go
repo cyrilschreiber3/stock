@@ -82,6 +82,22 @@ func StringToPgText(s string) pgtype.Text {
 	return text
 }
 
+func StringToPgDate(s string) pgtype.Date {
+	var date pgtype.Date
+	if err := date.Scan(s); err != nil {
+		return pgtype.Date{Time: time.Time{}, Valid: false}
+	}
+	return date
+}
+
+func StringToPgTimestamp(s string) pgtype.Timestamptz {
+	var ts pgtype.Timestamptz
+	if err := ts.Scan(s); err != nil {
+		return pgtype.Timestamptz{Time: time.Time{}, Valid: false}
+	}
+	return ts
+}
+
 func IsForeignKeyViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	if !errors.As(err, &pgErr) {

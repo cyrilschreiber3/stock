@@ -1,0 +1,176 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/templates/components"
+	"github.com/cyrilschreiber3/stock/templates/icons"
+	"github.com/cyrilschreiber3/stock/utils"
+	"github.com/gin-gonic/gin"
+)
+
+templ TransactionItemRow(c *gin.Context, transactionItem repository.GetTransactionItemsWithDetailsByTransactionIDRow) {
+	<tr id={ fmt.Sprintf("transaction_item_%s", transactionItem.ID.String()) }>
+		<td>{ transactionItem.Product.Name }</td>
+		<td>{ transactionItem.Quantity }</td>
+		<td>{ utils.PgNumericToString(transactionItem.BaseUnitPrice, "0.00") } CHF</td>
+		<td>{ utils.PgNumericToString(transactionItem.FinalUnitPrice, "0.00") } CHF</td>
+		<td>
+			<div class="flex space-x-2">
+				@components.Button(components.ButtonConfig("Edit").
+					Icon(icons.PencilSquare()).
+					Style("soft").
+					Size("sm").
+					Color("info").
+					HxGet(fmt.Sprintf("/transactions/%s/items/%s/edit", transactionItem.TransactionID.String(), transactionItem.ID.String())).
+					HxTarget("#edit_transaction_item_modal>#modal-box").
+					HxSwap("innerHTML"),
+				)
+				@components.Button(components.ButtonConfig("Delete").
+					Icon(icons.Trash()).
+					Color("error").
+					Style("soft").
+					Size("sm").
+					HxDelete(fmt.Sprintf("/transactions/%s/items/%s/delete", transactionItem.TransactionID.String(), transactionItem.ID.String())).
+					HxConfirm("Are you sure you want to delete this transaction item?").
+					HxTarget("closest tr").
+					HxSwap("delete"),
+				)
+			</div>
+		</td>
+	</tr>
+}
+
+templ SelectProductForTransactionItem(c *gin.Context, transactionID string) {
+	<div id="modal-content">
+		<h3 class="mb-4 text-lg font-bold">Select a product</h3>
+		@components.Search(components.SearchConfig("product_search").
+			Icon(icons.Cube()).
+			Placeholder("Search for a product").
+			Endpoint(fmt.Sprintf("/transactions/%s/search-products", transactionID)).
+			FilterDefault("All Categories").
+			FiltersFromEndpoint("/categories/options").
+			FloatingResults(true),
+		)
+	</div>
+	<div class="modal-action">
+		@components.Button(components.ButtonConfig("Cancel").
+			Type("button").
+			Color("neutral").
+			OnClick("add_transaction_item_modal.close()"),
+		)
+	</div>
+}
+
+templ CreateUpdateTransactionItem(c *gin.Context, product repository.GetProductWithDetailsByIDRow, transaction repository.Transaction, transactionItem *repository.TransactionItem) {
+	{{
+		title := "Add product to transaction"
+		formMethod := "post"
+		formAction := fmt.Sprintf("/transactions/%s/items/create", transaction.ID.String())
+		submitButtonText := "Add"
+		modalID := "add_transaction_item_modal"
+
+		quantityValidationPreset := "positiveInteger"
+
+		productID := product.ID.String()
+		quantity := ""
+		baseUnitPrice := ""
+		finalUnitPrice := ""
+
+		switch transaction.TransactionType {
+		case "buy":
+			baseUnitPrice = utils.PgNumericToString(product.DefaultBuyPrice, "0.00")
+			finalUnitPrice = utils.PgNumericToString(product.DefaultBuyPrice, "0.00")
+		case "sell":
+			baseUnitPrice = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
+			finalUnitPrice = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
+		case "adjustment":
+			baseUnitPrice = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
+			finalUnitPrice = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
+			quantityValidationPreset = "integer"
+		default:
+			baseUnitPrice = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
+			finalUnitPrice = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
+		}
+
+		if transactionItem != nil {
+			title = "Update product in transaction"
+			formMethod = "put"
+			formAction = fmt.Sprintf("/transactions/%s/items/%s/update", transaction.ID.String(), transactionItem.ID.String())
+			submitButtonText = "Update"
+			modalID = "edit_transaction_item_modal"
+
+			productID = transactionItem.ProductID.String()
+			quantity = fmt.Sprintf("%d", transactionItem.Quantity)
+			baseUnitPrice = utils.PgNumericToString(transactionItem.BaseUnitPrice, "0.00")
+			finalUnitPrice = utils.PgNumericToString(transactionItem.FinalUnitPrice, "0.00")
+		}
+	}}
+	<form id="transaction-item-form" name="transaction-item-form" { "hx-" + formMethod }={ formAction } hx-swap="none" { "hx-on:htmx:after-request" }={ fmt.Sprintf("if (event.detail.successful) { %s.close(); }", modalID) }>
+		<div id="modal-content">
+			<h3 class="mb-4 text-lg font-bold">{ title }</h3>
+			<div class="card bg-base-200 mb-4 p-4">
+				<div class="flex content-center items-center justify-between gap-4">
+					<div class="flex-1">
+						<p><strong>Brand:</strong> { product.Brand }</p>
+						<p><strong>Product:</strong> { product.Name }</p>
+						<p><strong>Stock:</strong> N/A</p>
+						<p><strong>Category:</strong> { product.Category.Name } / { product.Subcategory.Name }</p>
+					</div>
+					if transactionItem == nil {
+						<div class="shrink-0">
+							@components.Button(components.ButtonConfig("Change").
+								Icon(icons.XMark()).
+								Color("primary").
+								Style("link").
+								Size("xs").
+								HxGet(fmt.Sprintf("/transactions/%s/show-search-products", transaction.ID.String())).
+								HxTarget(fmt.Sprintf("#%s>#modal-box", modalID)).
+								HxSwap("innerHTML"),
+							)
+						</div>
+					}
+				</div>
+			</div>
+			<input id="product_id" name="product_id" type="text" value={ productID } hidden/>
+			<input id="transaction_id" name="transaction_id" type="text" value={ transaction.ID.String() } hidden/>
+			@components.FormField(components.FormFieldConfig("quantity").
+				Type("number").
+				Label("Quantity").
+				Placeholder("Enter quantity").
+				Value(quantity).
+				ValidationPreset(quantityValidationPreset).
+				Autofocus().
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("base_unit_price").
+				Type("number").
+				Label("Base unit price (CHF)").
+				Placeholder("Enter base unit price").
+				Value(baseUnitPrice).
+				ValidationPreset("money").
+				Required(),
+			)
+			@components.FormField(components.FormFieldConfig("final_unit_price").
+				Type("number").
+				Label("Final unit price (CHF)").
+				Placeholder("Enter final unit price").
+				Value(finalUnitPrice).
+				ValidationPreset("money").
+				Required(),
+			)
+		</div>
+		<div class="modal-action">
+			@components.Button(components.ButtonConfig(submitButtonText).
+				Type("submit").
+				Icon(icons.FloppyDisk()).
+				Color("primary"),
+			)
+			@components.Button(components.ButtonConfig("Cancel").
+				Type("button").
+				Color("neutral").
+				OnClick(fmt.Sprintf("%s.close()", modalID)),
+			)
+		</div>
+	</form>
+}

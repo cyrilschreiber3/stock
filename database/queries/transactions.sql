@@ -13,7 +13,7 @@ RETURNING *;
 
 -- name: UpdateTransaction :one
 UPDATE transactions
-SET transaction_date = $2, transaction_type = $3, state = $4, supplier_id = $5, base_price = $6, final_price = $7
+SET transaction_date = $2, transaction_type = $3, supplier_id = $4
 WHERE id = $1
 RETURNING *;
 
@@ -35,7 +35,7 @@ RETURNING *;
 
 -- name: UpdateTransactionItem :one
 UPDATE transaction_items
-SET product_id = $2, quantity = $3, transaction_id = $4, base_unit_price = $5, final_unit_price = $6
+SET product_id = $2, quantity = $3, base_unit_price = $4, final_unit_price = $5
 WHERE id = $1
 RETURNING *;
 

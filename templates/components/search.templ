@@ -1,0 +1,131 @@
+package components
+
+import (
+	"fmt"
+	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/templates/icons"
+	"strings"
+)
+
+templ Search(config *searchConfig) {
+	<form
+		hx-get={ config.endpoint }
+		hx-target="#search-results"
+		hx-swap="innerHTML"
+		hx-trigger="load, keyup[key!='ArrowDown'&&key!='ArrowUp'&&key!='Enter'] changed delay:250ms from:#product-search, change from:#search-filter"
+		id="search-form"
+		class="join"
+	>
+		<select id="search-filter" name="filter" class={ strings.Join(config.buttonClasses, " ") } { config.buttonAttributes... }>
+			@SelectOptions(config.filterDefault, "", config.filters, true)
+		</select>
+		<label class={ strings.Join(config.inputClasses, " ") }>
+			<span class="[&>svg]:!size-4">
+				@icons.MagnifyingGlass()
+			</span>
+			<input type="search" id="product-search" name="search" autocomplete="off" autofocus required placeholder="Search" { config.inputAttributes... }/>
+		</label>
+	</form>
+	<div id="search-results" role="listbox"></div>
+	<script>
+		(() => {
+			if (window.stockSearchKeyboardNavInitialized) {
+				return;
+			}
+			window.stockSearchKeyboardNavInitialized = true;
+
+			const searchInputId = "product-search";
+			const searchResultsId = "search-results";
+			let activeIndex = -1;
+
+			const getInput = () => document.getElementById(searchInputId);
+			const getResultButtons = () => Array.from(document.querySelectorAll("#search-results [data-search-result='true']"));
+
+			const setActiveResult = (nextIndex) => {
+				const buttons = getResultButtons();
+				activeIndex = nextIndex;
+
+				buttons.forEach((button, index) => {
+					const isActive = index === activeIndex;
+					button.classList.toggle("bg-base-200/80", isActive);
+					button.setAttribute("aria-selected", String(isActive));
+				});
+			};
+
+			document.addEventListener("keydown", (event) => {
+				const input = getInput();
+				if (!input || document.activeElement !== input) {
+					return;
+				}
+
+				const buttons = getResultButtons();
+				if (buttons.length === 0) {
+					return;
+				}
+
+				if (event.key === "ArrowDown") {
+					event.preventDefault();
+					const next = activeIndex >= buttons.length-1 ? 0 : activeIndex + 1;
+					setActiveResult(next);
+					return;
+				}
+
+				if (event.key === "ArrowUp") {
+					event.preventDefault();
+					const next = activeIndex <= 0 ? buttons.length - 1 : activeIndex - 1;
+					setActiveResult(next);
+					return;
+				}
+
+				if (event.key === "Enter" && activeIndex >= 0 && activeIndex < buttons.length) {
+					event.preventDefault();
+					buttons[activeIndex].click();
+				}
+			});
+
+			document.body.addEventListener("htmx:afterSwap", (event) => {
+				if (!(event.target instanceof HTMLElement) || event.target.id !== searchResultsId) {
+					return;
+				}
+
+				setActiveResult(0);
+				requestAnimationFrame(() => {
+					const input = getInput();
+					if (input) {
+						input.focus({ preventScroll: true });
+					}
+				});
+			});
+		})();
+	</script>
+}
+
+templ ProductResultsForTransactionItem(transactionID string, results []repository.SearchProductsRow) {
+	if len(results) == 0 {
+		<div class="rounded-box border-base-300 bg-base-100 text-base-content/70 mt-3 border px-4 py-3 text-sm">
+			No products found.
+		</div>
+	}
+	if len(results) > 0 {
+		<div class="rounded-box border-base-300 bg-base-100 mt-3 overflow-hidden border">
+			for _, result := range results {
+				<button
+					type="button"
+					class="hover:bg-base-200/60 border-base-300 w-full border-b px-4 py-3 text-left transition-colors last:border-b-0"
+					role="option"
+					aria-selected="false"
+					data-search-result="true"
+					data-product-id={ result.ID.String() }
+					hx-get={ fmt.Sprintf("/transactions/%s/select-product/%s", transactionID, result.ID.String()) }
+					hx-target="#add_transaction_item_modal>#modal-box"
+					hx-swap="innerHTML"
+				>
+					<div class="font-semibold">{ result.Brand + " - " + result.Name }</div>
+					<div class="text-base-content/70 mt-0.5 text-sm">
+						Subcategory: { result.Subcategory.Name } · Stock: N/A
+					</div>
+				</button>
+			}
+		</div>
+	}
+}

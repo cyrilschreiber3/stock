@@ -25,6 +25,7 @@ type formFieldConfig struct {
 	size             string // xs, sm, md, lg, xl
 	prefix           string
 	suffix           string
+	autofocus        bool
 	required         bool
 	checked          bool
 	asList           bool
@@ -167,6 +168,12 @@ func (c *formFieldConfig) Suffix(suffix string) *formFieldConfig {
 	return c
 }
 
+func (c *formFieldConfig) Autofocus() *formFieldConfig {
+	c.autofocus = true
+	c.inputAttributes["autofocus"] = true
+	return c
+}
+
 func (c *formFieldConfig) Required() *formFieldConfig {
 	c.required = true
 	c.inputAttributes["required"] = true
@@ -287,6 +294,11 @@ func (c *formFieldConfig) ValidationPreset(preset string) *formFieldConfig {
 	case "positive":
 		c.ValidationAttributes(map[string]string{
 			"min": "0",
+		})
+	case "positiveInteger":
+		c.ValidationAttributes(map[string]string{
+			"step": "1",
+			"min":  "0",
 		})
 	case "dateInPast":
 		c.ValidationAttributes(map[string]string{
