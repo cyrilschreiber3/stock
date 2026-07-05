@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/cyrilschreiber3/stock/controllers"
 	"github.com/cyrilschreiber3/stock/database/repository"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
@@ -175,5 +176,32 @@ func HandleDeleteTransaction() gin.HandlerFunc {
 }
 
 func HandleApplyTransaction() gin.HandlerFunc {
-	return func(c *gin.Context) {}
+	return func(c *gin.Context) {
+		transactionId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid transaction ID")
+			return
+		}
+
+		var applyTransactionForm applyTransactionFormDTO
+
+		if err := c.ShouldBind(&applyTransactionForm); err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", err.Error())
+			return
+		}
+
+		err = transactionController.ApplyTransaction(c, transactionId, applyTransactionForm.State)
+		if err != nil {
+			if controllerErr, ok := err.(controllers.ControllerErrors); ok {
+				slog.Error("Error applying transaction", "error", controllerErr.Error())
+				utils.HXNotify(c, controllerErr.HTTPStatusCode(), "error", controllerErr.HumanReadableError())
+				return
+			}
+			slog.Error("Error applying transaction", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", err.Error())
+			return
+		}
+
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction applied successfully", fmt.Sprintf("/transactions/%s/show", transactionId))
+	}
 }

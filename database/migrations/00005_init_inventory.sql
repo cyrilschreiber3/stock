@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS inventory_lots (
     transaction_item_id UUID NOT NULL REFERENCES transaction_items(id) ON DELETE CASCADE,
     received_quantity INTEGER NOT NULL CHECK (received_quantity > 0),
     remaining_quantity INTEGER NOT NULL CHECK (remaining_quantity >= 0),
-    unit_price NUMERIC(10, 2) NOT NULL CHECK (unit_price >= 0),
+    unit_cost NUMERIC(10, 2) NOT NULL CHECK (unit_cost >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -15,8 +15,10 @@ CREATE TABLE IF NOT EXISTS inventory (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id UUID NOT NULL UNIQUE REFERENCES products(id) ON DELETE CASCADE,
     total_quantity INTEGER NOT NULL CHECK (total_quantity >= 0),
-    average_buy_price NUMERIC(10, 2) NOT NULL CHECK (average_buy_price >= 0),
-    average_sell_price NUMERIC(10, 2) NOT NULL CHECK (average_sell_price >= 0),
+    total_buy_price NUMERIC(10, 2) NOT NULL CHECK (total_buy_price >= 0),
+    total_buy_quantity INTEGER NOT NULL CHECK (total_buy_quantity >= 0),
+    total_sell_price NUMERIC(10, 2) NOT NULL CHECK (total_sell_price >= 0),
+    total_sell_quantity INTEGER NOT NULL CHECK (total_sell_quantity >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -16,3 +16,7 @@ type transactionFormPayload struct {
 	TransactionType string
 	SupplierId      uuid.UUID
 }
+
+type applyTransactionFormDTO struct {
+	State string `form:"state" binding:"required"`
+}

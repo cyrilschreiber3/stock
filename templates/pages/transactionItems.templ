@@ -9,34 +9,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-templ TransactionItemRow(c *gin.Context, transactionItem repository.GetTransactionItemsWithDetailsByTransactionIDRow) {
+templ TransactionItemRow(c *gin.Context, transactionItem repository.GetTransactionItemsWithDetailsByTransactionIDRow, editable bool) {
 	<tr id={ fmt.Sprintf("transaction_item_%s", transactionItem.ID.String()) }>
 		<td>{ transactionItem.Product.Name }</td>
 		<td>{ transactionItem.Quantity }</td>
 		<td>{ utils.PgNumericToString(transactionItem.BaseUnitPrice, "0.00") } CHF</td>
 		<td>{ utils.PgNumericToString(transactionItem.FinalUnitPrice, "0.00") } CHF</td>
 		<td>
-			<div class="flex space-x-2">
-				@components.Button(components.ButtonConfig("Edit").
-					Icon(icons.PencilSquare()).
-					Style("soft").
-					Size("sm").
-					Color("info").
-					HxGet(fmt.Sprintf("/transactions/%s/items/%s/edit", transactionItem.TransactionID.String(), transactionItem.ID.String())).
-					HxTarget("#edit_transaction_item_modal>#modal-box").
-					HxSwap("innerHTML"),
-				)
-				@components.Button(components.ButtonConfig("Delete").
-					Icon(icons.Trash()).
-					Color("error").
-					Style("soft").
-					Size("sm").
-					HxDelete(fmt.Sprintf("/transactions/%s/items/%s/delete", transactionItem.TransactionID.String(), transactionItem.ID.String())).
-					HxConfirm("Are you sure you want to delete this transaction item?").
-					HxTarget("closest tr").
-					HxSwap("delete"),
-				)
-			</div>
+			if editable {
+				<div class="flex space-x-2">
+					@components.Button(components.ButtonConfig("Edit").
+						Icon(icons.PencilSquare()).
+						Style("soft").
+						Size("sm").
+						Color("info").
+						HxGet(fmt.Sprintf("/transactions/%s/items/%s/edit", transactionItem.TransactionID.String(), transactionItem.ID.String())).
+						HxTarget("#edit_transaction_item_modal>#modal-box").
+						HxSwap("innerHTML"),
+					)
+					@components.Button(components.ButtonConfig("Delete").
+						Icon(icons.Trash()).
+						Color("error").
+						Style("soft").
+						Size("sm").
+						HxDelete(fmt.Sprintf("/transactions/%s/items/%s/delete", transactionItem.TransactionID.String(), transactionItem.ID.String())).
+						HxConfirm("Are you sure you want to delete this transaction item?").
+						HxTarget("closest tr").
+						HxSwap("delete"),
+					)
+				</div>
+			}
 		</td>
 	</tr>
 }

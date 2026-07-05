@@ -2,10 +2,12 @@ package database
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
 	"github.com/cyrilschreiber3/stock/utils"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -34,5 +36,13 @@ func Close() {
 	log.Println("Closing PostgreSQL database connection...")
 	if Pool != nil {
 		Pool.Close()
+	}
+}
+
+func RollbackTransaction(ctx context.Context, tx pgx.Tx, retErr *error) {
+	if rollbackErr := tx.Rollback(ctx); rollbackErr != nil && *retErr == nil {
+		if !errors.Is(rollbackErr, pgx.ErrTxClosed) {
+			*retErr = rollbackErr
+		}
 	}
 }

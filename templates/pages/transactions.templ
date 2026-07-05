@@ -121,6 +121,8 @@ templ TransactionDetails(c *gin.Context, transaction repository.GetTransactionWi
 		if transaction.SupplierName.Valid {
 			supplierName = transaction.SupplierName.String
 		}
+
+		editable := transaction.State == "draft"
 	}}
 	@layouts.Base(c, "Stock") {
 		<div class="my-5 flex justify-between">
@@ -162,7 +164,7 @@ templ TransactionDetails(c *gin.Context, transaction repository.GetTransactionWi
 				</thead>
 				<tbody id="transaction-items">
 					for _, item := range transactionItems {
-						@TransactionItemRow(c, item)
+						@TransactionItemRow(c, item, editable)
 					}
 				</tbody>
 			</table>
