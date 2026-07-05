@@ -16,7 +16,7 @@ func SetupRoutes(router *gin.Engine) {
 		productGroup.GET("/search")
 		productGroup.GET("/create", handlers.HandleShowCreateProductForm())
 		productGroup.POST("/create", handlers.HandleCreateProduct())
-		productGroup.GET("/:id/show")
+		productGroup.GET("/:id/show", handlers.HandleGetProductDetails())
 		productGroup.GET("/:id/values/:field", handlers.HandleGetProductFieldValue())
 		productGroup.GET("/:id/edit", handlers.HandleShowUpdateProductForm())
 		productGroup.PUT("/:id/update", handlers.HandleUpdateProduct())
@@ -88,7 +88,7 @@ func SetupRoutes(router *gin.Engine) {
 
 	inventoryGroup := router.Group("/inventory")
 	{
-		inventoryGroup.GET("")
+		inventoryGroup.GET("", handlers.HandleGetInventory())
 		inventoryGroup.GET("/:product_id/lots")
 	}
 

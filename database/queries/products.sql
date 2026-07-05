@@ -23,11 +23,13 @@ SELECT
     p.*,
     sqlc.embed(categories),
     sqlc.embed(subcategories),
-    sqlc.embed(suppliers)
+    sqlc.embed(suppliers),
+    i.total_quantity AS inventory_quantity
 FROM products p
 INNER JOIN categories ON p.category_id = categories.id
 INNER JOIN subcategories ON p.subcategory_id = subcategories.id
 INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
+LEFT JOIN inventory i ON p.id = i.product_id
 WHERE
     (p.name ILIKE '%' || sqlc.arg(search)::text || '%' OR p.brand ILIKE '%' || sqlc.arg(search)::text || '%')
     AND (sqlc.arg(category_id)::UUID = '00000000-0000-0000-0000-000000000000'::UUID OR p.category_id = sqlc.arg(category_id)::UUID)
@@ -148,20 +150,24 @@ SELECT
     p.*,
     sqlc.embed(categories),
     sqlc.embed(subcategories),
-    sqlc.embed(suppliers)
+    sqlc.embed(suppliers),
+    i.total_quantity AS inventory_quantity
 FROM products p
 INNER JOIN categories ON p.category_id = categories.id
 INNER JOIN subcategories ON p.subcategory_id = subcategories.id
-INNER JOIN suppliers ON p.default_supplier_id = suppliers.id;
+INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
+LEFT JOIN inventory i ON p.id = i.product_id;
 
 -- name: GetProductWithDetailsByID :one
 SELECT
     p.*,
     sqlc.embed(categories),
     sqlc.embed(subcategories),
-    sqlc.embed(suppliers)
+    sqlc.embed(suppliers),
+    i.total_quantity AS inventory_quantity
 FROM products p
 INNER JOIN categories ON p.category_id = categories.id
 INNER JOIN subcategories ON p.subcategory_id = subcategories.id
 INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
+LEFT JOIN inventory i ON p.id = i.product_id
 WHERE p.id = $1;

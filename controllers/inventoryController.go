@@ -91,13 +91,13 @@ func (ic *InventoryController) IncreaseStockFromBuyItem(ctx context.Context, qtx
 		return WrapControllerError(err, "creating inventory lot", "Could not create inventory lot")
 	}
 
-	_, err = qtx.UpsertInventory(ctx, repository.UpsertInventoryParams{
+	_, err = qtx.BuyInventory(ctx, repository.BuyInventoryParams{
 		ProductID: transactionItem.ProductID,
-		QtyDelta:  transactionItem.Quantity,
+		Quantity:  transactionItem.Quantity,
 		UnitPrice: transactionItem.FinalUnitPrice,
 	})
 	if err != nil {
-		return WrapControllerError(err, "upserting inventory", "Could not update inventory")
+		return WrapControllerError(err, "updating inventory on buy", "Could not update inventory")
 	}
 
 	return nil
@@ -154,13 +154,13 @@ func (ic *InventoryController) DecreaseStockFromSellItem(ctx context.Context, qt
 		return err
 	}
 
-	_, err = qtx.UpsertInventory(ctx, repository.UpsertInventoryParams{
+	_, err = qtx.SellInventory(ctx, repository.SellInventoryParams{
 		ProductID: transactionItem.ProductID,
-		QtyDelta:  -transactionItem.Quantity,
+		Quantity:  transactionItem.Quantity,
 		UnitPrice: transactionItem.FinalUnitPrice,
 	})
 	if err != nil {
-		return WrapControllerError(err, "upserting inventory", "Could not update inventory")
+		return WrapControllerError(err, "updating inventory on sell", "Could not update inventory")
 	}
 
 	return nil

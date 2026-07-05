@@ -17,7 +17,7 @@ templ TransactionItemRow(c *gin.Context, transactionItem repository.GetTransacti
 		<td>{ utils.PgNumericToString(transactionItem.FinalUnitPrice, "0.00") } CHF</td>
 		<td>
 			if editable {
-				<div class="flex space-x-2">
+				<div class="flex justify-end space-x-2">
 					@components.Button(components.ButtonConfig("Edit").
 						Icon(icons.PencilSquare()).
 						Style("soft").

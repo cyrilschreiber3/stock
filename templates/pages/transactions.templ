@@ -145,11 +145,13 @@ templ TransactionDetails(c *gin.Context, transaction repository.GetTransactionWi
 		</div>
 		<div class="my-5 flex justify-between">
 			<h2 class="text-xl font-bold">Transaction items</h2>
-			@components.Button(components.ButtonConfig("Add product").
-				Icon(icons.Plus()).
-				Color("secondary").
-				OnClick("document.querySelector('#add_transaction_item_modal #modal-box').dispatchEvent(new Event('resetAddTransactionItemModal')); add_transaction_item_modal.showModal()"),
-			)
+			if editable {
+				@components.Button(components.ButtonConfig("Add product").
+					Icon(icons.Plus()).
+					Color("secondary").
+					OnClick("document.querySelector('#add_transaction_item_modal #modal-box').dispatchEvent(new Event('resetAddTransactionItemModal')); add_transaction_item_modal.showModal()"),
+				)
+			}
 		</div>
 		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
 			<table class="table">
@@ -207,6 +209,15 @@ templ TransactionDetails(c *gin.Context, transaction repository.GetTransactionWi
 					Color("error").
 					HxDelete(fmt.Sprintf("/transactions/%s/delete", transaction.ID.String())).
 					HxConfirm("Are you sure you want to delete this transaction?"),
+				)
+			} else if transaction.State == "pendingRefund" {
+				@components.Button(components.ButtonConfig("Set as completed").
+					Icon(icons.ArrowPath()).
+					Color("warning").
+					HxPost(fmt.Sprintf("/transactions/%s/apply", transaction.ID.String())).
+					HxConfirm("Are you sure you want to set this transaction as completed?").
+					HxSwap("none").
+					Hx("vals", `{"state":"completed"}`),
 				)
 			}
 		</div>

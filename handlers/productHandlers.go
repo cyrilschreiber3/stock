@@ -106,6 +106,42 @@ func HandleGetProducts() gin.HandlerFunc {
 	}
 }
 
+func HandleGetProductDetails() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		productIdStr := c.Param("id")
+
+		productIdUUID, err := uuid.Parse(productIdStr)
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Could not parse product ID")
+			return
+		}
+
+		product, err := db.GetProductWithDetailsByID(c.Request.Context(), productIdUUID)
+		if err != nil {
+			slog.Error("Error retrieving product", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve product")
+			return
+		}
+
+		inventoryLots, err := db.GetInventoryLotsByProductID(c.Request.Context(), productIdUUID)
+		if err != nil {
+			slog.Error("Error retrieving inventory lots", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve inventory lots")
+			return
+		}
+
+		transactions, err := db.GetTransactionsWithDetailsByProductID(c.Request.Context(), productIdUUID)
+		if err != nil {
+			slog.Error("Error retrieving transactions", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transactions")
+			return
+		}
+
+		component := pages.ProductDetails(c, product, inventoryLots, transactions)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleShowCreateProductForm() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		utils.RenderTemplate(c, http.StatusOK, pages.CreateUpdateProduct(c, nil))

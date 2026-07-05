@@ -197,11 +197,19 @@ func HandleCreateTransactionItem() gin.HandlerFunc {
 			}
 		}
 
+		updatedTransaction, err := db.GetTransactionByID(c.Request.Context(), newTransactionItem.TransactionID)
+		if err != nil {
+			slog.Error("Error retrieving transaction", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction")
+			return
+		}
+
 		c.Header("HX-Retarget", "#transaction-items")
 		c.Header("HX-Reswap", "beforeend")
 
 		component := pages.TransactionItemRow(c, newTransactionItemWithDetails, true)
 		utils.RenderTemplate(c, http.StatusCreated, component)
+		c.String(http.StatusOK, fmt.Sprintf("<span id=\"transaction-base-price\" hx-swap-oob=\"true\">%s CHF</span><span id=\"transaction-final-price\" hx-swap-oob=\"true\">%s CHF</span>", utils.PgNumericToString(updatedTransaction.BasePrice, "0.00"), utils.PgNumericToString(updatedTransaction.FinalPrice, "0.00")))
 	}
 }
 

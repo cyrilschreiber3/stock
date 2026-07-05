@@ -21,7 +21,7 @@ FROM inventory i
 INNER JOIN products ON i.product_id = products.id
 WHERE i.product_id = $1;
 
--- name: UpsertInventory :one
+-- name: BuyInventory :one
 INSERT INTO inventory (
     product_id,
     total_quantity,
@@ -31,22 +31,29 @@ INSERT INTO inventory (
     total_sell_quantity
 )
 VALUES (
-    $1,                                             -- product_id
-    sqlc.arg('qty_delta'),                                             -- qty_delta (+buy, -sell)
-    CASE WHEN sqlc.arg('qty_delta') > 0 THEN (sqlc.arg('unit_price') * sqlc.arg('qty_delta')) ELSE 0 END,    -- buy amount
-    CASE WHEN sqlc.arg('qty_delta') > 0 THEN sqlc.arg('qty_delta') ELSE 0 END,            -- buy qty
-    CASE WHEN sqlc.arg('qty_delta') < 0 THEN (sqlc.arg('unit_price') * ABS(sqlc.arg('qty_delta'))) ELSE 0 END,-- sell amount
-    CASE WHEN sqlc.arg('qty_delta') < 0 THEN ABS(sqlc.arg('qty_delta')) ELSE 0 END        -- sell qty
+    $1,                                    -- product_id
+    sqlc.arg('quantity'),                  -- total_quantity
+    sqlc.arg('unit_price')::numeric * sqlc.arg('quantity'), -- total_buy_price
+    sqlc.arg('quantity'),                  -- total_buy_quantity
+    0,                                     -- total_sell_price
+    0                                      -- total_sell_quantity
 )
 ON CONFLICT (product_id) DO UPDATE
 SET
-    total_quantity      = inventory.total_quantity + EXCLUDED.total_quantity,
-    total_buy_price     = inventory.total_buy_price + EXCLUDED.total_buy_price,
-    total_buy_quantity  = inventory.total_buy_quantity + EXCLUDED.total_buy_quantity,
-    total_sell_price    = inventory.total_sell_price + EXCLUDED.total_sell_price,
-    total_sell_quantity = inventory.total_sell_quantity + EXCLUDED.total_sell_quantity
+    total_quantity     = inventory.total_quantity     + EXCLUDED.total_quantity,
+    total_buy_price    = inventory.total_buy_price    + EXCLUDED.total_buy_price,
+    total_buy_quantity = inventory.total_buy_quantity + EXCLUDED.total_buy_quantity
+RETURNING *;
+
+-- name: SellInventory :one
+UPDATE inventory
+SET
+    total_quantity      = total_quantity      - sqlc.arg('quantity'),
+    total_sell_price    = total_sell_price    + sqlc.arg('unit_price')::numeric * sqlc.arg('quantity'),
+    total_sell_quantity = total_sell_quantity + sqlc.arg('quantity')
 WHERE
-    inventory.total_quantity + EXCLUDED.total_quantity >= 0
+    product_id = $1
+    AND total_quantity - sqlc.arg('quantity') >= 0
 RETURNING *;
 
 -- Inventory Lot Queries

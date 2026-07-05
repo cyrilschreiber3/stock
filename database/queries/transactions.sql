@@ -55,6 +55,13 @@ FROM transactions t
 LEFT JOIN suppliers s ON t.supplier_id = s.id
 WHERE t.id = $1;
 
+-- name: GetTransactionsWithDetailsByProductID :many
+SELECT t.*, s.name AS supplier_name
+FROM transactions t
+INNER JOIN transaction_items ti ON t.id = ti.transaction_id
+LEFT JOIN suppliers s ON t.supplier_id = s.id
+WHERE ti.product_id = $1;
+
 -- Rich TransactionItem queries
 
 -- name: GetTransactionItemsWithDetailsByTransactionID :many

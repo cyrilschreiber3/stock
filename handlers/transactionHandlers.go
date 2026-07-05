@@ -94,7 +94,7 @@ func HandleCreateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		_, err = db.CreateTransaction(c.Request.Context(), repository.CreateTransactionParams{
+		newTransaction, err := db.CreateTransaction(c.Request.Context(), repository.CreateTransactionParams{
 			TransactionDate: transaction.TransactionDate,
 			TransactionType: transaction.TransactionType,
 			SupplierID:      transaction.SupplierId,
@@ -108,7 +108,7 @@ func HandleCreateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Transaction created successfully", "/transactions")
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Transaction created successfully", fmt.Sprintf("/transactions/%s/show", newTransaction.ID))
 
 	}
 }
