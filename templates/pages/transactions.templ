@@ -86,7 +86,7 @@ templ TransactionRow(c *gin.Context, transaction repository.GetTransactionsWithD
 		</td>
 		<td>
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(fmt.Sprintf("/transactions/%s/show", transaction.ID.String()), components.ButtonConfig("View").
+				@components.ButtonLink(fmt.Sprintf("/transactions/%s", transaction.ID.String()), components.ButtonConfig("View").
 					Icon(icons.InformationCircle()).
 					Style("soft").
 					Size("sm").

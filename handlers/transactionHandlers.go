@@ -108,7 +108,7 @@ func HandleCreateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Transaction created successfully", fmt.Sprintf("/transactions/%s/show", newTransaction.ID))
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Transaction created successfully", fmt.Sprintf("/transactions/%s", newTransaction.ID))
 
 	}
 }
@@ -143,7 +143,7 @@ func HandleUpdateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction updated successfully", fmt.Sprintf("/transactions/%s/show", transactionId))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction updated successfully", fmt.Sprintf("/transactions/%s", transactionId))
 	}
 }
 
@@ -202,6 +202,6 @@ func HandleApplyTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction applied successfully", fmt.Sprintf("/transactions/%s/show", transactionId))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction applied successfully", fmt.Sprintf("/transactions/%s", transactionId))
 	}
 }

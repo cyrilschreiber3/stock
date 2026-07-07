@@ -63,7 +63,7 @@ templ Products(c *gin.Context, products []repository.GetAllProductWithDetailsRow
 							</td>
 							<td>
 								<div class="flex space-x-2">
-									@components.ButtonLink(fmt.Sprintf("/products/%s/show", product.ID.String()), components.ButtonConfig("Details").
+									@components.ButtonLink(fmt.Sprintf("/products/%s", product.ID.String()), components.ButtonConfig("Details").
 										Icon(icons.InformationCircle()).
 										Style("soft").
 										Size("sm").
