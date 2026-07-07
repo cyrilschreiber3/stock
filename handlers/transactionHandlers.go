@@ -101,6 +101,7 @@ func HandleCreateTransaction() gin.HandlerFunc {
 			State:           "draft",
 			BasePrice:       pgNumericZero,
 			FinalPrice:      pgNumericZero,
+			Description:     transaction.Description,
 		})
 		if err != nil {
 			slog.Error("Error creating transaction", "error", err)
@@ -136,6 +137,7 @@ func HandleUpdateTransaction() gin.HandlerFunc {
 			TransactionDate: transaction.TransactionDate,
 			TransactionType: transaction.TransactionType,
 			SupplierID:      transaction.SupplierId,
+			Description:     transaction.Description,
 		})
 		if err != nil {
 			slog.Error("Error updating transaction", "error", err)

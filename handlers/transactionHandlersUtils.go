@@ -30,6 +30,7 @@ func parseTransactionForm(c *gin.Context) (*transactionFormPayload, int, error) 
 		TransactionDate: transactionDate,
 		TransactionType: form.TransactionType,
 		SupplierId:      supplierUuid,
+		Description:     form.Description,
 	}
 
 	return &payload, http.StatusOK, nil

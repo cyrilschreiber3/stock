@@ -9,12 +9,14 @@ type transactionFormDTO struct {
 	TransactionDate string `form:"transaction_date" binding:"required"`
 	TransactionType string `form:"transaction_type" binding:"required"`
 	SupplierId      string `form:"supplier_id"`
+	Description     string `form:"description"`
 }
 
 type transactionFormPayload struct {
 	TransactionDate pgtype.Date
 	TransactionType string
 	SupplierId      uuid.UUID
+	Description     string
 }
 
 type applyTransactionFormDTO struct {

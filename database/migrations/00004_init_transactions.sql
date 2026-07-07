@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     supplier_id UUID REFERENCES suppliers(id),
     base_price NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (base_price >= 0),
     final_price NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (final_price >= 0),
+    description TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     applied_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

@@ -7,13 +7,13 @@ SELECT * FROM transactions;
 SELECT * FROM transactions WHERE id = $1;
 
 -- name: CreateTransaction :one
-INSERT INTO transactions (transaction_date, transaction_type, state, supplier_id, base_price, final_price)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO transactions (transaction_date, transaction_type, state, supplier_id, base_price, final_price, description)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: UpdateTransaction :one
 UPDATE transactions
-SET transaction_date = $2, transaction_type = $3, supplier_id = $4
+SET transaction_date = $2, transaction_type = $3, supplier_id = $4, description = $5
 WHERE id = $1
 RETURNING *;
 
