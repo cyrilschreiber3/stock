@@ -31,7 +31,15 @@ INNER JOIN subcategories ON p.subcategory_id = subcategories.id
 INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
 LEFT JOIN inventory i ON p.id = i.product_id
 WHERE
-    (p.name ILIKE '%' || sqlc.arg(search)::text || '%' OR p.brand ILIKE '%' || sqlc.arg(search)::text || '%')
+    (
+        p.name ILIKE '%' || sqlc.arg(search)::text || '%'
+        OR p.brand ILIKE '%' || sqlc.arg(search)::text || '%'
+        OR EXISTS (
+            SELECT 1
+            FROM unnest(p.aliases) AS alias
+            WHERE alias ILIKE '%' || sqlc.arg(search)::text || '%'
+        )
+    )
     AND (sqlc.arg(category_id)::UUID = '00000000-0000-0000-0000-000000000000'::UUID OR p.category_id = sqlc.arg(category_id)::UUID)
     AND (sqlc.arg(subcategory_id)::UUID = '00000000-0000-0000-0000-000000000000'::UUID OR p.subcategory_id = sqlc.arg(subcategory_id)::UUID)
     AND (sqlc.arg(supplier_id)::UUID = '00000000-0000-0000-0000-000000000000'::UUID OR p.default_supplier_id = sqlc.arg(supplier_id)::UUID)
