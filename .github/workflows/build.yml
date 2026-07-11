@@ -2,7 +2,13 @@ name: Build
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+      - dev
+      - int
+      - prod
+    tags:
+      - v*
 
 permissions:
   packages: write
@@ -15,11 +21,28 @@ jobs:
 
     env:
       IMAGE_NAME: ghcr.io/cyrilschreiber3/stock
-      IMAGE_TAG_LIST: v0,unstable,latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#v}"
+            MAJOR="v$(echo "$VERSION" | cut -d. -f1)"
+            MINOR="v$(echo "$VERSION" | cut -d. -f1-2)"
+            echo "tag_list=$MAJOR,$MINOR,$TAG,latest" >> "$GITHUB_OUTPUT"
+          else
+            BRANCH="${{ github.ref_name }}"
+            if [ "$BRANCH" = "master" ]; then
+              echo "tag_list=unstable" >> "$GITHUB_OUTPUT"
+            else
+              echo "tag_list=$BRANCH" >> "$GITHUB_OUTPUT"
+            fi
+          fi
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
@@ -28,6 +51,8 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Build Docker Image
+        env:
+          IMAGE_TAG_LIST: ${{ steps.tags.outputs.tag_list }}
         run: make docker-image
 
       - name: Log in to GHCR
@@ -39,6 +64,6 @@ jobs:
 
       - name: Push Docker Image
         run: |
-          for tag in $(echo $IMAGE_TAG_LIST | tr ',' ' '); do
-            docker push $IMAGE_NAME:$tag
+          for tag in $(echo "${{ steps.tags.outputs.tag_list }}" | tr ',' ' '); do
+            docker push "$IMAGE_NAME:$tag"
           done
