@@ -12,6 +12,10 @@ func SetupRoutes(router *gin.Engine) {
 
 	router.StaticFS("/static", http.FS(static.StaticAssets))
 
+	router.GET("/favicon.ico", func(c *gin.Context) {
+		c.Data(http.StatusOK, "image/x-icon", static.Favicon)
+	})
+
 	productGroup := router.Group("/products")
 	{
 		productGroup.GET("", handlers.HandleGetProducts())
