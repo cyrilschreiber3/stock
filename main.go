@@ -13,9 +13,9 @@ import (
 
 func main() {
 	utils.LoadEnv()
-	logger := logger.InitLogger()
-	slog.SetDefault(logger)
-	slog.Info("Starting stock application")
+	defaultLogger := logger.InitLogger()
+	slog.SetDefault(defaultLogger)
+	slog.Info("Stock - Stock management application")
 
 	cmd := utils.GetCommand()
 	switch cmd {
@@ -30,7 +30,6 @@ func main() {
 	database.Init()
 	defer database.Close()
 
-	// initialize handlers which wires the sqlc-generated queries instance
 	handlers.Init()
 
 	router := gin.Default()
@@ -39,6 +38,6 @@ func main() {
 
 	slog.Info("Starting server on port 8080")
 	if err := router.Run(":8080"); err != nil {
-		slog.Error("Failed to start server", "error", err)
+		logger.Fatal("Failed to start server", "error", err)
 	}
 }

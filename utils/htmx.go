@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +24,7 @@ type MessageTrigger struct {
 func SetJSONHeader(c *gin.Context, header string, payload any) {
 	encodedPayload, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("could not marshal %s header payload: %v", header, err)
+		slog.Error("could not marshal header payload", "header", header, "error", err)
 		return
 	}
 
@@ -80,7 +80,7 @@ func HXRedirectWithNotify(c *gin.Context, status int, severity string, message s
 	trigger := NewNotificationTrigger(severity, message)
 	cookie_body, err := json.Marshal(trigger)
 	if err != nil {
-		log.Printf("could not marshal notification trigger: %v", err)
+		slog.Error("could not marshal notification trigger", "error", err)
 		return
 	}
 
@@ -100,7 +100,7 @@ func HXRedirectWithMessage(c *gin.Context, status int, severity string, message 
 	trigger := NewMessageTrigger(severity, message)
 	cookie_body, err := json.Marshal(trigger)
 	if err != nil {
-		log.Printf("could not marshal message trigger: %v", err)
+		slog.Error("could not marshal message trigger", "error", err)
 		return
 	}
 

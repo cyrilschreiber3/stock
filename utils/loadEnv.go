@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"log"
 	"os"
 	"strconv"
 
@@ -9,10 +8,7 @@ import (
 )
 
 func LoadEnv() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Println("Warning: unable to find .env file")
-	}
+	_ = godotenv.Load(".env")
 }
 
 func GetEnv(key, def string) string {

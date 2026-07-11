@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/a-h/templ"
@@ -12,7 +12,7 @@ func RenderTemplate(c *gin.Context, status int, template templ.Component) {
 	c.Status(status)
 	err := template.Render(c.Request.Context(), c.Writer)
 	if err != nil {
-		log.Println("Error rendering template:", err)
+		slog.Error("Error rendering template", "error", err)
 		c.Status(http.StatusInternalServerError)
 	}
 }
@@ -21,7 +21,7 @@ func RenderTemplateFragment(c *gin.Context, status int, template templ.Component
 	c.Status(status)
 	err := templ.RenderFragments(c.Request.Context(), c.Writer, template, fragments)
 	if err != nil {
-		log.Println("Error rendering template with fragments:", err)
+		slog.Error("Error rendering template with fragments", "error", err)
 		c.Status(http.StatusInternalServerError)
 	}
 }

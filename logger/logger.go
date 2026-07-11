@@ -40,3 +40,9 @@ func slogLevelFromEnv() slog.Level {
 		return slog.LevelInfo
 	}
 }
+
+// Fatal is equivalent to [slog.Error] followed by a call to [os.Exit](1).
+func Fatal(msg string, args ...any) {
+	slog.Error(msg, args...)
+	os.Exit(1)
+}

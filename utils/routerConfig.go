@@ -1,11 +1,12 @@
 package utils
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/cyrilschreiber3/stock/logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +16,7 @@ func SetupRouter(router *gin.Engine) {
 
 	err := router.SetTrustedProxies(nil)
 	if err != nil {
-		log.Fatal("Error setting trusted proxies:", err)
+		logger.Fatal("Error setting trusted proxies", "error", err)
 	}
 
 }
@@ -28,11 +29,11 @@ func setupCors(router *gin.Engine) {
 		origins = strings.Split(allowedOrigins, ",")
 		for i := range origins {
 			origins[i] = strings.TrimSpace(origins[i])
-			log.Println("Allowed Origin:", origins[i])
+			slog.Info("Allowed Origin:", "origin", origins[i])
 		}
 	} else {
 		origins = []string{"http://localhost:8080", "http://localhost:8081"}
-		log.Println("Allowed Origin: ", origins)
+		slog.Info("Allowed Origin: ", "origins", origins)
 	}
 
 	config := cors.Config{}
