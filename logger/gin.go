@@ -7,7 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GinLogger returns a middleware that logs every HTTP request.
 func GinLogger() gin.HandlerFunc {
+	return GinLoggerWithConfig()
+}
+
+// GinLoggerWithConfig returns a middleware that logs HTTP requests.
+// Routes listed in silentPaths are skipped on success (2xx/3xx) and logged
+// at Debug level on failure, instead of the normal level.
+func GinLoggerWithConfig(silentPaths ...string) gin.HandlerFunc {
+	silent := make(map[string]struct{}, len(silentPaths))
+	for _, p := range silentPaths {
+		silent[p] = struct{}{}
+	}
+
 	return func(ctx *gin.Context) {
 		startedAt := time.Now()
 		rawPath := ctx.Request.URL.Path
@@ -19,6 +32,16 @@ func GinLogger() gin.HandlerFunc {
 		path := ctx.FullPath()
 		if path == "" {
 			path = rawPath
+		}
+
+		level := ginLogLevel(statusCode)
+
+		// For silent routes, skip on success; downgrade to Debug on failure.
+		if _, isSilent := silent[path]; isSilent {
+			if statusCode < 400 {
+				return
+			}
+			level = slog.LevelDebug
 		}
 
 		attrs := []slog.Attr{
@@ -43,7 +66,7 @@ func GinLogger() gin.HandlerFunc {
 			attrs = append(attrs, slog.String("error", errorMessage))
 		}
 
-		slog.Default().LogAttrs(ctx.Request.Context(), ginLogLevel(statusCode), "http_request", attrs...)
+		slog.Default().LogAttrs(ctx.Request.Context(), level, "http_request", attrs...)
 	}
 }
 

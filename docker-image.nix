@@ -21,6 +21,8 @@
     exec stock serve
   '';
   envFile = pkgs.writeText "docker-env" (builtins.readFile ./docker.env);
+
+  seconds = seconds: seconds * 1000000000;
 in
   pkgs.dockerTools.streamLayeredImage {
     name = "stock";
@@ -41,5 +43,12 @@ in
     config = {
       Entrypoint = [entrypoint];
       WorkingDir = "/app";
+      Healthcheck = {
+        Test = ["CMD-SHELL" "${pkgs.curl}/bin/curl -f http://localhost:8080/api/health || exit 1"];
+        Interval = seconds 30;
+        Timeout = seconds 5;
+        Retries = 2;
+        StartPeriod = seconds 3;
+      };
     };
   }

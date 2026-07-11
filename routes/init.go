@@ -12,7 +12,7 @@ import (
 )
 
 func Init() *gin.Engine {
-	ginLogger := logger.GinLogger()
+	ginLogger := logger.GinLoggerWithConfig("/api/health")
 	ginMode := gin.ReleaseMode
 
 	if os.Getenv("ENV") == "localdev" {
