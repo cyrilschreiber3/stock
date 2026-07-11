@@ -1,13 +1,16 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/cyrilschreiber3/stock/handlers"
+	"github.com/cyrilschreiber3/stock/static"
 	"github.com/gin-gonic/gin"
 )
 
 func SetupRoutes(router *gin.Engine) {
 
-	router.Static("/static", "./static")
+	router.StaticFS("/static", http.FS(static.StaticAssets))
 
 	productGroup := router.Group("/products")
 	{
