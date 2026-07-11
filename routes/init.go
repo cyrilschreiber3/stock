@@ -12,11 +12,21 @@ import (
 )
 
 func Init() *gin.Engine {
-	gin.SetMode(gin.ReleaseMode)
+	ginLogger := logger.GinLogger()
+	ginMode := gin.ReleaseMode
+
+	if os.Getenv("ENV") == "localdev" {
+		ginLogger = gin.Logger()
+	}
+	if os.Getenv("LOGLEVEL") == "debug" {
+		ginMode = gin.DebugMode
+	}
+
+	gin.SetMode(ginMode)
 
 	router := gin.New()
 
-	router.Use(logger.GinLogger(), gin.Recovery())
+	router.Use(ginLogger, gin.Recovery())
 
 	setupCors(router)
 
