@@ -78,8 +78,8 @@ docker-image:
 	@image_name=$${IMAGE_NAME:-stock}; \
     image_tag=$${IMAGE_TAG:-localdev}; \
 	image_tag_list=$${IMAGE_TAG_LIST:-}; \
-	if [ -n "$${image_tag_list}" ]; then \
-		for tag in $${image_tag_list//,/ }; do \
+	if [ -n "$$image_tag_list" ]; then \
+		for tag in $$(echo "$$image_tag_list" | tr ',' ' '); do \
 			echo "Tagging docker image as $$image_name:$$tag"; \
 			docker tag stock:localdev "$$image_name:$$tag"; \
 		done; \
