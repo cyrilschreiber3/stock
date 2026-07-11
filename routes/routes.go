@@ -2,8 +2,10 @@ package routes
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/cyrilschreiber3/stock/handlers"
+	"github.com/cyrilschreiber3/stock/middlewares"
 	"github.com/cyrilschreiber3/stock/static"
 	"github.com/gin-gonic/gin"
 )
@@ -15,6 +17,12 @@ func SetupRoutes(router *gin.Engine) {
 	router.GET("/favicon.ico", func(c *gin.Context) {
 		c.Data(http.StatusOK, "image/x-icon", static.Favicon)
 	})
+
+	apiGroup := router.Group("/api")
+	{
+		apiGroup.Use(middlewares.TimeoutMiddleware(10 * time.Second))
+		apiGroup.GET("/health", handlers.HandleGetHealth())
+	}
 
 	productGroup := router.Group("/products")
 	{

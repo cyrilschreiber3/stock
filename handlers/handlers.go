@@ -25,3 +25,19 @@ func Index() gin.HandlerFunc {
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }
+
+func HandleGetHealth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		databaseHealth := database.Pool.Ping(c.Request.Context())
+		if databaseHealth != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status": "unhealthy",
+				"error":  databaseHealth.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"status": "healthy",
+		})
+	}
+}
