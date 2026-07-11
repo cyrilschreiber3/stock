@@ -17,6 +17,16 @@ func main() {
 	slog.SetDefault(logger)
 	slog.Info("Starting stock application")
 
+	cmd := utils.GetCommand()
+	switch cmd {
+	case "migrate":
+		database.Migrate()
+		return
+	case "serve":
+		slog.Info("Starting server")
+	default:
+		logger.Fatal("Unknown command", "command", cmd)
+	}
 	database.Init()
 	defer database.Close()
 

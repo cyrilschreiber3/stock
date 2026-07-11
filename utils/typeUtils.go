@@ -98,6 +98,18 @@ func StringToPgTimestamp(s string) pgtype.Timestamptz {
 	return ts
 }
 
+func StringToInt(s string, def int) int {
+	if s == "" {
+		return def
+	}
+	var i int
+	_, err := fmt.Sscanf(s, "%d", &i)
+	if err != nil {
+		return def
+	}
+	return i
+}
+
 func IsForeignKeyViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	if !errors.As(err, &pgErr) {
