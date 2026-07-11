@@ -28,12 +28,12 @@ new_transaction AS (
         '11111111-1111-4111-8111-111111111111'::uuid,
         NOW() - INTERVAL '10 days',
         'buy',
-        'completed',
+        'draft',
         selected_supplier.id,
         0,
         0,
         NOW() - INTERVAL '10 days',
-        NOW() - INTERVAL '10 days',
+        NULL,
         NOW() - INTERVAL '10 days'
     FROM selected_supplier
     ON CONFLICT (id) DO NOTHING
@@ -185,12 +185,12 @@ WITH new_transaction AS (
         '33333333-3333-4333-8333-333333333333'::uuid,
         NOW() - INTERVAL '1 day',
         'sell',
-        'completed',
+        'draft',
         NULL,
         0,
         0,
         NOW() - INTERVAL '1 day',
-        NOW() - INTERVAL '1 day',
+        NULL,
         NOW() - INTERVAL '1 day'
     )
     ON CONFLICT (id) DO NOTHING
