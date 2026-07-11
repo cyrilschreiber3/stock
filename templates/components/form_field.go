@@ -232,14 +232,12 @@ func (c *formFieldConfig) DependsOn(fieldName string) *formFieldConfig {
 	// If endpoint contains a path token like :id, replace it at request time.
 	// Example: /categories/:id/subcategories/options
 	if strings.Contains(c.optionsEndpoint, ":id") {
-		fmt.Println("Setting up dynamic path replacement for endpoint:", c.optionsEndpoint)
 		c.inputAttributes["hx-on:htmx:config-request"] = fmt.Sprintf(
 			`event.detail.path = %q.replace(":id", encodeURIComponent(document.getElementById(%q)?.value || ""))`,
 			c.optionsEndpoint,
 			fieldName,
 		)
 	} else if strings.Contains(c.valueEndpoint, ":id") {
-		fmt.Println("Setting up dynamic path replacement for value endpoint:", c.valueEndpoint)
 		c.inputAttributes["hx-on:htmx:config-request"] = fmt.Sprintf(
 			`event.detail.path = %q.replace(":id", encodeURIComponent(document.getElementById(%q)?.value || ""))`,
 			c.valueEndpoint,

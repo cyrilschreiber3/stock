@@ -23,16 +23,14 @@ func GinLoggerWithConfig(silentPaths ...string) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		startedAt := time.Now()
-		rawPath := ctx.Request.URL.Path
+		path := ctx.Request.URL.Path
 		rawQuery := ctx.Request.URL.RawQuery
 
 		ctx.Next()
 
 		statusCode := ctx.Writer.Status()
-		path := ctx.FullPath()
-		if path == "" {
-			path = rawPath
-		}
+
+		matchedPath := ctx.FullPath()
 
 		level := ginLogLevel(statusCode)
 
@@ -56,6 +54,10 @@ func GinLoggerWithConfig(silentPaths ...string) gin.HandlerFunc {
 
 		if rawQuery != "" {
 			attrs = append(attrs, slog.String("query", rawQuery))
+		}
+
+		if matchedPath != "" {
+			attrs = append(attrs, slog.String("matched_path", matchedPath))
 		}
 
 		if referrer := ctx.Request.Referer(); referrer != "" {
