@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  packages: write
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: ghcr.io/cyrilschreiber3/stock
+      IMAGE_TAG_LIST: v0,unstable,latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v22
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker Image
+        run: make docker-build
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push Docker Image
+        run: |
+          for tag in $(echo $IMAGE_TAG_LIST | tr ',' ' '); do
+            docker push $IMAGE_NAME:$tag
+          done
