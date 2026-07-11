@@ -1,0 +1,32 @@
+---
+services:
+  app:
+    image: stock:localdev
+    ports:
+      - "8080:8080"
+    environment:
+      DB_USER: ${DB_USER:-stock}
+      DB_PASSWORD: ${DB_PASSWORD:-yourpassword}
+      DB_NAME: ${DB_NAME:-stockdb}
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+
+  database:
+    image: postgres:18
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 10
+      start_period: 2s
+      timeout: 10s
+    environment:
+      POSTGRES_USER: ${DB_USER:-stock}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-yourpassword}
+      POSTGRES_DB: ${DB_NAME:-stockdb}
+    volumes:
+      - database_data:/var/lib/postgresql
+
+volumes:
+  database_data:

@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -23,7 +24,15 @@ func Init() {
 	slog.Info("Initializing PostgreSQL database...")
 	dsn := utils.GetEnv("DB_URL", "")
 	if dsn == "" {
-		logger.Fatal("unable to initialize pgx pool: DB_URL is empty")
+		host := utils.GetEnv("DB_HOST", "database")
+		port := utils.GetEnv("DB_PORT", "5432")
+		user := utils.GetEnv("DB_USER", "stock")
+		pass := utils.GetEnv("DB_PASSWORD", "password")
+		name := utils.GetEnv("DB_NAME", "stockdb")
+		ssl := utils.GetEnv("DB_SSLMODE", "disable")
+
+		dsn = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
+			user, pass, host, port, name, ssl)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
