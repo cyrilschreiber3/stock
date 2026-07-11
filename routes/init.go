@@ -1,4 +1,4 @@
-package utils
+package routes
 
 import (
 	"log/slog"
@@ -11,14 +11,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(router *gin.Engine) {
+func Init() *gin.Engine {
+	gin.SetMode(gin.ReleaseMode)
+
+	router := gin.New()
+
+	router.Use(logger.GinLogger(), gin.Recovery())
+
 	setupCors(router)
 
 	err := router.SetTrustedProxies(nil)
 	if err != nil {
 		logger.Fatal("Error setting trusted proxies", "error", err)
 	}
-
+	return router
 }
 
 func setupCors(router *gin.Engine) {
@@ -29,11 +35,11 @@ func setupCors(router *gin.Engine) {
 		origins = strings.Split(allowedOrigins, ",")
 		for i := range origins {
 			origins[i] = strings.TrimSpace(origins[i])
-			slog.Info("Allowed Origin:", "origin", origins[i])
+			slog.Debug("Allowed Origin", "origin", origins[i])
 		}
 	} else {
 		origins = []string{"http://localhost:8080", "http://localhost:8081"}
-		slog.Info("Allowed Origin: ", "origins", origins)
+		slog.Debug("Allowed Origin", "origins", origins)
 	}
 
 	config := cors.Config{}

@@ -8,7 +8,6 @@ import (
 	"github.com/cyrilschreiber3/stock/logger"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/utils"
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -32,8 +31,7 @@ func main() {
 
 	handlers.Init()
 
-	router := gin.Default()
-	utils.SetupRouter(router)
+	router := routes.Init()
 	routes.SetupRoutes(router)
 
 	slog.Info("Starting server on port 8080")
