@@ -33,7 +33,7 @@ INSERT INTO inventory (
 VALUES (
     $1,                                    -- product_id
     sqlc.arg('quantity'),                  -- total_quantity
-    sqlc.arg('unit_price')::numeric * sqlc.arg('quantity'), -- total_buy_price
+    sqlc.arg('unit_price')::numeric * sqlc.arg('quantity')::int, -- total_buy_price
     sqlc.arg('quantity'),                  -- total_buy_quantity
     0,                                     -- total_sell_price
     0                                      -- total_sell_quantity
@@ -49,7 +49,7 @@ RETURNING *;
 UPDATE inventory
 SET
     total_quantity      = total_quantity      - sqlc.arg('quantity'),
-    total_sell_price    = total_sell_price    + sqlc.arg('unit_price')::numeric * sqlc.arg('quantity'),
+    total_sell_price    = total_sell_price    + sqlc.arg('unit_price')::numeric * sqlc.arg('quantity')::int,
     total_sell_quantity = total_sell_quantity + sqlc.arg('quantity')
 WHERE
     product_id = $1
