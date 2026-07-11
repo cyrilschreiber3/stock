@@ -3,7 +3,7 @@ testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-  args_bin = []
+  args_bin = ["serve"]
   bin = "./tmp/main"
   cmd = "go build -o ./tmp/main main.go; templ generate --notify-proxy --proxyport='8081'"
   pre_cmd = ["prettier -w ./**/*.templ", "tailwindcss -i ./styles/tailwind.css -o ./static/styles.css"]
