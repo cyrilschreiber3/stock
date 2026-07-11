@@ -1,36 +1,48 @@
-init-daisyui:
-	@test -f ./styles/daisyui.mjs || curl -o ./styles/daisyui.mjs -fsSL https://github.com/saadeghi/daisyui/releases/download/v5.5.19/daisyui.mjs
-	@test -f ./styles/daisyui-theme.mjs || curl -o ./styles/daisyui-theme.mjs -fsSL https://github.com/saadeghi/daisyui/releases/download/v5.5.19/daisyui-theme.mjs
+# Main Makefile for the project
 
-init-htmx:
-	@test -f ./static/htmx.min.js || curl -o static/htmx.min.js -fsSL https://unpkg.com/htmx.org@2.0.4
+# Include example Makefile
 
-init-alpine:
-	@test -f ./static/alpine.min.js || curl -o static/alpine.min.js -fsSL https://unpkg.com/alpinejs@3.15.11/dist/cdn.min.js
+define PRINT_INCLUDED_HELP
+	@echo "$(1) targets:"
+	@awk -F ':|##' '/^[^\t].+?:.*?##/ { printf "  %-20s %s\n", $$1, $$NF }' $(2)
+endef
 
-sqlc:
+help: ## Display help message
+	@echo "Usage:"
+	@echo "  make <target>"
+	@echo ""
+	@echo "Makefile targets:"
+	@awk '/^[a-zA-Z_-]+:.*?## .*$$/ { \
+		printf "  %-21s %s\n", substr($$1, 1, index($$1, ":")-1), substr($$0, index($$0, "##")+3) \
+	}' $(firstword $(MAKEFILE_LIST))
+	@echo ""
+
+.PHONY: help
+
+sqlc: ## Generate SQLC queries and models
 	@sqlc generate
 
-init: init-daisyui init-htmx init-alpine sqlc
-	@test -f .env || cp example.env .env
-
-seed:
+seed: ## Seed the database with initial data
 	@goose -dir ./database/seed -no-versioning up
 
-resetseed:
+resetseed: ## Reset the database seed
 	@goose -dir ./database/seed -no-versioning reset
 
-templ:
+templ: ## Run Templ proxy for live reloading of templates
 	@templ generate -watch -proxy=http://127.0.0.1:8080 -proxyport=8081
 
-templ-build:
+templ-build: ## Generate Templ templates
 	@templ generate
 
-tailwind:
+tailwind: ## Generate Tailwind static CSS file
 	@tailwindcss -i ./styles/tailwind.css -o ./static/styles.css
 
-build: init-daisyui sqlc templ-build tailwind
+init: init-deps sqlc templ-build tailwind ## Initialize the project (fetch libraries, generate SQLC queries and models)
+	@test -f .env || cp example.env .env
+
+
+build: init sqlc templ-build tailwind ## Build the project
 	@go build -o stock main.go
 
-run: build
+run: build ## Run the built binary
 	@./stock
