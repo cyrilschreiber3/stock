@@ -26,11 +26,17 @@
         inherit system;
         overlays = [
           my-packages.overlays.default
+          templ.overlays.default
         ];
       };
     in {
-      packages.default = pkgs.callPackage ./. {
-        inherit (gomod2nix.legacyPackages.${system}) buildGoApplication;
+      packages = {
+        default = pkgs.callPackage ./. {
+          inherit (gomod2nix.legacyPackages.${system}) buildGoApplication;
+        };
+        dockerImage = pkgs.callPackage ./docker-image.nix {
+          inherit self;
+        };
       };
       devShells.default = pkgs.callPackage ./shell.nix {
         inherit (gomod2nix.legacyPackages.${system}) mkGoEnv gomod2nix;

@@ -70,3 +70,14 @@ build: init sqlc templ-build tailwind ## Build the project
 
 run: build ## Run the built binary
 	@./stock
+
+docker-image:
+	@nix build .#dockerImage
+	@./result | docker load
+	@rm -f ./result
+	@image_name=$${IMAGE_NAME:-stock}; \
+    image_tag=$${IMAGE_TAG:-localdev}; \
+    if [ -n "$${IMAGE_NAME}$${IMAGE_TAG}" ]; then \
+		echo "Tagging docker image as $$image_name:$$image_tag"; \
+        docker tag stock:localdev "$$image_name:$$image_tag"; \
+    fi
