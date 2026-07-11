@@ -19,6 +19,30 @@ help: ## Display help message
 
 .PHONY: help
 
+init-deps: ## Fetch all assets from assets.json
+	@jq -r 'to_entries[] | "\(.value.destination)|\(.value.url)|\(.value.sha256)"' assets.json | \
+	while IFS='|' read -r dest url sha256; do \
+		if [ -f "$$dest" ]; then \
+			echo "✓ $$dest already exists"; \
+		else \
+			echo "Fetching $$url to $$dest..."; \
+			mkdir -p $$(dirname "$$dest"); \
+			tmp="$$dest.tmp"; \
+			curl -fsSL "$$url" -o "$$tmp" || (rm -f "$$tmp"; exit 1); \
+			echo "$$sha256  $$tmp" | sha256sum -c - || (rm -f "$$tmp"; exit 1); \
+			mv "$$tmp" "$$dest"; \
+		fi; \
+	done
+
+verify-assets: ## Verify all assets match their checksums from assets.json
+	@jq -r 'to_entries[] | "\(.value.destination)|\(.value.sha256)"' assets.json | \
+	while IFS='|' read -r dest sha256; do \
+		if [ ! -f "$$dest" ]; then \
+			echo "✗ $$dest missing"; exit 1; \
+		fi; \
+		echo "$$sha256  $$dest" | sha256sum -c -; \
+	done
+
 sqlc: ## Generate SQLC queries and models
 	@sqlc generate
 
