@@ -5,6 +5,9 @@ services:
     ports:
       - "${APP_PORT:-8080}:8080"
     environment:
+      ENV: ${ENV:-prod}
+      LOGLEVEL: ${LOGLEVEL:-info}
+      LOGFORMAT: ${LOGFORMAT:-text}
       DB_USER: ${DB_USER:-stock}
       DB_PASSWORD: ${DB_PASSWORD:-yourpassword}
       DB_NAME: ${DB_NAME:-stockdb}
