@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -178,7 +179,7 @@ func HandleCreateProduct() gin.HandlerFunc {
 			return
 		}
 
-		_, err = db.CreateProduct(c.Request.Context(), repository.CreateProductParams{
+		newProduct, err := db.CreateProduct(c.Request.Context(), repository.CreateProductParams{
 			Brand:             product.Brand,
 			Name:              product.Name,
 			CategoryID:        product.CategoryID,
@@ -192,10 +193,10 @@ func HandleCreateProduct() gin.HandlerFunc {
 			slog.Error("Error creating product", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not create product")
 			return
-		} // utils.HXRedirectWithNotify(c, http.StatusOK, "success", "Product updated successfully", "/products")
+		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Product created successfully", "/products")
-
+		redirectUrl := utils.ResolveReturnPath(c, fmt.Sprintf("/products/%s", newProduct.ID.String()))
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Product created successfully", redirectUrl)
 	}
 }
 
@@ -232,7 +233,8 @@ func HandleUpdateProduct() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product updated successfully", "/products")
+		redirectUrl := utils.ResolveReturnPath(c, fmt.Sprintf("/products/%s", productIdUUID.String()))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product updated successfully", redirectUrl)
 	}
 }
 

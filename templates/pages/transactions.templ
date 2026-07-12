@@ -92,23 +92,37 @@ templ TransactionRow(c *gin.Context, transaction repository.GetTransactionsWithD
 					Size("sm").
 					Color("info"),
 				)
-				if transaction.State == "draft" {
-					// @components.ButtonLink(fmt.Sprintf("/transactions/%s/edit", transaction.ID.String()), components.ButtonConfig("Edit").
-					// 	Icon(icons.PencilSquare()).
-					// 	Style("soft").
-					// 	Size("sm").
-					// 	Color("primary"),
-					// )
-					@components.Button(components.ButtonConfig("Apply").
-						Icon(icons.Check()).
-						Style("soft").
-						Size("sm").
-						Color("success").
-						HxPost(fmt.Sprintf("/transactions/%s/apply", transaction.ID.String())).
-						HxConfirm("Are you sure you want to apply this transaction?").
-						HxTarget("closest tr").
-						Hx("vals", `{"state":"completed"}`),
-					)
+				switch transaction.State {
+					case "draft":
+						@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/transactions/%s/edit", transaction.ID.String())), components.ButtonConfig("Edit").
+							Icon(icons.PencilSquare()).
+							Style("soft").
+							Size("sm").
+							Color("primary"),
+						)
+						@components.Button(components.ButtonConfig("Apply").
+							Icon(icons.Check()).
+							Style("soft").
+							Size("sm").
+							Color("success").
+							HxPost(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/transactions/%s/apply", transaction.ID.String()))).
+							HxConfirm("Are you sure you want to apply this transaction?").
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
+					case "pendingRefund":
+						@components.Button(components.ButtonConfig("Set as completed").
+							Icon(icons.ArrowPath()).
+							Style("soft").
+							Size("sm").
+							Color("warning").
+							HxPost(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/transactions/%s/apply", transaction.ID.String()))).
+							HxConfirm("Are you sure you want to set this transaction as completed?").
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
 				}
 			</div>
 		</td>
@@ -190,7 +204,7 @@ templ TransactionDetails(c *gin.Context, transaction repository.GetTransactionWi
 			)
 			switch transaction.State {
 				case "draft":
-					@components.ButtonLink(fmt.Sprintf("/transactions/%s/edit", transaction.ID.String()), components.ButtonConfig("Edit").
+					@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/transactions/%s/edit", transaction.ID.String())), components.ButtonConfig("Edit").
 						Icon(icons.PencilSquare()).
 						Color("primary"),
 					)
@@ -417,7 +431,7 @@ templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transact
 				Value(description),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink("/transactions", components.ButtonConfig("Back").
+				@components.ButtonLink(utils.ResolveReturnPath(c, "/transactions"), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)

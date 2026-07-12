@@ -47,7 +47,7 @@ templ Categories(c *gin.Context, categories []repository.Category) {
 							</td>
 							<td>
 								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(fmt.Sprintf("/categories/%s/edit", category.ID.String()), components.ButtonConfig("Edit").
+									@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/categories/%s/edit", category.ID.String())), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Color("info").
 										Style("soft").
@@ -93,7 +93,7 @@ templ CreateUpdateCategory(c *gin.Context, category *repository.Category) {
 		if category != nil {
 			title = "Update category: " + category.Name
 			formMethod = "put"
-			formAction = fmt.Sprintf("/categories/%s/update", category.ID.String())
+			formAction = utils.BuildURLWithReturnPath(c, fmt.Sprintf("/categories/%s/update", category.ID.String()))
 			submitButtonText = "Update"
 
 			name = category.Name
@@ -118,7 +118,7 @@ templ CreateUpdateCategory(c *gin.Context, category *repository.Category) {
 				Required(),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink("/categories", components.ButtonConfig("Back").
+				@components.ButtonLink(utils.ResolveReturnPath(c, "/categories"), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)

@@ -47,7 +47,7 @@ templ Suppliers(c *gin.Context, suppliers []repository.Supplier) {
 							</td>
 							<td>
 								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(fmt.Sprintf("/suppliers/%s/edit", supplier.ID.String()), components.ButtonConfig("Edit").
+									@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/suppliers/%s/edit", supplier.ID.String())), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Color("info").
 										Style("soft").
@@ -93,7 +93,7 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 		if supplier != nil {
 			title = "Update supplier: " + supplier.Name
 			formMethod = "put"
-			formAction = fmt.Sprintf("/suppliers/%s/update", supplier.ID.String())
+			formAction = utils.BuildURLWithReturnPath(c, fmt.Sprintf("/suppliers/%s/update", supplier.ID.String()))
 			submitButtonText = "Update"
 
 			name = supplier.Name
@@ -118,7 +118,7 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 				Required(),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink("/suppliers", components.ButtonConfig("Back").
+				@components.ButtonLink(utils.ResolveReturnPath(c, "/suppliers"), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)

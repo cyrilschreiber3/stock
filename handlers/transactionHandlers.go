@@ -204,6 +204,23 @@ func HandleApplyTransaction() gin.HandlerFunc {
 			return
 		}
 
+		updatedTransaction, err := db.GetTransactionWithDetailsByID(c.Request.Context(), transactionId)
+		if err != nil {
+			slog.Error("Error retrieving updated transaction", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve updated transaction")
+			return
+		}
+
+		transactionListObject := repository.GetTransactionsWithDetailsRow(updatedTransaction)
+
+		returnUrl := utils.ResolveReturnPath(c, fmt.Sprintf("/transactions/%s", transactionId))
+		if returnUrl == "/transactions" {
+			utils.HXNotify(c, http.StatusOK, "success", "Transaction applied successfully")
+			component := pages.TransactionRow(c, transactionListObject)
+			utils.RenderTemplate(c, http.StatusOK, component)
+			return
+		}
+
 		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction applied successfully", fmt.Sprintf("/transactions/%s", transactionId))
 	}
 }

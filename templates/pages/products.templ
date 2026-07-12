@@ -69,7 +69,7 @@ templ Products(c *gin.Context, products []repository.GetAllProductWithDetailsRow
 										Size("sm").
 										Color("primary"),
 									)
-									@components.ButtonLink(fmt.Sprintf("/products/%s/edit", product.ID.String()), components.ButtonConfig("Edit").
+									@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/products/%s/edit", product.ID.String())), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Style("soft").
 										Size("sm").
@@ -115,7 +115,7 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 			if product != nil {
 				title = "Update product: " + product.Name
 				formMethod = "put"
-				formAction = fmt.Sprintf("/products/%s/update", product.ID.String())
+				formAction = utils.BuildURLWithReturnPath(c, fmt.Sprintf("/products/%s/update", product.ID.String()))
 				submitButtonText = "Update"
 
 				brand = product.Brand
@@ -196,7 +196,7 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 				Required(),
 			)
 			<div class="mt-6 flex justify-end gap-2">
-				@components.ButtonLink("/products", components.ButtonConfig("Back").
+				@components.ButtonLink(utils.ResolveReturnPath(c, "/products"), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
@@ -215,7 +215,7 @@ templ ProductDetails(c *gin.Context, product repository.GetProductWithDetailsByI
 		<div class="my-5 flex justify-between">
 			<h1 class="text-2xl font-bold">{ product.Brand + " - " + product.Name }</h1>
 			<div class="flex space-x-2">
-				@components.ButtonLink(fmt.Sprintf("/products/%s/edit", product.ID.String()), components.ButtonConfig("Edit").
+				@components.ButtonLink(fmt.Sprintf("/products/%s/edit?from=%s", product.ID.String(), c.Request.URL.Path), components.ButtonConfig("Edit").
 					Icon(icons.PencilSquare()).
 					Color("info"),
 				)
