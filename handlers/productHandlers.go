@@ -131,7 +131,7 @@ func HandleGetProductDetails() gin.HandlerFunc {
 			return
 		}
 
-		transactions, err := db.GetTransactionsWithDetailsByProductID(c.Request.Context(), productIdUUID)
+		transactions, err := db.GetTransactionWithDetailsAndItemsByProductID(c.Request.Context(), productIdUUID)
 		if err != nil {
 			slog.Error("Error retrieving transactions", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transactions")

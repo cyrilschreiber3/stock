@@ -19,17 +19,7 @@ RETURNING *;
 DELETE FROM products WHERE id = $1;
 
 -- name: SearchProducts :many
-SELECT
-    p.*,
-    sqlc.embed(categories),
-    sqlc.embed(subcategories),
-    sqlc.embed(suppliers),
-    i.total_quantity AS inventory_quantity
-FROM products p
-INNER JOIN categories ON p.category_id = categories.id
-INNER JOIN subcategories ON p.subcategory_id = subcategories.id
-INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
-LEFT JOIN inventory i ON p.id = i.product_id
+SELECT * FROM product_with_details p
 WHERE
     (
         p.name ILIKE '%' || sqlc.arg(search)::text || '%'
@@ -123,20 +113,10 @@ DELETE FROM subcategories WHERE category_id = $1;
 -- Subcategory by category id with details
 
 -- name: GetSubcategoriesWithCategoryDetailsByCategoryID :many
-SELECT
-    sc.*,
-    sqlc.embed(categories)
-FROM subcategories sc
-INNER JOIN categories ON sc.category_id = categories.id
-WHERE sc.category_id = $1;
+SELECT * FROM subcategory_with_details WHERE category_id = $1;
 
 -- name: GetSubcategoryWithCategoryDetailsBySubcategoryID :one
-SELECT
-    sc.*,
-    sqlc.embed(categories)
-FROM subcategories sc
-INNER JOIN categories ON sc.category_id = categories.id
-WHERE sc.id = $1;
+SELECT * FROM subcategory_with_details WHERE id = $1;
 
 -- Product queries by category and subcategory
 
@@ -154,28 +134,14 @@ SELECT * FROM products WHERE default_supplier_id = $1;
 -- Product with all details
 
 -- name: GetAllProductWithDetails :many
-SELECT
-    p.*,
-    sqlc.embed(categories),
-    sqlc.embed(subcategories),
-    sqlc.embed(suppliers),
-    i.total_quantity AS inventory_quantity
-FROM products p
-INNER JOIN categories ON p.category_id = categories.id
-INNER JOIN subcategories ON p.subcategory_id = subcategories.id
-INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
-LEFT JOIN inventory i ON p.id = i.product_id;
+SELECT * FROM product_with_details;
 
 -- name: GetProductWithDetailsByID :one
-SELECT
-    p.*,
-    sqlc.embed(categories),
-    sqlc.embed(subcategories),
-    sqlc.embed(suppliers),
-    i.total_quantity AS inventory_quantity
-FROM products p
-INNER JOIN categories ON p.category_id = categories.id
-INNER JOIN subcategories ON p.subcategory_id = subcategories.id
-INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
-LEFT JOIN inventory i ON p.id = i.product_id
-WHERE p.id = $1;
+SELECT * FROM product_with_details WHERE id = $1;
+
+
+-- name: GetProductsWithDetailsByCategoryID :many
+SELECT * FROM product_with_details WHERE category_id = $1;
+
+-- name: GetProductsWithDetailsBySubcategoryID :many
+SELECT * FROM product_with_details WHERE subcategory_id = $1;

@@ -44,7 +44,7 @@ func SetupRoutes(router *gin.Engine) {
 		categoryGroup.GET("/options", handlers.HandleGetCategoryOptions())
 		categoryGroup.GET("/create", handlers.HandleShowCreateCategoryForm())
 		categoryGroup.POST("/create", handlers.HandleCreateCategory())
-		categoryGroup.GET("/:id")
+		categoryGroup.GET("/:id", handlers.HandleGetCategoryDetails())
 		categoryGroup.GET("/:id/edit", handlers.HandleShowUpdateCategoryForm())
 		categoryGroup.PUT("/:id/update", handlers.HandleUpdateCategory())
 		categoryGroup.DELETE("/:id/delete", handlers.HandleDeleteCategory())

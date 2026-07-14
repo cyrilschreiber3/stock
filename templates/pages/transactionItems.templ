@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-templ TransactionItemRow(c *gin.Context, transactionItem repository.GetTransactionItemsWithDetailsByTransactionIDRow, editable bool) {
+templ TransactionItemRow(c *gin.Context, transactionItem repository.TransactionItemWithDetail, editable bool) {
 	<tr id={ fmt.Sprintf("transaction_item_%s", transactionItem.ID.String()) }>
 		<td>{ transactionItem.Product.Name }</td>
 		<td>{ transactionItem.Quantity }</td>
@@ -64,7 +64,7 @@ templ SelectProductForTransactionItem(c *gin.Context, transactionID string) {
 	</div>
 }
 
-templ CreateUpdateTransactionItem(c *gin.Context, product repository.GetProductWithDetailsByIDRow, transaction repository.Transaction, transactionItem *repository.TransactionItem) {
+templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWithDetail, transaction repository.Transaction, transactionItem *repository.TransactionItem) {
 	{{
 		title := "Add product to transaction"
 		formMethod := "post"
@@ -116,7 +116,7 @@ templ CreateUpdateTransactionItem(c *gin.Context, product repository.GetProductW
 					<div class="flex-1">
 						<p><strong>Brand:</strong> { product.Brand }</p>
 						<p><strong>Product:</strong> { product.Name }</p>
-						<p><strong>Stock:</strong> N/A</p>
+						<p><strong>Stock:</strong> { fmt.Sprintf("%d", product.InventoryQuantity) }</p>
 						<p><strong>Category:</strong> { product.Category.Name } / { product.Subcategory.Name }</p>
 					</div>
 					if transactionItem == nil {

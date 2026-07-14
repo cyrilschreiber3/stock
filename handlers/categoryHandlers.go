@@ -55,6 +55,41 @@ func HandleGetCategories() gin.HandlerFunc {
 	}
 }
 
+func HandleGetCategoryDetails() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		categoryId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			slog.Error("Error parsing category ID", "error", err)
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Could not parse category ID")
+			return
+		}
+
+		category, err := db.GetCategoryByID(c.Request.Context(), categoryId)
+		if err != nil {
+			slog.Error("Error retrieving category", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve category")
+			return
+		}
+
+		subcategories, err := db.GetSubcategoriesByCategoryID(c.Request.Context(), categoryId)
+		if err != nil {
+			slog.Error("Error retrieving subcategories", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve subcategories")
+			return
+		}
+
+		products, err := db.GetProductsWithDetailsByCategoryID(c.Request.Context(), categoryId)
+		if err != nil {
+			slog.Error("Error retrieving products", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve products")
+			return
+		}
+
+		component := pages.CategoryDetails(c, category, subcategories, products)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleShowCreateCategoryForm() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		utils.RenderTemplate(c, http.StatusOK, pages.CreateUpdateCategory(c, nil))

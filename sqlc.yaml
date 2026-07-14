@@ -21,3 +21,44 @@ sql:
               type: UUID
           - db_type: pg_catalog.int4
             go_type: int
+
+          - column: "product_with_details.category"
+            go_type:
+              type: Category
+          - column: "product_with_details.subcategory"
+            go_type:
+              type: Subcategory
+          - column: "product_with_details.supplier"
+            go_type:
+              type: Supplier
+
+          - column: "subcategory_with_details.category"
+            go_type:
+              type: Category
+
+          - column: "transaction_item_with_details.product"
+            go_type:
+              type: Product
+
+          - column: "transaction_with_details.supplier"
+            go_type:
+              type: Supplier
+
+          - column: "transaction_with_details_and_items.transaction_items"
+            go_type:
+              type: TransactionItemWithDetail
+              slice: true
+          - column: "transaction_with_details_and_items.supplier"
+            go_type:
+              type: Supplier
+
+          - column: "inventory_with_details.product"
+            go_type:
+              type: ProductWithDetail
+
+          - column: "inventory_lot_with_details.product"
+            go_type:
+              type: ProductWithDetail
+          - column: "inventory_lot_with_details.transaction_item"
+            go_type:
+              type: TransactionItemWithDetail

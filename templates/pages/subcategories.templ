@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-templ Subcategories(c *gin.Context, subcategories []repository.GetSubcategoriesWithCategoryDetailsByCategoryIDRow) {
+templ Subcategories(c *gin.Context, subcategories []repository.SubcategoryWithDetail) {
 	@layouts.Base(c, "Stock") {
 		<div class="my-5 flex flex-wrap items-center justify-between gap-3">
 			<div>

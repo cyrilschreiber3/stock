@@ -182,19 +182,11 @@ func HandleCreateTransactionItem() gin.HandlerFunc {
 			return
 		}
 
-		transactionItemsWithDetails, err := db.GetTransactionItemsWithDetailsByTransactionID(c.Request.Context(), newTransactionItem.TransactionID)
+		newTransactionItemWithDetails, err := db.GetTransactionItemWithDetailsByID(c.Request.Context(), newTransactionItem.ID)
 		if err != nil {
-			slog.Error("Error retrieving transaction items with details", "error", err)
-			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction items with details")
+			slog.Error("Error retrieving transaction item with details", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction item with details")
 			return
-		}
-
-		var newTransactionItemWithDetails repository.GetTransactionItemsWithDetailsByTransactionIDRow
-		for _, item := range transactionItemsWithDetails {
-			if item.ID == newTransactionItem.ID {
-				newTransactionItemWithDetails = item
-				break
-			}
 		}
 
 		updatedTransaction, err := db.GetTransactionByID(c.Request.Context(), newTransactionItem.TransactionID)
@@ -207,9 +199,10 @@ func HandleCreateTransactionItem() gin.HandlerFunc {
 		c.Header("HX-Retarget", "#transaction-items")
 		c.Header("HX-Reswap", "beforeend")
 
+		returnStatus := http.StatusCreated
 		component := pages.TransactionItemRow(c, newTransactionItemWithDetails, true)
-		utils.RenderTemplate(c, http.StatusCreated, component)
-		c.String(http.StatusOK, fmt.Sprintf("<span id=\"transaction-base-price\" hx-swap-oob=\"true\">%s CHF</span><span id=\"transaction-final-price\" hx-swap-oob=\"true\">%s CHF</span>", utils.PgNumericToString(updatedTransaction.BasePrice, "0.00"), utils.PgNumericToString(updatedTransaction.FinalPrice, "0.00")))
+		utils.RenderTemplate(c, returnStatus, component)
+		c.String(returnStatus, fmt.Sprintf("<span id=\"transaction-base-price\" hx-swap-oob=\"true\">%s CHF</span><span id=\"transaction-final-price\" hx-swap-oob=\"true\">%s CHF</span>", utils.PgNumericToString(updatedTransaction.BasePrice, "0.00"), utils.PgNumericToString(updatedTransaction.FinalPrice, "0.00")))
 	}
 }
 
@@ -256,19 +249,11 @@ func HandleUpdateTransactionItem() gin.HandlerFunc {
 			return
 		}
 
-		transactionItemsWithDetails, err := db.GetTransactionItemsWithDetailsByTransactionID(c.Request.Context(), updatedTransactionItem.TransactionID)
+		updatedTransactionItemWithDetails, err := db.GetTransactionItemWithDetailsByID(c.Request.Context(), updatedTransactionItem.ID)
 		if err != nil {
-			slog.Error("Error retrieving transaction items with details", "error", err)
-			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction items with details")
+			slog.Error("Error retrieving transaction item with details", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction item with details")
 			return
-		}
-
-		var updatedTransactionItemWithDetails repository.GetTransactionItemsWithDetailsByTransactionIDRow
-		for _, item := range transactionItemsWithDetails {
-			if item.ID == updatedTransactionItem.ID {
-				updatedTransactionItemWithDetails = item
-				break
-			}
 		}
 
 		updatedTransaction, err := db.GetTransactionByID(c.Request.Context(), updatedTransactionItem.TransactionID)
@@ -281,9 +266,10 @@ func HandleUpdateTransactionItem() gin.HandlerFunc {
 		c.Header("HX-Retarget", fmt.Sprintf("#transaction_item_%s", updatedTransactionItemWithDetails.ID.String()))
 		c.Header("HX-Reswap", "outerHTML")
 
+		returnStatus := http.StatusOK
 		component := pages.TransactionItemRow(c, updatedTransactionItemWithDetails, true)
-		utils.RenderTemplate(c, http.StatusOK, component)
-		c.String(http.StatusOK, fmt.Sprintf("<span id=\"transaction-base-price\" hx-swap-oob=\"true\">%s CHF</span><span id=\"transaction-final-price\" hx-swap-oob=\"true\">%s CHF</span>", utils.PgNumericToString(updatedTransaction.BasePrice, "0.00"), utils.PgNumericToString(updatedTransaction.FinalPrice, "0.00")))
+		utils.RenderTemplate(c, returnStatus, component)
+		c.String(returnStatus, fmt.Sprintf("<span id=\"transaction-base-price\" hx-swap-oob=\"true\">%s CHF</span><span id=\"transaction-final-price\" hx-swap-oob=\"true\">%s CHF</span>", utils.PgNumericToString(updatedTransaction.BasePrice, "0.00"), utils.PgNumericToString(updatedTransaction.FinalPrice, "0.00")))
 	}
 }
 

@@ -100,7 +100,7 @@ templ Search(config *searchConfig) {
 	</script>
 }
 
-templ ProductResultsForTransactionItem(transactionID string, results []repository.SearchProductsRow) {
+templ ProductResultsForTransactionItem(transactionID string, results []repository.ProductWithDetail) {
 	if len(results) == 0 {
 		<div class="rounded-box border-base-300 bg-base-100 text-base-content/70 mt-3 border px-4 py-3 text-sm">
 			No products found.
@@ -122,7 +122,7 @@ templ ProductResultsForTransactionItem(transactionID string, results []repositor
 				>
 					<div class="font-semibold">{ result.Brand + " - " + result.Name }</div>
 					<div class="text-base-content/70 mt-0.5 text-sm">
-						Subcategory: { result.Subcategory.Name } · Stock: { fmt.Sprintf("%d", result.InventoryQuantity.Int32) }
+						Subcategory: { result.Subcategory.Name } · Stock: { fmt.Sprintf("%d", result.InventoryQuantity) }
 					</div>
 				</button>
 			}

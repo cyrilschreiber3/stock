@@ -35,21 +35,14 @@ func HandleGetTransactionDetails() gin.HandlerFunc {
 			return
 		}
 
-		transaction, err := db.GetTransactionWithDetailsByID(c.Request.Context(), transactionId)
+		transaction, err := db.GetTransactionWithDetailsAndItemsByID(c.Request.Context(), transactionId)
 		if err != nil {
 			slog.Error("Error retrieving transaction details", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction details")
 			return
 		}
 
-		transactionItems, err := db.GetTransactionItemsWithDetailsByTransactionID(c.Request.Context(), transactionId)
-		if err != nil {
-			slog.Error("Error retrieving transaction items", "error", err)
-			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction items")
-			return
-		}
-
-		component := pages.TransactionDetails(c, transaction, transactionItems)
+		component := pages.TransactionDetails(c, transaction)
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }
@@ -211,12 +204,10 @@ func HandleApplyTransaction() gin.HandlerFunc {
 			return
 		}
 
-		transactionListObject := repository.GetTransactionsWithDetailsRow(updatedTransaction)
-
 		returnUrl := utils.ResolveReturnPath(c, fmt.Sprintf("/transactions/%s", transactionId))
 		if returnUrl == "/transactions" {
 			utils.HXNotify(c, http.StatusOK, "success", "Transaction applied successfully")
-			component := pages.TransactionRow(c, transactionListObject)
+			component := pages.TransactionRow(c, updatedTransaction)
 			utils.RenderTemplate(c, http.StatusOK, component)
 			return
 		}
