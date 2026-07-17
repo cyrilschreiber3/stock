@@ -32,7 +32,7 @@ func main() {
 	handlers.Init()
 
 	router := routes.Init()
-	routes.SetupRoutes(router)
+	routes.RegisterRoutes(router)
 
 	slog.Info("Starting server on port 8080")
 	if err := router.Run(":8080"); err != nil {
