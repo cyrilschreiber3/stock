@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/controllers"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
@@ -102,7 +102,7 @@ func HandleCreateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Transaction created successfully", fmt.Sprintf("/transactions/%s", newTransaction.ID))
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Transaction created successfully", routes.TransactionDetails.ReturnOrURL(routes.ID(newTransaction.ID), c))
 
 	}
 }
@@ -138,7 +138,7 @@ func HandleUpdateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction updated successfully", fmt.Sprintf("/transactions/%s", transactionId))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction updated successfully", routes.TransactionDetails.ReturnOrURL(routes.ID(transactionId), c))
 	}
 }
 
@@ -166,7 +166,7 @@ func HandleDeleteTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction deleted successfully", "/transactions")
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction deleted successfully", routes.TransactionList.ReturnOrURL(c))
 	}
 }
 
@@ -204,14 +204,14 @@ func HandleApplyTransaction() gin.HandlerFunc {
 			return
 		}
 
-		returnUrl := utils.ResolveReturnPath(c, fmt.Sprintf("/transactions/%s", transactionId))
-		if returnUrl == "/transactions" {
+		returnUrl := utils.ResolveReturnPath(c, "")
+		if returnUrl == routes.TransactionList.URL() {
 			utils.HXNotify(c, http.StatusOK, "success", "Transaction applied successfully")
 			component := pages.TransactionRow(c, updatedTransaction)
 			utils.RenderTemplate(c, http.StatusOK, component)
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction applied successfully", fmt.Sprintf("/transactions/%s", transactionId))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction applied successfully", routes.TransactionList.ReturnOrURL(c))
 	}
 }

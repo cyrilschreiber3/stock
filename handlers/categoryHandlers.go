@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
@@ -135,7 +136,7 @@ func HandleCreateCategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Category created successfully", "/categories")
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Category created successfully", routes.CategoryList.URL())
 	}
 }
 
@@ -165,7 +166,7 @@ func HandleUpdateCategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Category updated successfully", "/categories")
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Category updated successfully", routes.CategoryList.URL())
 	}
 }
 
@@ -191,6 +192,12 @@ func HandleDeleteCategory() gin.HandlerFunc {
 
 		if result == 0 {
 			utils.HXNotify(c, http.StatusNotFound, "error", "Category not found")
+			return
+		}
+
+		returnPath := utils.ResolveReturnPath(c, "")
+		if returnPath == routes.CategoryDetails.URL(routes.ID(categoryId)) {
+			utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Category deleted successfully", routes.CategoryList.URL())
 			return
 		}
 

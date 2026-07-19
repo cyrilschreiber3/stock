@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
@@ -195,8 +195,8 @@ func HandleCreateProduct() gin.HandlerFunc {
 			return
 		}
 
-		redirectUrl := utils.ResolveReturnPath(c, fmt.Sprintf("/products/%s", newProduct.ID.String()))
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Product created successfully", redirectUrl)
+		redirectURL := routes.ProductDetails.ReturnOrURL(routes.ID(newProduct.ID), c)
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Product created successfully", redirectURL)
 	}
 }
 
@@ -233,8 +233,8 @@ func HandleUpdateProduct() gin.HandlerFunc {
 			return
 		}
 
-		redirectUrl := utils.ResolveReturnPath(c, fmt.Sprintf("/products/%s", productIdUUID.String()))
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product updated successfully", redirectUrl)
+		redirectURL := routes.ProductDetails.ReturnOrURL(routes.ID(productIdUUID), c)
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product updated successfully", redirectURL)
 	}
 }
 
@@ -263,6 +263,12 @@ func HandleDeleteProduct() gin.HandlerFunc {
 
 		if result == 0 {
 			utils.HXNotify(c, http.StatusNotFound, "error", "No product found with the given ID")
+			return
+		}
+
+		returnURL := utils.ResolveReturnPath(c, "")
+		if returnURL == routes.ProductDetails.URL(routes.ID(productIdUUID)) {
+			utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product deleted successfully", routes.ProductList.URL())
 			return
 		}
 

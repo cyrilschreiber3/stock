@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
@@ -101,7 +102,7 @@ func HandleCreateSupplier() gin.HandlerFunc {
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not create supplier")
 			return
 		}
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Supplier created successfully", "/suppliers")
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Supplier created successfully", routes.SupplierList.ReturnOrURL(c))
 	}
 }
 
@@ -132,7 +133,7 @@ func HandleUpdateSupplier() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Supplier updated successfully", "/suppliers")
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Supplier updated successfully", routes.SupplierList.ReturnOrURL(c))
 	}
 }
 

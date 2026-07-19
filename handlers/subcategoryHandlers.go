@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
@@ -155,7 +155,7 @@ func HandleCreateSubcategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Subcategory created successfully", fmt.Sprintf("/categories/%s/subcategories", categoryId.String()))
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Subcategory created successfully", routes.CategoryDetails.ReturnOrURL(routes.ID(categoryId), c))
 	}
 }
 
@@ -190,7 +190,7 @@ func HandleUpdateSubcategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Subcategory updated successfully", fmt.Sprintf("/categories/%s/subcategories", categoryId.String()))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Subcategory updated successfully", routes.CategoryDetails.ReturnOrURL(routes.ID(categoryId), c))
 	}
 }
 
@@ -219,6 +219,6 @@ func HandleDeleteSubcategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Subcategory deleted successfully", fmt.Sprintf("/categories/%s/subcategories", categoryId.String()))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Subcategory deleted successfully", routes.CategoryDetails.ReturnOrURL(routes.ID(categoryId), c))
 	}
 }
