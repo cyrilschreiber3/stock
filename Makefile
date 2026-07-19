@@ -64,6 +64,8 @@ tailwind: ## Generate Tailwind static CSS file
 init: init-deps sqlc templ-build tailwind ## Initialize the project (fetch libraries, generate SQLC queries and models)
 	@test -f .env || cp example.env .env
 
+test: init ## Run tests
+	@go test ./...
 
 build: init sqlc templ-build tailwind ## Build the project
 	@go build -o stock main.go
