@@ -22,7 +22,7 @@ func HandleShowSearchProductsForTransactionItems() gin.HandlerFunc {
 			return
 		}
 
-		component := pages.SelectProductForTransactionItem(c, transactionID.String())
+		component := pages.SelectProductForTransactionItem(c, transactionID)
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }

@@ -15,3 +15,10 @@ func (p SubcategoryUUIDParams) Values() map[string]string {
 		"subcategory_id": p.SubcategoryID.String(),
 	}
 }
+
+func Subcategory(categoryID uuid.UUID, subcategoryID uuid.UUID) SubcategoryUUIDParams {
+	return SubcategoryUUIDParams{
+		CategoryID:    categoryID,
+		SubcategoryID: subcategoryID,
+	}
+}

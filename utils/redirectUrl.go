@@ -1,6 +1,10 @@
 package utils
 
-import "github.com/gin-gonic/gin"
+import (
+	"strings"
+
+	"github.com/gin-gonic/gin"
+)
 
 func ResolveReturnPath(c *gin.Context, defaultUrl string) string {
 	redirectUrl := c.Query("from")
@@ -10,9 +14,13 @@ func ResolveReturnPath(c *gin.Context, defaultUrl string) string {
 	if redirectUrl == "" {
 		redirectUrl = defaultUrl
 	}
-	return redirectUrl
+	if strings.HasPrefix(redirectUrl, "/") {
+		return redirectUrl
+	}
+	return defaultUrl
 }
 
+// Deprecated: Use routes.Route.URLWithReturn instead. This function is kept for backward compatibility.
 func BuildURLWithReturnPath(c *gin.Context, baseUrl string) string {
 	redirectUrl := ResolveReturnPath(c, "")
 	if redirectUrl != "" {
@@ -21,6 +29,7 @@ func BuildURLWithReturnPath(c *gin.Context, baseUrl string) string {
 	return baseUrl
 }
 
+// Deprecated: Use routes.Route.URLWithReturnToCurrent instead. This function is kept for backward compatibility.
 func BuildReturnURLWithCurrentPath(c *gin.Context, baseUrl string) string {
 	referer := c.Request.URL.Path
 	if referer != "" {

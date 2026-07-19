@@ -1,28 +1,26 @@
 package routes
 
-import "github.com/cyrilschreiber3/stock/handlers"
-
 var SupplierGroup = Group("/suppliers")
 
-var SupplierList = GET[NoParams]("SupplierList", SupplierGroup, "", handlers.HandleGetSuppliers())
+var SupplierList = Spec0("SupplierList", MethodGET, SupplierGroup, "")
 
-var SupplierOptions = GET[NoParams]("SupplierOptions", SupplierGroup, "/options", handlers.HandleGetSupplierOptions())
+var SupplierOptions = Spec0("SupplierOptions", MethodGET, SupplierGroup, "/options")
 
-var SupplierCreateForm = GET[NoParams]("SupplierCreateForm", SupplierGroup, "/create", handlers.HandleShowCreateSupplierForm())
+var SupplierCreateForm = Spec0("SupplierCreateForm", MethodGET, SupplierGroup, "/create")
 
-var SupplierCreate = POST[NoParams]("SupplierCreate", SupplierGroup, "/create", handlers.HandleCreateSupplier())
+var SupplierCreate = Spec0("SupplierCreate", MethodPOST, SupplierGroup, "/create")
 
 // var SupplierDetailsRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-// var SupplierDetails = GET("SupplierDetails", SupplierGroup, "/:id", handlers.HandleGetSupplierDetails(), SupplierDetailsRouteParams)
+// var SupplierDetails = Spec[SimpleUUIDParam]("SupplierDetails", MethodGET, SupplierGroup, "/:id", SupplierDetailsRouteParams)
 
-var SupplierEditFormRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var SupplierEditForm = GET("SupplierEditForm", SupplierGroup, "/:id/edit", handlers.HandleShowUpdateSupplierForm(), SupplierEditFormRouteParams)
+var SupplierEditFormRouteParams = WithRouteParams[IDParam](ParamID)
+var SupplierEditForm = Spec[IDParam]("SupplierEditForm", MethodGET, SupplierGroup, "/:id/edit", SupplierEditFormRouteParams)
 
-var SupplierUpdateRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var SupplierUpdate = PUT("SupplierUpdate", SupplierGroup, "/:id/update", handlers.HandleUpdateSupplier(), SupplierUpdateRouteParams)
+var SupplierUpdateRouteParams = WithRouteParams[IDParam](ParamID)
+var SupplierUpdate = Spec[IDParam]("SupplierUpdate", MethodPUT, SupplierGroup, "/:id/update", SupplierUpdateRouteParams)
 
-var SupplierDeleteRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var SupplierDelete = DELETE("SupplierDelete", SupplierGroup, "/:id/delete", handlers.HandleDeleteSupplier(), SupplierDeleteRouteParams)
+var SupplierDeleteRouteParams = WithRouteParams[IDParam](ParamID)
+var SupplierDelete = Spec[IDParam]("SupplierDelete", MethodDELETE, SupplierGroup, "/:id/delete", SupplierDeleteRouteParams)
 
 var SupplierRoutes = ResourceRoutes{
 	Group: SupplierGroup,

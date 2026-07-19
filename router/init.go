@@ -1,4 +1,4 @@
-package routes
+package router
 
 import (
 	"log/slog"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cyrilschreiber3/stock/logger"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -61,4 +62,17 @@ func setupCors(router *gin.Engine) {
 	config.MaxAge = 12 * time.Hour
 
 	router.Use(cors.New(config))
+}
+
+func RegisterRoutes(router *gin.Engine) {
+	registerCoreRoutes(router)
+	routes.RegisterSpecialRoutes(router)
+	registerApiRoutes(router)
+	registerProductRoutes(router)
+	registerCategoryRoutes(router)
+	registerSubcategoryRoutes(router)
+	registerSupplierRoutes(router)
+	registerTransactionRoutes(router)
+	registerTransactionItemRoutes(router)
+	registerInventoryRoutes(router)
 }

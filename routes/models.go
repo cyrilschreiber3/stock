@@ -45,14 +45,14 @@ type Route[P RouteParams] struct {
 	Path        string
 	Params      []ParamSpec
 	Middlewares []gin.HandlerFunc
-	Handler     gin.HandlerFunc
 }
 
+type StaticRoute struct{ Route[NoParams] }
+
 type RouteHandler interface {
-	Register(router gin.IRoutes)
+	Register(router gin.IRoutes, handler gin.HandlerFunc)
 	RouteName() string
 	MethodType() Method
-	HandlerFunc() gin.HandlerFunc
 	ParamSpecs() []ParamSpec
 	Pattern() string
 	PatternWithQuery(queryParams url.Values) string

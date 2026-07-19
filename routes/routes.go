@@ -17,9 +17,9 @@ func GetAllRoutes() []RouteHandler {
 	return routes
 }
 
-func RegisterRoutes(r *gin.Engine) {
+func RegisterSpecsForTests(r *gin.Engine) {
 	routes := GetAllRoutes()
 
 	RegisterSpecialRoutes(r)
-	RegisterAll(r, routes...)
+	registerAllSpecsForTests(r, routes...)
 }

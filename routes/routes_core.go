@@ -1,10 +1,8 @@
 package routes
 
-import "github.com/cyrilschreiber3/stock/handlers"
-
 var IndexGroup = Group("/")
 
-var Index = GET[NoParams]("Index", IndexGroup, "/", handlers.Index())
+var Index = Spec0("Index", MethodGET, IndexGroup, "/")
 
 var IndexRoutes = ResourceRoutes{
 	Group: IndexGroup,

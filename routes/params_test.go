@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -81,8 +80,8 @@ func TestRouteURLSubstitution(t *testing.T) {
 }
 
 func TestRouteMustURL(t *testing.T) {
-	validRoute := GET("ValidRoute", nil, "/test/:id", func(c *gin.Context) {}, WithRouteParams[SimpleUUIDParam](ParamID))
-	invalidRoute := GET("InvalidRoute", nil, "/test/:id", func(c *gin.Context) {}, WithRouteParams[NoParams]())
+	validRoute := Spec("ValidRoute", MethodGET, nil, "/test/:id", WithRouteParams[IDParam](ParamID))
+	invalidRoute := Spec("InvalidRoute", MethodGET, nil, "/test/:id", WithRouteParams[NoParams]())
 
 	t.Run("MustURL panics on unresolved params", func(t *testing.T) {
 		defer func() {
@@ -90,7 +89,7 @@ func TestRouteMustURL(t *testing.T) {
 				t.Errorf("MustURL did not panic on unresolved params")
 			}
 		}()
-		invalidRoute.MustURL(NoParams{})
+		invalidRoute.URL(NoParams{})
 	})
 
 	t.Run("MustURL does not panic on valid params", func(t *testing.T) {
@@ -99,7 +98,7 @@ func TestRouteMustURL(t *testing.T) {
 				t.Errorf("MustURL panicked on valid params: %v", r)
 			}
 		}()
-		validRoute.MustURL(SimpleUUIDParam{ID: uuid.New()})
+		validRoute.URL(IDParam{ID: uuid.New()})
 	})
 }
 
@@ -147,12 +146,12 @@ func TestRouteParamSpecsMatchRouteParamsType(t *testing.T) {
 // TODO: Check if there is other edge cases to test for
 func TestAssertParamSpecsMatchRouteParamsType_CatchesMismatch(t *testing.T) {
 	t.Run("missing values key for declared paramspec", func(t *testing.T) {
-		route := GET(
+		route := Spec(
 			"BadMissingField",
+			MethodGET,
 			nil,
 			"/test/:id/:field",
-			func(c *gin.Context) {},
-			WithRouteParams[SimpleUUIDParam](ParamID, ParamField),
+			WithRouteParams[IDParam](ParamID, ParamField),
 		)
 
 		errors := assertParamSpecsMatchRouteParamsType(t, route)
@@ -162,12 +161,12 @@ func TestAssertParamSpecsMatchRouteParamsType_CatchesMismatch(t *testing.T) {
 	})
 
 	t.Run("values key missing from paramspecs", func(t *testing.T) {
-		route := GET(
+		route := Spec(
 			"BadExtraValueKey",
+			MethodGET,
 			nil,
 			"/test/:id/:field",
-			func(c *gin.Context) {},
-			WithRouteParams[ProductFieldParams](ParamID),
+			WithRouteParams[ObjectFieldParams](ParamID),
 		)
 
 		errors := assertParamSpecsMatchRouteParamsType(t, route)
@@ -219,12 +218,12 @@ func TestRouteParamSpecTypesMatchValues(t *testing.T) {
 // FIXME: This test will catch if a param is defined as complex in the RouteParams but is declared as a simple type in the ParamSpecs, but it won't catch the reverse case.
 func TestAssertParamSpecTypesMatchValues_CatchesMismatch(t *testing.T) {
 	t.Run("uuid declared as text does not fail with current helper", func(t *testing.T) {
-		route := GET(
+		route := Spec(
 			"TextSpecForUUIDValue",
+			MethodGET,
 			nil,
 			"/test/:id",
-			func(c *gin.Context) {},
-			WithRouteParams[SimpleUUIDParam](ParamSpec{Name: "id", Type: ParamText}),
+			WithRouteParams[IDParam](ParamSpec{Name: "id", Type: ParamText}),
 		)
 
 		errors := assertParamSpecTypesMatchValues(t, route)
@@ -234,12 +233,12 @@ func TestAssertParamSpecTypesMatchValues_CatchesMismatch(t *testing.T) {
 	})
 
 	t.Run("text declared as uuid does fail", func(t *testing.T) {
-		route := GET(
+		route := Spec(
 			"UUIDSpecForTextValue",
+			MethodGET,
 			nil,
 			"/test/:field",
-			func(c *gin.Context) {},
-			WithRouteParams[ProductFieldParams](ParamSpec{Name: "field", Type: ParamUUID}),
+			WithRouteParams[ObjectFieldParams](ParamSpec{Name: "field", Type: ParamUUID}),
 		)
 
 		errors := assertParamSpecTypesMatchValues(t, route)

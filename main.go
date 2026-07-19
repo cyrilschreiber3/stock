@@ -6,7 +6,7 @@ import (
 	"github.com/cyrilschreiber3/stock/database"
 	"github.com/cyrilschreiber3/stock/handlers"
 	"github.com/cyrilschreiber3/stock/logger"
-	"github.com/cyrilschreiber3/stock/routes"
+	"github.com/cyrilschreiber3/stock/router"
 	"github.com/cyrilschreiber3/stock/utils"
 )
 
@@ -31,11 +31,11 @@ func main() {
 
 	handlers.Init()
 
-	router := routes.Init()
-	routes.RegisterRoutes(router)
+	httpRouter := router.Init()
+	router.RegisterRoutes(httpRouter)
 
 	slog.Info("Starting server on port 8080")
-	if err := router.Run(":8080"); err != nil {
+	if err := httpRouter.Run(":8080"); err != nil {
 		logger.Fatal("Failed to start server", "error", err)
 	}
 }

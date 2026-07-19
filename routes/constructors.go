@@ -22,13 +22,12 @@ func WithMiddlewares(middlewares ...gin.HandlerFunc) GroupOpt {
 	}
 }
 
-func GET[P RouteParams](name string, group *RouteGroup, path string, handler gin.HandlerFunc, opts ...RouteOpt[P]) Route[P] {
+func Spec[P RouteParams](name string, method Method, group *RouteGroup, path string, opts ...RouteOpt[P]) Route[P] {
 	route := Route[P]{
-		Name:    name,
-		Method:  MethodGET,
-		Group:   group,
-		Path:    path,
-		Handler: handler,
+		Name:   name,
+		Method: method,
+		Group:  group,
+		Path:   path,
 	}
 	for _, opt := range opts {
 		opt(&route)
@@ -36,58 +35,17 @@ func GET[P RouteParams](name string, group *RouteGroup, path string, handler gin
 	return route
 }
 
-func POST[P RouteParams](name string, group *RouteGroup, path string, handler gin.HandlerFunc, opts ...RouteOpt[P]) Route[P] {
-	route := Route[P]{
-		Name:    name,
-		Method:  MethodPOST,
-		Group:   group,
-		Path:    path,
-		Handler: handler,
+func Spec0(name string, method Method, group *RouteGroup, path string, opts ...RouteOpt[NoParams]) StaticRoute {
+	route := StaticRoute{
+		Route: Route[NoParams]{
+			Name:   name,
+			Method: method,
+			Group:  group,
+			Path:   path,
+		},
 	}
 	for _, opt := range opts {
-		opt(&route)
-	}
-	return route
-}
-
-func PUT[P RouteParams](name string, group *RouteGroup, path string, handler gin.HandlerFunc, opts ...RouteOpt[P]) Route[P] {
-	route := Route[P]{
-		Name:    name,
-		Method:  MethodPUT,
-		Group:   group,
-		Path:    path,
-		Handler: handler,
-	}
-	for _, opt := range opts {
-		opt(&route)
-	}
-	return route
-}
-
-func PATCH[P RouteParams](name string, group *RouteGroup, path string, handler gin.HandlerFunc, opts ...RouteOpt[P]) Route[P] {
-	route := Route[P]{
-		Name:    name,
-		Method:  MethodPATCH,
-		Group:   group,
-		Path:    path,
-		Handler: handler,
-	}
-	for _, opt := range opts {
-		opt(&route)
-	}
-	return route
-}
-
-func DELETE[P RouteParams](name string, group *RouteGroup, path string, handler gin.HandlerFunc, opts ...RouteOpt[P]) Route[P] {
-	route := Route[P]{
-		Name:    name,
-		Method:  MethodDELETE,
-		Group:   group,
-		Path:    path,
-		Handler: handler,
-	}
-	for _, opt := range opts {
-		opt(&route)
+		opt(&route.Route)
 	}
 	return route
 }
@@ -104,8 +62,8 @@ func WithRouteParams[P RouteParams](params ...ParamSpec) RouteOpt[P] {
 	}
 }
 
-func RegisterAll(router gin.IRoutes, routes ...RouteHandler) {
+func registerAllSpecsForTests(router gin.IRoutes, routes ...RouteHandler) {
 	for _, route := range routes {
-		route.Register(router)
+		route.Register(router, func(c *gin.Context) {})
 	}
 }

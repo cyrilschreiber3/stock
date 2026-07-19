@@ -1,38 +1,36 @@
 package routes
 
-import "github.com/cyrilschreiber3/stock/handlers"
-
 var TransactionGroup = Group("/transactions")
 
-var TransactionList = GET[NoParams]("TransactionList", TransactionGroup, "", handlers.HandleGetTransactions())
+var TransactionList = Spec0("TransactionList", MethodGET, TransactionGroup, "")
 
-var TransactionCreateForm = GET[NoParams]("TransactionCreateForm", TransactionGroup, "/create", handlers.HandleShowCreateTransactionForm())
+var TransactionCreateForm = Spec0("TransactionCreateForm", MethodGET, TransactionGroup, "/create")
 
-var TransactionCreate = POST[NoParams]("TransactionCreate", TransactionGroup, "/create", handlers.HandleCreateTransaction())
+var TransactionCreate = Spec0("TransactionCreate", MethodPOST, TransactionGroup, "/create")
 
-var TransactionSearchProductsFormRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var TransactionSearchProductsForm = GET("TransactionSearchProductsForm", TransactionGroup, "/:id/show-search-products", handlers.HandleShowSearchProductsForTransactionItems(), TransactionSearchProductsFormRouteParams)
+var TransactionSearchProductsFormRouteParams = WithRouteParams[IDParam](ParamID)
+var TransactionSearchProductsForm = Spec("TransactionSearchProductsForm", MethodGET, TransactionGroup, "/:id/show-search-products", TransactionSearchProductsFormRouteParams)
 
-var TransactionSearchProductsRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var TransactionSearchProducts = GET("TransactionSearchProducts", TransactionGroup, "/:id/search-products", handlers.HandleSearchProductsForTransactionItems(), TransactionSearchProductsRouteParams)
+var TransactionSearchProductsRouteParams = WithRouteParams[IDParam](ParamID)
+var TransactionSearchProducts = Spec("TransactionSearchProducts", MethodGET, TransactionGroup, "/:id/search-products", TransactionSearchProductsRouteParams)
 
 var TransactionSelectProductRouteParams = WithRouteParams[TransactionSelectProductParams](ParamID, ParamProductID)
-var TransactionSelectProduct = POST("TransactionSelectProduct", TransactionGroup, "/:id/select-product/:product_id", handlers.HandleSelectProductForTransactionItem(), TransactionSelectProductRouteParams)
+var TransactionSelectProduct = Spec("TransactionSelectProduct", MethodGET, TransactionGroup, "/:id/select-product/:product_id", TransactionSelectProductRouteParams)
 
-var TransactionDetailsRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var TransactionDetails = GET("TransactionDetails", TransactionGroup, "/:id", handlers.HandleGetTransactionDetails(), TransactionDetailsRouteParams)
+var TransactionDetailsRouteParams = WithRouteParams[IDParam](ParamID)
+var TransactionDetails = Spec("TransactionDetails", MethodGET, TransactionGroup, "/:id", TransactionDetailsRouteParams)
 
-var TransactionEditFormRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var TransactionEditForm = GET("TransactionEditForm", TransactionGroup, "/:id/edit", handlers.HandleShowUpdateTransactionForm(), TransactionEditFormRouteParams)
+var TransactionEditFormRouteParams = WithRouteParams[IDParam](ParamID)
+var TransactionEditForm = Spec("TransactionEditForm", MethodGET, TransactionGroup, "/:id/edit", TransactionEditFormRouteParams)
 
-var TransactionUpdateRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var TransactionUpdate = PUT("TransactionUpdate", TransactionGroup, "/:id/update", handlers.HandleUpdateTransaction(), TransactionUpdateRouteParams)
+var TransactionUpdateRouteParams = WithRouteParams[IDParam](ParamID)
+var TransactionUpdate = Spec("TransactionUpdate", MethodPUT, TransactionGroup, "/:id/update", TransactionUpdateRouteParams)
 
-var TransactionDeleteRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var TransactionDelete = DELETE("TransactionDelete", TransactionGroup, "/:id/delete", handlers.HandleDeleteTransaction(), TransactionDeleteRouteParams)
+var TransactionDeleteRouteParams = WithRouteParams[IDParam](ParamID)
+var TransactionDelete = Spec("TransactionDelete", MethodDELETE, TransactionGroup, "/:id/delete", TransactionDeleteRouteParams)
 
-var TransactionApplyRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var TransactionApply = POST("TransactionApply", TransactionGroup, "/:id/apply", handlers.HandleApplyTransaction(), TransactionApplyRouteParams)
+var TransactionApplyRouteParams = WithRouteParams[IDParam](ParamID)
+var TransactionApply = Spec("TransactionApply", MethodPOST, TransactionGroup, "/:id/apply", TransactionApplyRouteParams)
 
 var TransactionRoutes = ResourceRoutes{
 	Group: TransactionGroup,
@@ -51,19 +49,19 @@ var TransactionRoutes = ResourceRoutes{
 	},
 }
 
-var TransactionItemGroupDefaultParams = WithRouteParams[SimpleUUIDParam](ParamID)
+var TransactionItemGroupDefaultParams = WithRouteParams[IDParam](ParamID)
 var TransactionItemGroup = Group("/:id/items", WithParent(TransactionGroup))
 
-var TransactionItemCreate = POST("TransactionItemCreate", TransactionItemGroup, "/create", handlers.HandleCreateTransactionItem(), TransactionItemGroupDefaultParams)
+var TransactionItemCreate = Spec("TransactionItemCreate", MethodPOST, TransactionItemGroup, "/create", TransactionItemGroupDefaultParams)
 
 var TransactionItemEditFormRouteParams = WithRouteParams[TransactionItemUUIDParams](ParamID, ParamItemID)
-var TransactionItemEditForm = GET("TransactionItemEditForm", TransactionItemGroup, "/:item_id/edit", handlers.HandleShowUpdateTransactionItemForm(), TransactionItemEditFormRouteParams)
+var TransactionItemEditForm = Spec("TransactionItemEditForm", MethodGET, TransactionItemGroup, "/:item_id/edit", TransactionItemEditFormRouteParams)
 
 var TransactionItemUpdateRouteParams = WithRouteParams[TransactionItemUUIDParams](ParamID, ParamItemID)
-var TransactionItemUpdate = PUT("TransactionItemUpdate", TransactionItemGroup, "/:item_id/update", handlers.HandleUpdateTransactionItem(), TransactionItemUpdateRouteParams)
+var TransactionItemUpdate = Spec("TransactionItemUpdate", MethodPUT, TransactionItemGroup, "/:item_id/update", TransactionItemUpdateRouteParams)
 
 var TransactionItemDeleteRouteParams = WithRouteParams[TransactionItemUUIDParams](ParamID, ParamItemID)
-var TransactionItemDelete = DELETE("TransactionItemDelete", TransactionItemGroup, "/:item_id/delete", handlers.HandleDeleteTransactionItem(), TransactionItemDeleteRouteParams)
+var TransactionItemDelete = Spec("TransactionItemDelete", MethodDELETE, TransactionItemGroup, "/:item_id/delete", TransactionItemDeleteRouteParams)
 
 var TransactionItemRoutes = ResourceRoutes{
 	Group: TransactionItemGroup,

@@ -277,7 +277,7 @@ func TestRouteFullMiddlewares(t *testing.T) {
 func TestRouteRegistration(t *testing.T) {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
-	RegisterRoutes(router)
+	RegisterSpecsForTests(router)
 	ginRouteTable := map[string]gin.RouteInfo{}
 	for _, routeInfo := range router.Routes() {
 		ginRouteTable[routeInfo.Method+"_"+routeInfo.Path] = routeInfo

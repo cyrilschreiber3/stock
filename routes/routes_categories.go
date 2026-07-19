@@ -1,28 +1,26 @@
 package routes
 
-import "github.com/cyrilschreiber3/stock/handlers"
-
 var CategoryGroup = Group("/categories")
 
-var CategoryList = GET[NoParams]("CategoryList", CategoryGroup, "", handlers.HandleGetCategories())
+var CategoryList = Spec0("CategoryList", MethodGET, CategoryGroup, "")
 
-var CategoryOptions = GET[NoParams]("CategoryOptions", CategoryGroup, "/options", handlers.HandleGetCategoryOptions())
+var CategoryOptions = Spec0("CategoryOptions", MethodGET, CategoryGroup, "/options")
 
-var CategoryCreateForm = GET[NoParams]("CategoryCreateForm", CategoryGroup, "/create", handlers.HandleShowCreateCategoryForm())
+var CategoryCreateForm = Spec0("CategoryCreateForm", MethodGET, CategoryGroup, "/create")
 
-var CategoryCreate = POST[NoParams]("CategoryCreate", CategoryGroup, "/create", handlers.HandleCreateCategory())
+var CategoryCreate = Spec0("CategoryCreate", MethodPOST, CategoryGroup, "/create")
 
-var CategoryDetailsRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var CategoryDetails = GET("CategoryDetails", CategoryGroup, "/:id", handlers.HandleGetCategoryDetails(), CategoryDetailsRouteParams)
+var CategoryDetailsRouteParams = WithRouteParams[IDParam](ParamID)
+var CategoryDetails = Spec("CategoryDetails", MethodGET, CategoryGroup, "/:id", CategoryDetailsRouteParams)
 
-var CategoryEditFormRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var CategoryEditForm = GET("CategoryEditForm", CategoryGroup, "/:id/edit", handlers.HandleShowUpdateCategoryForm(), CategoryEditFormRouteParams)
+var CategoryEditFormRouteParams = WithRouteParams[IDParam](ParamID)
+var CategoryEditForm = Spec("CategoryEditForm", MethodGET, CategoryGroup, "/:id/edit", CategoryEditFormRouteParams)
 
-var CategoryUpdateRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var CategoryUpdate = PUT("CategoryUpdate", CategoryGroup, "/:id/update", handlers.HandleUpdateCategory(), CategoryUpdateRouteParams)
+var CategoryUpdateRouteParams = WithRouteParams[IDParam](ParamID)
+var CategoryUpdate = Spec("CategoryUpdate", MethodPUT, CategoryGroup, "/:id/update", CategoryUpdateRouteParams)
 
-var CategoryDeleteRouteParams = WithRouteParams[SimpleUUIDParam](ParamID)
-var CategoryDelete = DELETE("CategoryDelete", CategoryGroup, "/:id/delete", handlers.HandleDeleteCategory(), CategoryDeleteRouteParams)
+var CategoryDeleteRouteParams = WithRouteParams[IDParam](ParamID)
+var CategoryDelete = Spec("CategoryDelete", MethodDELETE, CategoryGroup, "/:id/delete", CategoryDeleteRouteParams)
 
 var CategoryRoutes = ResourceRoutes{
 	Group: CategoryGroup,
@@ -38,28 +36,28 @@ var CategoryRoutes = ResourceRoutes{
 	},
 }
 
-var SubcategoryGroupDefaultParams = WithRouteParams[SimpleUUIDParam](ParamID)
+var SubcategoryGroupDefaultParams = WithRouteParams[IDParam](ParamID)
 var SubcategoryGroup = Group("/:id/subcategories", WithParent(CategoryGroup))
 
-var SubcategoryList = GET("SubcategoryList", SubcategoryGroup, "", handlers.HandleGetSubcategories(), SubcategoryGroupDefaultParams)
+var SubcategoryList = Spec("SubcategoryList", MethodGET, SubcategoryGroup, "", SubcategoryGroupDefaultParams)
 
-var SubcategoryOptions = GET("SubcategoryOptions", SubcategoryGroup, "/options", handlers.HandleGetSubcategoryOptions(), SubcategoryGroupDefaultParams)
+var SubcategoryOptions = Spec("SubcategoryOptions", MethodGET, SubcategoryGroup, "/options", SubcategoryGroupDefaultParams)
 
-var SubcategoryCreateForm = GET("SubcategoryCreateForm", SubcategoryGroup, "/create", handlers.HandleShowCreateSubcategoryForm(), SubcategoryGroupDefaultParams)
+var SubcategoryCreateForm = Spec("SubcategoryCreateForm", MethodGET, SubcategoryGroup, "/create", SubcategoryGroupDefaultParams)
 
-var SubcategoryCreate = POST("SubcategoryCreate", SubcategoryGroup, "/create", handlers.HandleCreateSubcategory(), SubcategoryGroupDefaultParams)
+var SubcategoryCreate = Spec("SubcategoryCreate", MethodPOST, SubcategoryGroup, "/create", SubcategoryGroupDefaultParams)
 
 // var SubcategoryDetailsRouteParams = WithRouteParams[SubcategoryUUIDParams](ParamID, ParamSubcategoryID)
 // var SubcategoryDetails = GET("SubcategoryDetails", SubcategoryGroup, "/:subcategory_id", handlers.HandleGetSubcategoryDetails(), SubcategoryDetailsRouteParams)
 
 var SubcategoryEditFormRouteParams = WithRouteParams[SubcategoryUUIDParams](ParamID, ParamSubcategoryID)
-var SubcategoryEditForm = GET("SubcategoryEditForm", SubcategoryGroup, "/:subcategory_id/edit", handlers.HandleShowUpdateSubcategoryForm(), SubcategoryEditFormRouteParams)
+var SubcategoryEditForm = Spec("SubcategoryEditForm", MethodGET, SubcategoryGroup, "/:subcategory_id/edit", SubcategoryEditFormRouteParams)
 
 var SubcategoryUpdateRouteParams = WithRouteParams[SubcategoryUUIDParams](ParamID, ParamSubcategoryID)
-var SubcategoryUpdate = PUT("SubcategoryUpdate", SubcategoryGroup, "/:subcategory_id/update", handlers.HandleUpdateSubcategory(), SubcategoryUpdateRouteParams)
+var SubcategoryUpdate = Spec("SubcategoryUpdate", MethodPUT, SubcategoryGroup, "/:subcategory_id/update", SubcategoryUpdateRouteParams)
 
 var SubcategoryDeleteRouteParams = WithRouteParams[SubcategoryUUIDParams](ParamID, ParamSubcategoryID)
-var SubcategoryDelete = DELETE("SubcategoryDelete", SubcategoryGroup, "/:subcategory_id/delete", handlers.HandleDeleteSubcategory(), SubcategoryDeleteRouteParams)
+var SubcategoryDelete = Spec("SubcategoryDelete", MethodDELETE, SubcategoryGroup, "/:subcategory_id/delete", SubcategoryDeleteRouteParams)
 
 var SubcategoryRoutes = ResourceRoutes{
 	Group: SubcategoryGroup,
