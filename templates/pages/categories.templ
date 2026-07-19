@@ -1,8 +1,8 @@
 package pages
 
 import (
-	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
@@ -14,7 +14,7 @@ templ Categories(c *gin.Context, categories []repository.Category) {
 	@layouts.Base(c, "Stock") {
 		<div class="my-5 flex justify-between">
 			<h1 class="text-2xl font-bold">Categories</h1>
-			@components.ButtonLink("/categories/create", components.ButtonConfig("Create").
+			@components.ButtonLink(routes.CategoryCreateForm.URL(), components.ButtonConfig("Create").
 				Icon(icons.Plus()).
 				Color("primary"),
 			)
@@ -47,13 +47,13 @@ templ Categories(c *gin.Context, categories []repository.Category) {
 							</td>
 							<td>
 								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(fmt.Sprintf("/categories/%s", category.ID.String()), components.ButtonConfig("View").
+									@components.ButtonLink(routes.CategoryDetails.URL(routes.ID(category.ID)), components.ButtonConfig("View").
 										Icon(icons.InformationCircle()).
 										Color("primary").
 										Style("soft").
 										Size("sm"),
 									)
-									@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/categories/%s/edit", category.ID.String())), components.ButtonConfig("Edit").
+									@components.ButtonLink(routes.CategoryEditForm.URLWithReturnToCurrent(routes.ID(category.ID), c), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Color("info").
 										Style("soft").
@@ -65,7 +65,7 @@ templ Categories(c *gin.Context, categories []repository.Category) {
 										Color("error").
 										Style("soft").
 										Size("sm").
-										HxDelete(fmt.Sprintf("/categories/%s/delete", category.ID.String())).
+										HxDelete(routes.CategoryDelete.URL(routes.ID(category.ID))).
 										HxConfirm("Are you sure you want to delete this category?").
 										HxTarget("closest tr").
 										HxSwap("delete"),
@@ -84,7 +84,7 @@ templ CreateUpdateCategory(c *gin.Context, category *repository.Category) {
 	{{
 		title := "Create category"
 		formMethod := "post"
-		formAction := "/categories/create"
+		formAction := routes.CategoryCreate.URL()
 		submitButtonText := "Create"
 
 		name := ""
@@ -93,7 +93,7 @@ templ CreateUpdateCategory(c *gin.Context, category *repository.Category) {
 		if category != nil {
 			title = "Update category: " + category.Name
 			formMethod = "put"
-			formAction = utils.BuildURLWithReturnPath(c, fmt.Sprintf("/categories/%s/update", category.ID.String()))
+			formAction = routes.CategoryUpdate.URLWithReturn(routes.ID(category.ID), c)
 			submitButtonText = "Update"
 
 			name = category.Name
@@ -118,7 +118,7 @@ templ CreateUpdateCategory(c *gin.Context, category *repository.Category) {
 				Required(),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(utils.ResolveReturnPath(c, "/categories"), components.ButtonConfig("Back").
+				@components.ButtonLink(routes.CategoryList.ReturnOrURL(c), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
@@ -147,7 +147,7 @@ templ CategoryDetails(c *gin.Context, category repository.Category, subcategorie
 				<p class="text-base-content/70 mb-4 text-sm">{ category.Description.String }</p>
 			</div>
 			<div class="flex space-x-2">
-				@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/categories/%s/edit", category.ID.String())), components.ButtonConfig("Edit").
+				@components.ButtonLink(routes.CategoryEditForm.URLWithReturnToCurrent(routes.ID(category.ID), c), components.ButtonConfig("Edit").
 					Icon(icons.PencilSquare()).
 					Color("info"),
 				)
@@ -155,7 +155,7 @@ templ CategoryDetails(c *gin.Context, category repository.Category, subcategorie
 					Icon(icons.Trash()).
 					Color("error").
 					Disabled(!safeToDelete).
-					HxDelete(fmt.Sprintf("/categories/%s/delete", category.ID.String())).
+					HxDelete(routes.CategoryDelete.URLWithReturnToCurrent(routes.ID(category.ID), c)).
 					HxConfirm("Are you sure you want to delete this category?").
 					HxSwap("none"),
 				)
@@ -190,7 +190,7 @@ templ CategoryDetails(c *gin.Context, category repository.Category, subcategorie
 							</td>
 							<td>
 								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/categories/%s/subcategories/%s/edit", category.ID.String(), subcategory.ID.String())), components.ButtonConfig("Edit").
+									@components.ButtonLink(routes.SubcategoryEditForm.URLWithReturnToCurrent(routes.Subcategory(subcategory.CategoryID, subcategory.ID), c), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Color("info").
 										Style("soft").
@@ -202,7 +202,7 @@ templ CategoryDetails(c *gin.Context, category repository.Category, subcategorie
 										Color("error").
 										Style("soft").
 										Size("sm").
-										HxDelete(fmt.Sprintf("/categories/%s/subcategories/%s/delete", category.ID.String(), subcategory.ID.String())).
+										HxDelete(routes.SubcategoryDelete.URL(routes.Subcategory(subcategory.CategoryID, subcategory.ID))).
 										HxConfirm("Are you sure you want to delete this sub-category?").
 										HxTarget("closest tr").
 										HxSwap("delete"),
@@ -253,7 +253,7 @@ templ CategoryDetails(c *gin.Context, category repository.Category, subcategorie
 							</td>
 							<td>
 								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/products/%s/edit", product.ID.String())), components.ButtonConfig("Edit").
+									@components.ButtonLink(routes.ProductEditForm.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Color("info").
 										Style("soft").
@@ -265,7 +265,7 @@ templ CategoryDetails(c *gin.Context, category repository.Category, subcategorie
 										Color("error").
 										Style("soft").
 										Size("sm").
-										HxDelete(fmt.Sprintf("/products/%s/delete", product.ID.String())).
+										HxDelete(routes.ProductDelete.URL(routes.ID(product.ID))).
 										HxConfirm("Are you sure you want to delete this product?").
 										HxTarget("closest tr").
 										HxSwap("delete"),

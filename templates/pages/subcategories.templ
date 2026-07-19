@@ -1,8 +1,8 @@
 package pages
 
 import (
-	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
@@ -18,11 +18,11 @@ templ Subcategories(c *gin.Context, subcategories []repository.SubcategoryWithDe
 				<p class="text-base-content/70 text-sm">Category: { subcategories[0].Category.Name }</p>
 			</div>
 			<div class="flex gap-2">
-				@components.ButtonLink("/categories", components.ButtonConfig("Back to categories").
+				@components.ButtonLink(routes.CategoryList.URL(), components.ButtonConfig("Back to categories").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
-				@components.ButtonLink(fmt.Sprintf("/categories/%s/subcategories/create", subcategories[0].Category.ID.String()), components.ButtonConfig("Create").
+				@components.ButtonLink(routes.SubcategoryCreateForm.URL(routes.ID(subcategories[0].Category.ID)), components.ButtonConfig("Create").
 					Icon(icons.Plus()).
 					Color("primary"),
 				)
@@ -56,7 +56,7 @@ templ Subcategories(c *gin.Context, subcategories []repository.SubcategoryWithDe
 							</td>
 							<td>
 								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/categories/%s/subcategories/%s/edit", subcategories[0].Category.ID.String(), subcategory.ID.String())), components.ButtonConfig("Edit").
+									@components.ButtonLink(routes.SubcategoryEditForm.URLWithReturnToCurrent(routes.Subcategory(subcategory.CategoryID, subcategory.ID), c), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Color("info").
 										Style("soft").
@@ -68,7 +68,7 @@ templ Subcategories(c *gin.Context, subcategories []repository.SubcategoryWithDe
 										Color("error").
 										Style("soft").
 										Size("sm").
-										HxDelete(fmt.Sprintf("/categories/%s/subcategories/%s/delete", subcategories[0].Category.ID.String(), subcategory.ID.String())).
+										HxDelete(routes.SubcategoryDelete.URL(routes.Subcategory(subcategory.Category.ID, subcategory.ID))).
 										HxConfirm("Are you sure you want to delete this sub-category?").
 										HxTarget("closest tr").
 										HxSwap("delete"),
@@ -87,7 +87,7 @@ templ CreateUpdateSubcategory(c *gin.Context, category repository.Category, subc
 	{{
 		title := "Create sub-category"
 		formMethod := "post"
-		formAction := fmt.Sprintf("/categories/%s/subcategories/create", category.ID.String())
+		formAction := routes.SubcategoryCreate.URL(routes.ID(category.ID))
 		submitButtonText := "Create"
 
 		name := ""
@@ -96,9 +96,7 @@ templ CreateUpdateSubcategory(c *gin.Context, category repository.Category, subc
 		if subcategory != nil {
 			title = "Update sub-category: " + subcategory.Name
 			formMethod = "put"
-			formAction = utils.BuildURLWithReturnPath(
-				c, fmt.Sprintf("/categories/%s/subcategories/%s/update", category.ID.String(), subcategory.ID.String()),
-			)
+			formAction = routes.SubcategoryUpdate.URLWithReturn(routes.Subcategory(category.ID, subcategory.ID), c)
 			submitButtonText = "Update"
 
 			name = subcategory.Name
@@ -125,7 +123,7 @@ templ CreateUpdateSubcategory(c *gin.Context, category repository.Category, subc
 				Required(),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(utils.ResolveReturnPath(c, fmt.Sprintf("/categories/%s/subcategories", category.ID.String())), components.ButtonConfig("Back").
+				@components.ButtonLink(routes.SubcategoryList.ReturnOrURL(routes.ID(category.ID), c), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)

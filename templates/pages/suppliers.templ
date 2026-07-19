@@ -1,8 +1,8 @@
 package pages
 
 import (
-	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
@@ -14,7 +14,7 @@ templ Suppliers(c *gin.Context, suppliers []repository.Supplier) {
 	@layouts.Base(c, "Stock") {
 		<div class="my-5 flex justify-between">
 			<h1 class="text-2xl font-bold">Suppliers</h1>
-			@components.ButtonLink("/suppliers/create", components.ButtonConfig("Create").
+			@components.ButtonLink(routes.SupplierCreateForm.URL(), components.ButtonConfig("Create").
 				Icon(icons.Plus()).
 				Color("primary"),
 			)
@@ -47,15 +47,9 @@ templ Suppliers(c *gin.Context, suppliers []repository.Supplier) {
 							</td>
 							<td>
 								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/suppliers/%s/edit", supplier.ID.String())), components.ButtonConfig("Edit").
+									@components.ButtonLink(routes.SupplierEditForm.URLWithReturnToCurrent(routes.ID(supplier.ID), c), components.ButtonConfig("Edit").
 										Icon(icons.PencilSquare()).
 										Color("info").
-										Style("soft").
-										Size("sm"),
-									)
-									@components.ButtonLink(fmt.Sprintf("/suppliers/%s/products", supplier.ID.String()), components.ButtonConfig("Products").
-										Icon(icons.Cube()).
-										Color("secondary").
 										Style("soft").
 										Size("sm"),
 									)
@@ -65,7 +59,7 @@ templ Suppliers(c *gin.Context, suppliers []repository.Supplier) {
 										Color("error").
 										Style("soft").
 										Size("sm").
-										HxDelete(fmt.Sprintf("/suppliers/%s/delete", supplier.ID.String())).
+										HxDelete(routes.SupplierDelete.URL(routes.ID(supplier.ID))).
 										HxConfirm("Are you sure you want to delete this supplier?").
 										HxTarget("closest tr").
 										HxSwap("delete"),
@@ -84,7 +78,7 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 	{{
 		title := "Create supplier"
 		formMethod := "post"
-		formAction := "/suppliers/create"
+		formAction := routes.SupplierCreate.URL()
 		submitButtonText := "Create"
 
 		name := ""
@@ -93,7 +87,7 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 		if supplier != nil {
 			title = "Update supplier: " + supplier.Name
 			formMethod = "put"
-			formAction = utils.BuildURLWithReturnPath(c, fmt.Sprintf("/suppliers/%s/update", supplier.ID.String()))
+			formAction = routes.SupplierUpdate.URLWithReturn(routes.ID(supplier.ID), c)
 			submitButtonText = "Update"
 
 			name = supplier.Name
@@ -118,7 +112,7 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 				Required(),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(utils.ResolveReturnPath(c, "/suppliers"), components.ButtonConfig("Back").
+				@components.ButtonLink(routes.SupplierList.ReturnOrURL(c), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)

@@ -3,10 +3,12 @@ package pages
 import (
 	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 templ TransactionItemRow(c *gin.Context, transactionItem repository.TransactionItemWithDetail, editable bool) {
@@ -23,7 +25,7 @@ templ TransactionItemRow(c *gin.Context, transactionItem repository.TransactionI
 						Style("soft").
 						Size("sm").
 						Color("info").
-						HxGet(fmt.Sprintf("/transactions/%s/items/%s/edit", transactionItem.TransactionID.String(), transactionItem.ID.String())).
+						HxGet(routes.TransactionItemEditForm.URL(routes.TxItem(transactionItem.TransactionID, transactionItem.ID))).
 						HxTarget("#edit_transaction_item_modal>#modal-box").
 						HxSwap("innerHTML"),
 					)
@@ -32,7 +34,7 @@ templ TransactionItemRow(c *gin.Context, transactionItem repository.TransactionI
 						Color("error").
 						Style("soft").
 						Size("sm").
-						HxDelete(fmt.Sprintf("/transactions/%s/items/%s/delete", transactionItem.TransactionID.String(), transactionItem.ID.String())).
+						HxDelete(routes.TransactionItemDelete.URL(routes.TxItem(transactionItem.TransactionID, transactionItem.ID))).
 						HxConfirm("Are you sure you want to delete this transaction item?").
 						HxTarget("closest tr").
 						HxSwap("delete"),
@@ -43,15 +45,15 @@ templ TransactionItemRow(c *gin.Context, transactionItem repository.TransactionI
 	</tr>
 }
 
-templ SelectProductForTransactionItem(c *gin.Context, transactionID string) {
+templ SelectProductForTransactionItem(c *gin.Context, transactionID uuid.UUID) {
 	<div id="modal-content">
 		<h3 class="mb-4 text-lg font-bold">Select a product</h3>
 		@components.Search(components.SearchConfig("product_search").
 			Icon(icons.Cube()).
 			Placeholder("Search for a product").
-			Endpoint(fmt.Sprintf("/transactions/%s/search-products", transactionID)).
+			Endpoint(routes.TransactionSearchProducts.URL(routes.ID(transactionID))).
 			FilterDefault("All Categories").
-			FiltersFromEndpoint("/categories/options").
+			FiltersFromEndpoint(routes.CategoryOptions.URL()).
 			FloatingResults(true),
 		)
 	</div>
@@ -68,7 +70,7 @@ templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWith
 	{{
 		title := "Add product to transaction"
 		formMethod := "post"
-		formAction := fmt.Sprintf("/transactions/%s/items/create", transaction.ID.String())
+		formAction := routes.TransactionItemCreate.URL(routes.ID(transaction.ID))
 		submitButtonText := "Add"
 		modalID := "add_transaction_item_modal"
 
@@ -98,7 +100,7 @@ templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWith
 		if transactionItem != nil {
 			title = "Update product in transaction"
 			formMethod = "put"
-			formAction = fmt.Sprintf("/transactions/%s/items/%s/update", transaction.ID.String(), transactionItem.ID.String())
+			formAction = routes.TransactionItemUpdate.URL(routes.TxItem(transaction.ID, transactionItem.ID))
 			submitButtonText = "Update"
 			modalID = "edit_transaction_item_modal"
 
@@ -122,11 +124,12 @@ templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWith
 					if transactionItem == nil {
 						<div class="shrink-0">
 							@components.Button(components.ButtonConfig("Change").
+								Type("button").
 								Icon(icons.XMark()).
 								Color("primary").
 								Style("link").
 								Size("xs").
-								HxGet(fmt.Sprintf("/transactions/%s/show-search-products", transaction.ID.String())).
+								HxGet(routes.TransactionSearchProductsForm.URL(routes.ID(transaction.ID))).
 								HxTarget(fmt.Sprintf("#%s>#modal-box", modalID)).
 								HxSwap("innerHTML"),
 							)

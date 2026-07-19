@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
@@ -15,7 +16,7 @@ templ Transactions(c *gin.Context, transactions []repository.TransactionWithDeta
 	@layouts.Base(c, "Stock") {
 		<div class="my-5 flex justify-between">
 			<h1 class="text-2xl font-bold">Transactions</h1>
-			@components.ButtonLink("/transactions/create", components.ButtonConfig("Create").
+			@components.ButtonLink(routes.TransactionCreateForm.URL(), components.ButtonConfig("Create").
 				Icon(icons.Plus()).
 				Color("primary"),
 			)
@@ -86,7 +87,7 @@ templ TransactionRow(c *gin.Context, transaction repository.TransactionWithDetai
 		</td>
 		<td>
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(fmt.Sprintf("/transactions/%s", transaction.ID.String()), components.ButtonConfig("View").
+				@components.ButtonLink(routes.TransactionDetails.URL(routes.ID(transaction.ID)), components.ButtonConfig("View").
 					Icon(icons.InformationCircle()).
 					Style("soft").
 					Size("sm").
@@ -94,7 +95,7 @@ templ TransactionRow(c *gin.Context, transaction repository.TransactionWithDetai
 				)
 				switch transaction.State {
 					case "draft":
-						@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/transactions/%s/edit", transaction.ID.String())), components.ButtonConfig("Edit").
+						@components.ButtonLink(routes.TransactionEditForm.URLWithReturnToCurrent(routes.ID(transaction.ID), c), components.ButtonConfig("Edit").
 							Icon(icons.PencilSquare()).
 							Style("soft").
 							Size("sm").
@@ -105,7 +106,7 @@ templ TransactionRow(c *gin.Context, transaction repository.TransactionWithDetai
 							Style("soft").
 							Size("sm").
 							Color("success").
-							HxPost(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/transactions/%s/apply", transaction.ID.String()))).
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
 							HxConfirm("Are you sure you want to apply this transaction?").
 							HxTarget("closest tr").
 							HxSwap("outerHTML").
@@ -117,7 +118,7 @@ templ TransactionRow(c *gin.Context, transaction repository.TransactionWithDetai
 							Style("soft").
 							Size("sm").
 							Color("warning").
-							HxPost(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/transactions/%s/apply", transaction.ID.String()))).
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
 							HxConfirm("Are you sure you want to set this transaction as completed?").
 							HxTarget("closest tr").
 							HxSwap("outerHTML").
@@ -198,28 +199,29 @@ templ TransactionDetails(c *gin.Context, transaction repository.TransactionWithD
 			</dialog>
 		</div>
 		<div class="my-5 flex justify-end space-x-2">
-			@components.ButtonLink("/transactions", components.ButtonConfig("Back to transactions").
+			@components.ButtonLink(routes.TransactionList.URL(), components.ButtonConfig("Back to transactions").
 				Icon(icons.ArrowLeft()).
 				Color("neutral"),
 			)
 			switch transaction.State {
 				case "draft":
-					@components.ButtonLink(utils.BuildReturnURLWithCurrentPath(c, fmt.Sprintf("/transactions/%s/edit", transaction.ID.String())), components.ButtonConfig("Edit").
-						Icon(icons.PencilSquare()).
-						Color("primary"),
+					@components.ButtonLink(routes.TransactionEditForm.URLWithReturnToCurrent(routes.ID(transaction.ID), c),
+						components.ButtonConfig("Edit").
+							Icon(icons.PencilSquare()).
+							Color("primary"),
 					)
 					@components.ButtonDropdown(components.ButtonConfig("Apply transaction").
 						Icon(icons.Check()).
 						Color("success").
 						Classes("join-item").
-						HxPost(fmt.Sprintf("/transactions/%s/apply", transaction.ID.String())).
+						HxPost(routes.TransactionApply.URL(routes.ID(transaction.ID))).
 						HxConfirm("Are you sure you want to apply this transaction?").
 						HxSwap("none").
 						Hx("vals", `{"state":"completed"}`),
 						components.Button(components.ButtonConfig("Apply without refund").
 							Icon(icons.HourGlass()).
 							Color("warning").
-							HxPost(fmt.Sprintf("/transactions/%s/apply", transaction.ID.String())).
+							HxPost(routes.TransactionApply.URL(routes.ID(transaction.ID))).
 							HxConfirm("Are you sure you want to apply this transaction?").
 							HxSwap("none").
 							Hx("vals", `{"state":"pendingRefund"}`),
@@ -228,14 +230,14 @@ templ TransactionDetails(c *gin.Context, transaction repository.TransactionWithD
 					@components.Button(components.ButtonConfig("Delete").
 						Icon(icons.Trash()).
 						Color("error").
-						HxDelete(fmt.Sprintf("/transactions/%s/delete", transaction.ID.String())).
+						HxDelete(routes.TransactionDelete.URL(routes.ID(transaction.ID))).
 						HxConfirm("Are you sure you want to delete this transaction?"),
 					)
 				case "pendingRefund":
 					@components.Button(components.ButtonConfig("Set as completed").
 						Icon(icons.ArrowPath()).
 						Color("warning").
-						HxPost(fmt.Sprintf("/transactions/%s/apply", transaction.ID.String())).
+						HxPost(routes.TransactionApply.URL(routes.ID(transaction.ID))).
 						HxConfirm("Are you sure you want to set this transaction as completed?").
 						HxSwap("none").
 						Hx("vals", `{"state":"completed"}`),
@@ -243,7 +245,7 @@ templ TransactionDetails(c *gin.Context, transaction repository.TransactionWithD
 			}
 		</div>
 		<dialog id="add_transaction_item_modal" class="modal">
-			<div id="modal-box" class="modal-box" hx-get={ fmt.Sprintf("/transactions/%s/show-search-products", transaction.ID.String()) } hx-trigger="load, resetAddTransactionItemModal"></div>
+			<div id="modal-box" class="modal-box" hx-get={ routes.TransactionSearchProductsForm.URL(routes.ID(transaction.ID)) } hx-trigger="load, resetAddTransactionItemModal"></div>
 			<form method="dialog" class="modal-backdrop">
 				<button>close</button>
 			</form>
@@ -255,7 +257,7 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 	{{
 		title := "Create transaction"
 		formMethod := "post"
-		formAction := "/transactions/create"
+		formAction := routes.TransactionCreate.URLWithReturn(c)
 		submitButtonText := "Create"
 
 		transactionDate := ""
@@ -266,7 +268,7 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 		if transaction != nil {
 			title = "Update transaction from " + utils.PgDateToString(transaction.TransactionDate)
 			formMethod = "put"
-			formAction = fmt.Sprintf("/transactions/%s/update", transaction.ID.String())
+			formAction = routes.TransactionUpdate.URLWithReturn(routes.ID(transaction.ID), c)
 			submitButtonText = "Update"
 
 			transactionDate = utils.PgDateToFormString(transaction.TransactionDate)
@@ -318,7 +320,7 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 				Label("Supplier").
 				Placeholder("Select a Supplier").
 				Value(supplierID).
-				OptionsFromEndpoint("/suppliers/options"),
+				OptionsFromEndpoint(routes.SupplierOptions.URL()),
 			)
 			@components.FormField(components.FormFieldConfig("transaction_items").
 				Type("multi").
@@ -330,7 +332,7 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 						Placeholder("Select a product").
 						AsRowField().
 						Required().
-						OptionsFromEndpoint("/products/options"),
+						OptionsFromEndpoint(routes.ProductOptions.URL()),
 					components.FormFieldConfig("quantity").
 						Type("number").
 						Label("Quantity").
@@ -342,21 +344,21 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 						Label("Base unit price (CHF)").
 						Placeholder("Enter base unit price").
 						ValidationPreset("positiveNumber").
-						ValueFromEndpoint("/products/:id/values/default_buy_price").
+						ValueFromEndpoint(routes.ProductField.PatternWithParams(map[string]string{"field": "default_buy_price"})).
 						DependsOn("product_id"),
 					components.FormFieldConfig("final_unit_price").
 						Type("number").
 						Label("Final unit price (CHF)").
 						Placeholder("Enter final unit price").
 						ValidationPreset("positiveNumber").
-						ValueFromEndpoint("/products/:id/values/default_buy_price").
+						ValueFromEndpoint(routes.ProductField.PatternWithParams(map[string]string{"field": "default_buy_price"})).
 						DependsOn("product_id"),
 				), string(defaultItemsJSON)).
 				MultiValueList(transactionItemsList).
 				Required(),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink("/transactions", components.ButtonConfig("Back").
+				@components.ButtonLink(routes.TransactionList.ReturnOrURL(c), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
@@ -374,7 +376,7 @@ templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transact
 	{{
 		title := "Create transaction"
 		formMethod := "post"
-		formAction := "/transactions/create"
+		formAction := routes.TransactionCreate.URL()
 		submitButtonText := "Create"
 
 		transactionDate := ""
@@ -385,7 +387,7 @@ templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transact
 		if transaction != nil {
 			title = "Update transaction from " + utils.PgDateToString(transaction.TransactionDate)
 			formMethod = "put"
-			formAction = fmt.Sprintf("/transactions/%s/update", transaction.ID.String())
+			formAction = routes.TransactionUpdate.URL(routes.ID(transaction.ID))
 			submitButtonText = "Update"
 
 			transactionDate = utils.PgDateToFormString(transaction.TransactionDate)
@@ -422,7 +424,7 @@ templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transact
 				Label("Supplier").
 				Placeholder("Select a Supplier").
 				Value(supplierID).
-				OptionsFromEndpoint("/suppliers/options"),
+				OptionsFromEndpoint(routes.SupplierOptions.URL()),
 			)
 			@components.FormField(components.FormFieldConfig("description").
 				Type("textarea").
@@ -431,7 +433,7 @@ templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transact
 				Value(description),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(utils.ResolveReturnPath(c, "/transactions"), components.ButtonConfig("Back").
+				@components.ButtonLink(routes.TransactionList.ReturnOrURL(c), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
