@@ -27,7 +27,7 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@v22
 
       - name: Run tests
-        run: nix develop --command "make test"
+        run: nix develop --command make test
 
   build:
     runs-on: ubuntu-latest
