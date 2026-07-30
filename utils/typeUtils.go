@@ -35,7 +35,7 @@ func PgDateToString(date pgtype.Date) string {
 	if !date.Valid {
 		return "Unknown"
 	}
-	return date.Time.Format("02-01-2006")
+	return date.Time.Format("02.01.2006")
 }
 
 func PgDateToFormString(date pgtype.Date) string {
@@ -66,12 +66,37 @@ func TimeToNaturalLanguage(t time.Time) string {
 	}
 }
 
+func DateToNaturalLanguage(date time.Time) string {
+	now := time.Now()
+	duration := now.Sub(date)
+
+	if duration < 24*time.Hour {
+		return "today"
+	} else if duration < 48*time.Hour {
+		return "yesterday"
+	} else if duration < 7*24*time.Hour {
+		return date.Weekday().String()
+	} else if date.Year() == now.Year() {
+		return date.Format("Jan 2")
+	} else {
+		return date.Format("Jan 2, 2006")
+	}
+}
+
 func PgTimestampToNaturalLanguage(ts pgtype.Timestamptz) string {
 	if !ts.Valid {
 		return "Unknown"
 	}
 	t := ts.Time
 	return TimeToNaturalLanguage(t)
+}
+
+func PgDateToNaturalLanguage(date pgtype.Date) string {
+	if !date.Valid {
+		return "Unknown"
+	}
+	d := date.Time
+	return DateToNaturalLanguage(d)
 }
 
 func StringToPgText(s string) pgtype.Text {
