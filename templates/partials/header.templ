@@ -1,27 +1,18 @@
 package partials
 
 templ Header() {
-	<header class="navbar bg-base-100 shadow-sm">
+	<header class="navbar bg-base-100/80 border-base-300 sticky top-0 z-40 border-b px-4 shadow-sm backdrop-blur-md sm:px-6 lg:px-8">
 		<div class="flex-1">
-			<a class="btn btn-ghost text-xl">Stock</a>
+			<a href="/" class="btn btn-ghost text-primary hover:bg-base-300/70 text-xl font-bold tracking-tight">Stock</a>
 		</div>
 		<div class="flex-none">
-			<ul class="menu menu-horizontal px-1">
-				<li><a href="/">Home</a></li>
-				<li><a href="/products">Products</a></li>
-				<li><a href="/suppliers">Suppliers</a></li>
-				<li><a href="/categories">Categories</a></li>
-				<li><a href="/transactions">Transactions</a></li>
-				<li><a href="/inventory">Inventory</a></li>
-				// <li>
-				// 	<details>
-				// 		<summary>Parent</summary>
-				// 		<ul class="bg-base-100 rounded-t-none p-2">
-				// 			<li><a>Link 1</a></li>
-				// 			<li><a>Link 2</a></li>
-				// 		</ul>
-				// 	</details>
-				// </li>
+			<ul class="menu menu-horizontal text-base-content/75 gap-1 px-1 text-sm">
+				<li><a class="hover:bg-base-300/70 hover:text-primary" href="/">Home</a></li>
+				<li><a class="hover:bg-base-300/70 hover:text-primary" href="/products">Products</a></li>
+				<li><a class="hover:bg-base-300/70 hover:text-primary" href="/suppliers">Suppliers</a></li>
+				<li><a class="hover:bg-base-300/70 hover:text-primary" href="/categories">Categories</a></li>
+				<li><a class="hover:bg-base-300/70 hover:text-primary" href="/transactions">Transactions</a></li>
+				<li><a class="hover:bg-base-300/70 hover:text-primary" href="/inventory">Inventory</a></li>
 			</ul>
 		</div>
 	</header>

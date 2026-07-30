@@ -1,0 +1,130 @@
+package components
+
+import (
+	"fmt"
+	"github.com/gin-gonic/gin"
+)
+
+// TODO: make the datatable more generic and reusable by configuring the columns by objects and each implementation selects the columns it wants.
+templ DataTable(c *gin.Context, config *DataTableConfig) {
+	{{ config = config.buildConfig() }}
+	<section id={ config.getElementName("table") }>
+		<form
+			id={ config.getFormName() }
+			hx-get={ config.URLString }
+			hx-target={ "#" + config.getElementName("table") }
+			hx-swap="morph:outerHTML"
+			hx-trigger={ config.getFormTriggerString() }
+		>
+			<input type="hidden" name={ config.getSortName() } id={ config.getSortName() } value={ config.SortKey }/>
+			<input type="hidden" name={ config.getSortDirectionName() } id={ config.getSortDirectionName() } value={ config.SortDirection }/>
+		</form>
+		<div class="rounded-box border-base-content/10 bg-base-200 overflow-hidden border shadow-md">
+			<div class="bg-base-100 border-base-content/10 flex flex-wrap items-center justify-between gap-4 border-b p-5">
+				if config.Label != "" {
+					<h2 class="text-xl font-bold tracking-tight">{ config.Label }</h2>
+				}
+				if !config.SearchDisabled {
+					<label class="input input-bordered w-full sm:w-auto sm:min-w-[18rem] sm:max-w-[22rem]">
+						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+							<path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path>
+						</svg>
+						<input type="search" name={ config.getSearchName() } value={ config.SearchValue } placeholder={ config.SearchPlaceholder } form={ config.getFormName() }/>
+					</label>
+				}
+			</div>
+			<div class="bg-base-200 overflow-x-auto">
+				<table class="table">
+					<thead class="bg-base-200/90 border-base-content/10 border-b">
+						<tr>
+							for _, column := range config.Columns {
+								<th>
+									if column.Sortable {
+										<button
+											class={
+												"inline-flex gap-2 rounded-full text-sm font-medium text-base-content/75 transition-colors cursor-pointer hover:bg-base-100/55 hover:text-base-content",
+												templ.KV("bg-base-100/45 text-base-content font-semibold", config.shouldShowArrow(column.Key)),
+											}
+											type="submit"
+											form={ config.getFormName() }
+											aria-label={ "Sort by " + column.Label }
+											aria-sort={ config.sortState(column.Key) }
+											x-on:click={ fmt.Sprintf("document.getElementById('%s').value = '%s';", config.getSortDirectionName(), config.nextSortDirection(column.Key)) +
+												fmt.Sprintf("document.getElementById('%s').value = '%s';", config.getSortName(), column.Key) }
+										>
+											<span>{ column.Label }</span>
+											if config.shouldShowArrow(column.Key) {
+												<span class={ "inline-flex items-center justify-center transition-transform duration-150", templ.KV("rotate-180", config.SortDirection == "desc") } aria-hidden="true">
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" class="size-3">
+														<path stroke-linecap="round" stroke-linejoin="round" d="M3.5 9.5 8 5l4.5 4.5"></path>
+													</svg>
+												</span>
+											}
+										</button>
+									} else {
+										<p class="text-base-content/75 pointer-events-none inline-flex gap-2 rounded-full text-sm font-medium">{ column.Label }</p>
+									}
+								</th>
+							}
+						</tr>
+					</thead>
+					<tbody>
+						{ children... }
+						if config.ItemCount == 0 {
+							<tr><td colspan={ len(config.Columns) } class="text-center">No results found</td></tr>
+						}
+					</tbody>
+				</table>
+			</div>
+			<div class="bg-base-100 border-base-content/10 flex flex-col gap-4 border-t p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+				<div class="flex w-full flex-wrap items-center justify-between gap-3 sm:w-auto sm:justify-start">
+					<p class="text-sm font-medium">{ config.countLabel() }</p>
+					<select name={ config.getPageSizeName() } form={ config.getFormName() } class="select select-sm select-bordered w-auto min-w-16" aria-label="Rows per page">
+						for _, option := range config.PageSizeOptions {
+							<option value={ fmt.Sprintf("%d", option) } selected?={ config.PageSize == option }>{ fmt.Sprintf("%d", option) }</option>
+						}
+					</select>
+				</div>
+				<div class="join flex w-full items-center overflow-x-auto pb-0.5 sm:w-auto sm:pb-0" aria-label="Pagination">
+					{{ pageNumbers := config.pageNumbers() }}
+					<button aria-label="Previous page" type="submit" name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.CurrentPage-1) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item" disabled?={ pageNumbers.DisablePrev }>Prev</button>
+					if pageNumbers.ShowPrefix {
+						<button type="submit" name={ config.getPageSelectName() } value="1" form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item">1</button>
+						<a class="btn border-base-content/10 btn-sm join-item pointer-events-none text-xs">
+							...
+						</a>
+					}
+					for _, page := range pageNumbers.Pages {
+						<button
+							type="submit"
+							name={ config.getPageSelectName() }
+							value={ fmt.Sprintf("%d", page) }
+							form={ config.getFormName() }
+							class={ "btn border-base-content/10 btn-sm join-item", templ.KV("btn-primary btn-active pointer-events-none", page == config.CurrentPage) }
+						>{ fmt.Sprintf("%d", page) }</button>
+					}
+					if pageNumbers.ShowSuffix {
+						<a class="btn border-base-content/10 btn-sm join-item pointer-events-none text-xs">
+							...
+						</a>
+						<button type="submit" name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.TotalPages) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item">{ fmt.Sprintf("%d", config.TotalPages) }</button>
+					}
+					<button aria-label="Next page" type="submit" name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.CurrentPage+1) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item" disabled?={ pageNumbers.DisableNext }>Next</button>
+				</div>
+				// <div class="flex w-full items-center overflow-x-auto pb-0.5 sm:w-auto sm:pb-0" aria-label="Pagination">
+				// 	<p>Page&nbsp;</p>
+				// 	<select name={ config.getPageSelectName() } form={ config.getFormName() } class="select select-sm select-bordered min-w-16" aria-label="Current page">
+				// 		for i := 1; i <= config.TotalPages; i++ {
+				// 			<option value={ fmt.Sprintf("%d", i) } selected?={ i == config.CurrentPage }>{ fmt.Sprintf("%d", i) }</option>
+				// 		}
+				// 	</select>
+				// 	<p>&nbsp;of&nbsp;{ fmt.Sprintf("%d", config.TotalPages) }&nbsp;</p>
+				// 	<div class="join">
+				// 		<button class="btn border-base-content/10 join-item" form={ config.getFormName() } name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.CurrentPage-1) } disabled?={ pageNumbers.DisablePrev }>◄</button>
+				// 		<button class="btn border-base-content/10 join-item" form={ config.getFormName() } name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.CurrentPage+1) } disabled?={ pageNumbers.DisableNext }>►</button>
+				// 	</div>
+				// </div>
+			</div>
+		</div>
+	</section>
+}

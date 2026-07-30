@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
@@ -55,7 +55,7 @@ func HandleGetSubcategoryOptions() gin.HandlerFunc {
 	}
 }
 
-func HandleGetSubcategories() gin.HandlerFunc {
+func HandleSearchSubcategories() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		categoryId, err := parseUUIDParam(c, "id")
 		if err != nil {
@@ -63,14 +63,61 @@ func HandleGetSubcategories() gin.HandlerFunc {
 			return
 		}
 
-		subcategories, err := db.GetSubcategoriesWithCategoryDetailsByCategoryID(c.Request.Context(), categoryId)
+		tableConfig := pages.GetDefaultSubcategoriesForCategoryTableConfig(categoryId).GetConfigFromURL(c)
+
+		subcategories, err := db.SearchSubcategoriesByCategoryID(c, repository.SearchSubcategoriesByCategoryIDParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			CategoryID:    categoryId,
+		})
 		if err != nil {
-			slog.Error("Error retrieving subcategories", "error", err)
-			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve subcategories")
+			slog.Error("Error searching subcategories", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search subcategories")
 			return
 		}
 
-		component := pages.Subcategories(c, subcategories)
+		component := pages.SubcategoriesForCategoryTable(c, categoryId, subcategories, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
+func HandleGetSubcategoryDetails() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		categoryId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid category ID")
+			return
+		}
+
+		subcategoryId, err := parseUUIDParam(c, "subcategory_id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid subcategory ID")
+			return
+		}
+
+		subcategory, err := db.GetSubcategoryWithCategoryDetailsBySubcategoryID(c.Request.Context(), subcategoryId)
+		if err != nil {
+			slog.Error("Error retrieving subcategory", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve subcategory")
+			return
+		}
+
+		productsTableConfig := pages.GetDefaultProductsForSubcategoryTableConfig(categoryId, subcategoryId).GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        productsTableConfig.SearchValue,
+			SortKey:       productsTableConfig.SortKey,
+			SortDirection: productsTableConfig.SortDirection,
+			SubcategoryID: subcategoryId,
+		})
+		if err != nil {
+			slog.Error("Error searching products for subcategory", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search products for subcategory")
+			return
+		}
+
+		component := pages.SubcategoryDetails(c, subcategory, products)
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }
@@ -155,7 +202,7 @@ func HandleCreateSubcategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Subcategory created successfully", fmt.Sprintf("/categories/%s/subcategories", categoryId.String()))
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Subcategory created successfully", routes.CategoryDetails.ReturnOrURL(routes.ID(categoryId), c))
 	}
 }
 
@@ -190,7 +237,7 @@ func HandleUpdateSubcategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Subcategory updated successfully", fmt.Sprintf("/categories/%s/subcategories", categoryId.String()))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Subcategory updated successfully", routes.CategoryDetails.ReturnOrURL(routes.ID(categoryId), c))
 	}
 }
 
@@ -219,6 +266,6 @@ func HandleDeleteSubcategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Subcategory deleted successfully", fmt.Sprintf("/categories/%s/subcategories", categoryId.String()))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Subcategory deleted successfully", routes.CategoryDetails.ReturnOrURL(routes.ID(categoryId), c))
 	}
 }

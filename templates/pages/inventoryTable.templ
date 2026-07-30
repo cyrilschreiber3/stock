@@ -1,0 +1,60 @@
+package pages
+
+import (
+	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
+	"github.com/cyrilschreiber3/stock/templates/components"
+	"github.com/cyrilschreiber3/stock/utils"
+	"github.com/gin-gonic/gin"
+)
+
+var InventoryTableColumns = []components.DataTableColumn{
+	components.NewDataTableColumn("Product brand", "product_brand"),
+	components.NewDataTableColumn("Product Name", "product_name"),
+	components.NewDataTableColumn("Quantity", "quantity"),
+	components.NewDataTableColumn("Average Unit Price", "average_unit_price"),
+	components.NewDataTableColumn("Average Unit Cost", "average_unit_cost"),
+	components.NewDataTableColumn("Updated", "updated"),
+}
+
+func GetDefaultInventoryTableConfig() *components.DataTableConfig {
+	return components.NewDataTableConfig("inventory").
+		SetLabel("Inventory Overview").
+		SetSearchPlaceholder("Search products").
+		SetItemLabel("products", "product").
+		SetURL(routes.InventorySearch).
+		SetSortKey("product_name").
+		SetSortDirection("asc").
+		AddColumns(InventoryTableColumns...)
+}
+
+templ InventoryTableRow(c *gin.Context, product repository.InventoryWithDetail) {
+	<tr class="hover:bg-base-300">
+		<td>{ product.Product.Brand }</td>
+		<td>{ product.Product.Name }</td>
+		<td>{ product.TotalQuantity }</td>
+		<td>{ utils.PgNumericToString(averageUnitPrice(product.TotalBuyPrice, product.TotalBuyQuantity), "0.00") } CHF</td>
+		<td>{ utils.PgNumericToString(averageUnitPrice(product.TotalSellPrice, product.TotalSellQuantity), "0.00") } CHF</td>
+		<td>
+			<div class="tooltip" data-tip={ utils.PgTimestampToString(product.UpdatedAt) }>
+				{ utils.PgTimestampToNaturalLanguage(product.UpdatedAt) }
+			</div>
+		</td>
+	</tr>
+}
+
+templ InventoryTable(c *gin.Context, inventory []repository.InventoryWithDetail, tableConfig *components.DataTableConfig) {
+	{{
+		if tableConfig == nil {
+			tableConfig = GetDefaultInventoryTableConfig().GetConfigFromURL(c)
+		}
+		tableConfig = tableConfig.
+			SetItemCount(len(inventory)).
+			SetConfigToURL(c)
+	}}
+	@components.DataTable(c, tableConfig) {
+		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(inventory)); i++ {
+			@InventoryTableRow(c, inventory[i])
+		}
+	}
+}

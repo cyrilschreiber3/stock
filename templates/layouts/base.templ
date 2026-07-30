@@ -1,11 +1,12 @@
 package layouts
 
 import (
+	"github.com/cyrilschreiber3/stock/static"
 	"github.com/cyrilschreiber3/stock/templates/partials"
 	"github.com/gin-gonic/gin"
 )
 
-templ Base(c *gin.Context, title string) {
+templ OldBase(c *gin.Context, title string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -16,15 +17,122 @@ templ Base(c *gin.Context, title string) {
 			<script src="/static/htmx.min.js"></script>
 			<script src="/static/alpine.min.js" defer></script>
 			<link rel="stylesheet" href="/static/styles.css"/>
-			<link rel="stylesheet" href="/static/customStyles.css"/>
-			<title>{ title }</title>
+			<title>{ title } — Stock</title>
 		</head>
-		<body class="mx-auto max-w-[90rem]">
+		<body class="bg-base-100 text-base-content min-h-screen antialiased">
 			@partials.Header()
-			<main class="mx-auto mt-8 max-w-6xl p-4">
+			<main class="mx-auto mt-8 max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
 				@partials.MessagesHandler(c)
 				{ children... }
 			</main>
+			@partials.NotificationHandler(c)
+		</body>
+	</html>
+}
+
+templ baseNavItem(label string, href string, section string, currentSection string) {
+	<li>
+		if currentSection == section {
+			<a href={ templ.SafeURL(href) } @click="if (window.innerWidth < 1024) sidebarOpen = false" class="active border-primary/20 bg-primary/12 text-primary border font-semibold">{ label }</a>
+		} else {
+			<a href={ templ.SafeURL(href) } @click="if (window.innerWidth < 1024) sidebarOpen = false" class="text-base-content/70 hover:bg-base-300/70 hover:text-primary transition-colors">{ label }</a>
+		}
+	</li>
+}
+
+templ Base(c *gin.Context, title string, currentSection string) {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="night">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<script src={ "/static/htmx.min.js?v=" + static.Version }></script>
+			<script src={ "/static/alpine.min.js?v=" + static.Version } defer></script>
+			<script src={ "/static/idiomorph-ext.min.js?v=" + static.Version } defer></script>
+			<link rel="stylesheet" href={ "/static/styles.css?v=" + static.Version }/>
+			<link rel="stylesheet" href={ "/static/customStyles.css?v=" + static.Version }/>
+			<title>{ title } — Stock</title>
+		</head>
+		<body
+			hx-ext="morph"
+			x-data="{ sidebarOpen: false }"
+			@keydown.escape.window="sidebarOpen = false"
+			class="text-base-content bg-base-300 flex h-screen overflow-hidden antialiased"
+		>
+			<div
+				x-show="sidebarOpen"
+				x-transition.opacity.duration.150ms
+				@click="sidebarOpen = false"
+				class="bg-base-content/45 fixed inset-0 z-30 lg:hidden"
+			></div>
+			// Sidebar
+			<aside
+				:class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+				class="bg-base-100/92 border-base-content/10 fixed inset-y-0 left-0 z-40 flex w-[17.5rem] flex-shrink-0 flex-col border-r backdrop-blur-sm transition-transform duration-200 ease-out lg:static lg:z-auto"
+			>
+				// Brand
+				<div class="border-base-content/10 flex items-center justify-between border-b px-5 py-5">
+					<div>
+						<p class="text-primary text-lg font-bold leading-none tracking-tight">Stock</p>
+						<p class="text-base-content/55 mt-1 text-xs tracking-wide">Inventory Management</p>
+					</div>
+					<button
+						type="button"
+						@click="sidebarOpen = false"
+						class="btn btn-ghost btn-square btn-sm lg:hidden"
+						aria-label="Close sidebar"
+					>
+						X
+					</button>
+				</div>
+				// Navigation
+				<nav class="flex-1 overflow-y-auto px-2 py-4">
+					<ul class="menu menu-md w-full gap-1 p-0">
+						<li class="menu-title text-[0.7rem] uppercase tracking-[0.2em]">Overview</li>
+						@baseNavItem("Home", "/", "home", currentSection)
+						<li class="menu-title pt-3 text-[0.7rem] uppercase tracking-[0.2em]">Catalog</li>
+						@baseNavItem("Products", "/products", "products", currentSection)
+						@baseNavItem("Categories", "/categories", "categories", currentSection)
+						@baseNavItem("Suppliers", "/suppliers", "suppliers", currentSection)
+						<li class="menu-title pt-3 text-[0.7rem] uppercase tracking-[0.2em]">Operations</li>
+						@baseNavItem("Transactions", "/transactions", "transactions", currentSection)
+						@baseNavItem("Inventory", "/inventory", "inventory", currentSection)
+					</ul>
+				</nav>
+			</aside>
+			// Main area
+			<div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+				// Top bar
+				<header class="bg-base-200/84 border-base-content/10 flex h-14 flex-shrink-0 items-center border-b px-6 backdrop-blur-md">
+					<button
+						type="button"
+						@click="sidebarOpen = true"
+						class="btn btn-ghost btn-square btn-sm mr-2 lg:hidden"
+						aria-label="Open sidebar"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+						</svg>
+					</button>
+					<div class="breadcrumbs py-0 text-sm">
+						<ul>
+							<li><span class="text-base-content/50">Stock</span></li>
+							<li><span class="font-semibold">{ title }</span></li>
+						</ul>
+					</div>
+				</header>
+				// Page content
+				<main class="bg-base-100/20 flex flex-1 flex-col overflow-y-auto p-6">
+					@partials.MessagesHandler(c)
+					<div class="flex-1">
+						{ children... }
+					</div>
+					// Footer
+					<footer class="border-base-content/10 text-base-content/50 mt-auto py-3 pb-0 pt-6 text-center text-xs">
+						<span>Stock • Cyril Schreiber • <a href="https://github.com/cyrilschreiber3/stock" target="_blank" class="hover:text-base-content transition-colors">GitHub</a></span>
+					</footer>
+				</main>
+			</div>
 			@partials.NotificationHandler(c)
 		</body>
 	</html>

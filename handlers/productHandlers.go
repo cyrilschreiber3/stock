@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
@@ -41,6 +42,113 @@ func HandleGetProductOptions() gin.HandlerFunc {
 		component := components.SelectOptions(placeholder, selectedId, productOptions, required)
 
 		utils.RenderTemplate(c, statusCode, component)
+	}
+}
+
+func HandleSearchProducts() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tableConfig := pages.GetDefaultProductsTableConfig().GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
+		if err != nil {
+			slog.Error("Error searching products", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search products")
+			return
+		}
+
+		component := pages.ProductsTable(c, products, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
+func HandleSearchProductsByCategory() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		categoryId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid category ID")
+			return
+		}
+
+		tableConfig := pages.GetDefaultProductsForCategoryTableConfig(categoryId).GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			CategoryID:    categoryId,
+		})
+		if err != nil {
+			slog.Error("Error searching products by category", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search products by category")
+			return
+		}
+
+		component := pages.ProductsForCategoryTable(c, categoryId, products, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
+func HandleSearchProductsBySubcategory() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		categoryId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid category ID")
+			return
+		}
+
+		subcategoryId, err := parseUUIDParam(c, "subcategory_id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid subcategory ID")
+			return
+		}
+
+		tableConfig := pages.GetDefaultProductsForSubcategoryTableConfig(categoryId, subcategoryId).GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			SubcategoryID: subcategoryId,
+		})
+		if err != nil {
+			slog.Error("Error searching products by subcategory", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search products by subcategory")
+			return
+		}
+
+		component := pages.ProductsForSubcategoryTable(c, categoryId, subcategoryId, products, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
+func HandleSearchProductsBySupplier() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		supplierId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid supplier ID")
+			return
+		}
+
+		tableConfig := pages.GetDefaultProductsForSupplierTableConfig(supplierId).GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			SupplierID:    supplierId,
+		})
+		if err != nil {
+			slog.Error("Error searching products by supplier", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search products by supplier")
+			return
+		}
+
+		component := pages.ProductsForSupplierTable(c, supplierId, products, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }
 
@@ -94,7 +202,13 @@ func HandleGetProductFieldValue() gin.HandlerFunc {
 
 func HandleGetProducts() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		products, err := db.GetAllProductWithDetails(c.Request.Context())
+		tableConfig := pages.GetDefaultProductsTableConfig().GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
 		if err != nil {
 			slog.Error("Error retrieving products", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve products")
@@ -123,14 +237,28 @@ func HandleGetProductDetails() gin.HandlerFunc {
 			return
 		}
 
-		inventoryLots, err := db.GetInventoryLotsByProductID(c.Request.Context(), productIdUUID)
+		inventoryLotsTableConfig := pages.GetDefaultInventoryLotsForProductTableConfig(productIdUUID).GetConfigFromURL(c)
+
+		inventoryLots, err := db.SearchInventoryLotsWithDetails(c.Request.Context(), repository.SearchInventoryLotsWithDetailsParams{
+			Search:        inventoryLotsTableConfig.SearchValue,
+			SortKey:       inventoryLotsTableConfig.SortKey,
+			SortDirection: inventoryLotsTableConfig.SortDirection,
+			ProductID:     productIdUUID,
+		})
 		if err != nil {
 			slog.Error("Error retrieving inventory lots", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve inventory lots")
 			return
 		}
 
-		transactions, err := db.GetTransactionsWithDetailsByProductID(c.Request.Context(), productIdUUID)
+		transactionTableConfig := pages.GetDefaultTransactionsForProductTableConfig(productIdUUID).GetConfigFromURL(c)
+
+		transactions, err := db.SearchTransactionsWithDetailsAndItems(c.Request.Context(), repository.SearchTransactionsWithDetailsAndItemsParams{
+			Search:        transactionTableConfig.SearchValue,
+			SortKey:       transactionTableConfig.SortKey,
+			SortDirection: transactionTableConfig.SortDirection,
+			ProductID:     productIdUUID,
+		})
 		if err != nil {
 			slog.Error("Error retrieving transactions", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transactions")
@@ -178,7 +306,7 @@ func HandleCreateProduct() gin.HandlerFunc {
 			return
 		}
 
-		_, err = db.CreateProduct(c.Request.Context(), repository.CreateProductParams{
+		newProduct, err := db.CreateProduct(c.Request.Context(), repository.CreateProductParams{
 			Brand:             product.Brand,
 			Name:              product.Name,
 			CategoryID:        product.CategoryID,
@@ -192,10 +320,10 @@ func HandleCreateProduct() gin.HandlerFunc {
 			slog.Error("Error creating product", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not create product")
 			return
-		} // utils.HXRedirectWithNotify(c, http.StatusOK, "success", "Product updated successfully", "/products")
+		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Product created successfully", "/products")
-
+		redirectURL := routes.ProductDetails.ReturnOrURL(routes.ID(newProduct.ID), c)
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Product created successfully", redirectURL)
 	}
 }
 
@@ -232,7 +360,8 @@ func HandleUpdateProduct() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product updated successfully", "/products")
+		redirectURL := routes.ProductDetails.ReturnOrURL(routes.ID(productIdUUID), c)
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product updated successfully", redirectURL)
 	}
 }
 
@@ -261,6 +390,12 @@ func HandleDeleteProduct() gin.HandlerFunc {
 
 		if result == 0 {
 			utils.HXNotify(c, http.StatusNotFound, "error", "No product found with the given ID")
+			return
+		}
+
+		returnURL := utils.ResolveReturnPath(c, "")
+		if returnURL == routes.ProductDetails.URL(routes.ID(productIdUUID)) {
+			utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Product deleted successfully", routes.ProductList.URL())
 			return
 		}
 

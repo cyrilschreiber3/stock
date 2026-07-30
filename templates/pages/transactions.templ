@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
@@ -11,229 +12,134 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-templ Transactions(c *gin.Context, transactions []repository.GetTransactionsWithDetailsRow) {
-	@layouts.Base(c, "Stock") {
-		<div class="my-5 flex justify-between">
-			<h1 class="text-2xl font-bold">Transactions</h1>
-			@components.ButtonLink("/transactions/create", components.ButtonConfig("Create").
-				Icon(icons.Plus()).
-				Color("primary"),
-			)
-		</div>
-		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Type</th>
-						<th>State</th>
-						<th>Supplier</th>
-						<th>Base price</th>
-						<th>Final price</th>
-						<th>Created</th>
-						<th>Last updated</th>
-						<th>Applied</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					for _, transaction := range transactions {
-						@TransactionRow(c, transaction)
-					}
-				</tbody>
-			</table>
+templ Transactions(c *gin.Context, transactions []repository.TransactionWithDetail) {
+	@layouts.Base(c, "Transactions", "transactions") {
+		<div class="flex flex-col gap-6">
+			<div class="flex justify-between">
+				<h1 class="text-2xl font-bold">Transactions</h1>
+				@components.ButtonLink(routes.TransactionCreateForm.URL(), components.ButtonConfig("Create").
+					Icon(icons.Plus()).
+					Color("primary"),
+				)
+			</div>
+			@TransactionsTable(c, transactions, nil)
 		</div>
 	}
 }
 
-templ TransactionRow(c *gin.Context, transaction repository.GetTransactionsWithDetailsRow) {
-	{{
-		supplierName := "N/A"
-		if transaction.SupplierName.Valid {
-			supplierName = transaction.SupplierName.String
-		}
-
-		appliedAtString := "N/A"
-		appliedAtNL := "N/A"
-		if transaction.AppliedAt.Valid {
-			appliedAtString = utils.PgTimestampToString(transaction.AppliedAt)
-			appliedAtNL = utils.PgTimestampToNaturalLanguage(transaction.AppliedAt)
-		}
-	}}
-	<tr>
-		<td>
-			@transactionTypeBadge(transaction.TransactionType)
-		</td>
-		<td>
-			@transactionStateBadge(transaction.State)
-		</td>
-		<td>{ supplierName }</td>
-		<td>{ utils.PgNumericToString(transaction.BasePrice, "0.00") }</td>
-		<td>{ utils.PgNumericToString(transaction.FinalPrice, "0.00") }</td>
-		<td>
-			<div class="tooltip" data-tip={ utils.PgTimestampToString(transaction.CreatedAt) }>
-				{ utils.PgTimestampToNaturalLanguage(transaction.CreatedAt) }
-			</div>
-		</td>
-		<td>
-			<div class="tooltip" data-tip={ utils.PgTimestampToString(transaction.UpdatedAt) }>
-				{ utils.PgTimestampToNaturalLanguage(transaction.UpdatedAt) }
-			</div>
-		</td>
-		<td>
-			<div class="tooltip" data-tip={ appliedAtString }>
-				{ appliedAtNL }
-			</div>
-		</td>
-		<td>
-			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(fmt.Sprintf("/transactions/%s", transaction.ID.String()), components.ButtonConfig("View").
-					Icon(icons.InformationCircle()).
-					Style("soft").
-					Size("sm").
-					Color("info"),
-				)
-				if transaction.State == "draft" {
-					// @components.ButtonLink(fmt.Sprintf("/transactions/%s/edit", transaction.ID.String()), components.ButtonConfig("Edit").
-					// 	Icon(icons.PencilSquare()).
-					// 	Style("soft").
-					// 	Size("sm").
-					// 	Color("primary"),
-					// )
-					@components.Button(components.ButtonConfig("Apply").
-						Icon(icons.Check()).
-						Style("soft").
-						Size("sm").
-						Color("success").
-						HxPost(fmt.Sprintf("/transactions/%s/apply", transaction.ID.String())).
-						HxConfirm("Are you sure you want to apply this transaction?").
-						HxTarget("closest tr").
-						Hx("vals", `{"state":"completed"}`),
-					)
-				}
-			</div>
-		</td>
-	</tr>
+templ TransactionRow(c *gin.Context, transaction repository.TransactionWithDetail) {
+	@TransactionsTableRow(c, transaction)
 }
 
-templ TransactionDetails(c *gin.Context, transaction repository.GetTransactionWithDetailsByIDRow, transactionItems []repository.GetTransactionItemsWithDetailsByTransactionIDRow) {
+templ TransactionDetails(c *gin.Context, transaction repository.TransactionWithDetail, transactionItems []repository.TransactionItemWithDetail) {
 	{{
 		supplierName := "N/A"
-		if transaction.SupplierName.Valid {
-			supplierName = transaction.SupplierName.String
+		if transaction.SupplierID != nil {
+			supplierName = transaction.Supplier.Name
 		}
 
 		editable := transaction.State == "draft"
 	}}
-	@layouts.Base(c, "Stock") {
-		<div class="my-5 flex justify-between">
-			<h1 class="text-2xl font-bold">Transaction details</h1>
-		</div>
-		<div class="card card-border bg-base-100 w-96">
-			<div class="card-body">
-				<p>
-					<strong>Transaction type:</strong>&nbsp;
-					@transactionTypeBadge(transaction.TransactionType)
-				</p>
-				<p>
-					<strong>State:</strong>&nbsp;
-					@transactionStateBadge(transaction.State)
-				</p>
-				<p><strong>Supplier:</strong> { supplierName }</p>
-				<p><strong>Base price:</strong> <span id="transaction-base-price">{ utils.PgNumericToString(transaction.BasePrice, "0.00") } CHF</span></p>
-				<p><strong>Final price:</strong> <span id="transaction-final-price">{ utils.PgNumericToString(transaction.FinalPrice, "0.00") } CHF</span></p>
-				if transaction.AppliedAt.Valid {
-					<p><strong>Applied at:</strong> <span class="tooltip" data-tip={ utils.PgTimestampToString(transaction.AppliedAt) }>{ utils.PgTimestampToNaturalLanguage(transaction.AppliedAt) }</span></p>
-				}
-				if transaction.Description != "" {
-					<p><strong>Description:</strong> { transaction.Description }</p>
+	@layouts.Base(c, "Transaction details", "transactions") {
+		<div class="flex flex-col gap-6">
+			<div class="flex justify-between">
+				<h1 class="text-2xl font-bold">Transaction details</h1>
+			</div>
+			<div class="card card-border bg-base-100 w-96">
+				<div class="card-body">
+					<p>
+						<strong>Transaction date:</strong>&nbsp;
+						<span class="tooltip" data-tip={ utils.PgDateToString(transaction.TransactionDate) }>{ utils.PgDateToNaturalLanguage(transaction.TransactionDate) }</span>
+					</p>
+					<p>
+						<strong>Transaction type:</strong>&nbsp;
+						@transactionTypeBadge(transaction.TransactionType)
+					</p>
+					<p>
+						<strong>State:</strong>&nbsp;
+						@transactionStateBadge(transaction.State)
+					</p>
+					<p><strong>Supplier:</strong> { supplierName }</p>
+					<p><strong>Base price:</strong> <span id="transaction-base-price">{ utils.PgNumericToString(transaction.BasePrice, "0.00") } CHF</span></p>
+					<p><strong>Final price:</strong> <span id="transaction-final-price">{ utils.PgNumericToString(transaction.FinalPrice, "0.00") } CHF</span></p>
+					if transaction.AppliedAt.Valid {
+						<p><strong>Applied at:</strong> <span class="tooltip" data-tip={ utils.PgTimestampToString(transaction.AppliedAt) }>{ utils.PgTimestampToNaturalLanguage(transaction.AppliedAt) }</span></p>
+					}
+					if transaction.Description != "" {
+						<p><strong>Description:</strong> { transaction.Description }</p>
+					}
+				</div>
+			</div>
+			<div class="flex justify-between">
+				<h2 class="text-xl font-bold">Transaction items</h2>
+				if editable {
+					@components.Button(components.ButtonConfig("Add product").
+						Icon(icons.Plus()).
+						Color("secondary").
+						OnClick("document.querySelector('#add_transaction_item_modal #modal-box').dispatchEvent(new Event('resetAddTransactionItemModal')); add_transaction_item_modal.showModal()"),
+					)
 				}
 			</div>
-		</div>
-		<div class="my-5 flex justify-between">
-			<h2 class="text-xl font-bold">Transaction items</h2>
-			if editable {
-				@components.Button(components.ButtonConfig("Add product").
-					Icon(icons.Plus()).
-					Color("secondary").
-					OnClick("document.querySelector('#add_transaction_item_modal #modal-box').dispatchEvent(new Event('resetAddTransactionItemModal')); add_transaction_item_modal.showModal()"),
+			@TransactionItemsTable(c, transaction.ID, transactionItems, editable, nil)
+			<div class="flex justify-end gap-2">
+				@components.ButtonLink(routes.TransactionList.URL(), components.ButtonConfig("Back to transactions").
+					Icon(icons.ArrowLeft()).
+					Color("neutral"),
 				)
-			}
-		</div>
-		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Product</th>
-						<th>Quantity</th>
-						<th>Base unit price</th>
-						<th>Final unit price</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody id="transaction-items">
-					for _, item := range transactionItems {
-						@TransactionItemRow(c, item, editable)
-					}
-				</tbody>
-			</table>
+				switch transaction.State {
+					case "draft":
+						@components.ButtonLink(routes.TransactionEditForm.URLWithReturnToCurrent(routes.ID(transaction.ID), c),
+							components.ButtonConfig("Edit").
+								Icon(icons.PencilSquare()).
+								Color("primary"),
+						)
+						@components.ButtonDropdown(components.ButtonConfig("Apply transaction").
+							Icon(icons.Check()).
+							Color("success").
+							Classes("join-item").
+							HxPost(routes.TransactionApply.URL(routes.ID(transaction.ID))).
+							HxConfirm("Are you sure you want to apply this transaction?").
+							HxSwap("none").
+							Hx("vals", `{"state":"completed"}`),
+							components.Button(components.ButtonConfig("Apply without refund").
+								Icon(icons.HourGlass()).
+								Color("warning").
+								HxPost(routes.TransactionApply.URL(routes.ID(transaction.ID))).
+								HxConfirm("Are you sure you want to apply this transaction?").
+								HxSwap("none").
+								Hx("vals", `{"state":"pendingRefund"}`),
+							),
+						)
+						@components.Button(components.ButtonConfig("Delete").
+							Icon(icons.Trash()).
+							Color("error").
+							HxDelete(routes.TransactionDelete.URL(routes.ID(transaction.ID))).
+							HxConfirm("Are you sure you want to delete this transaction?"),
+						)
+					case "pendingRefund":
+						@components.Button(components.ButtonConfig("Set as completed").
+							Icon(icons.ArrowPath()).
+							Color("warning").
+							HxPost(routes.TransactionApply.URL(routes.ID(transaction.ID))).
+							HxConfirm("Are you sure you want to set this transaction as completed?").
+							HxSwap("none").
+							Hx("vals", `{"state":"completed"}`),
+						)
+				}
+			</div>
 			<dialog id="edit_transaction_item_modal" class="modal">
 				<div id="modal-box" class="modal-box" hx-on:htmx:after-swap="if(event.detail.successful) { edit_transaction_item_modal.showModal(); }"></div>
 				<form method="dialog" class="modal-backdrop">
 					<button>close</button>
 				</form>
 			</dialog>
+			<dialog id="add_transaction_item_modal" class="modal">
+				<div id="modal-box" class="modal-box" hx-get={ routes.TransactionSearchProductsForm.URL(routes.ID(transaction.ID)) } hx-trigger="load, resetAddTransactionItemModal"></div>
+				<form method="dialog" class="modal-backdrop">
+					<button>close</button>
+				</form>
+			</dialog>
 		</div>
-		<div class="my-5 flex justify-end space-x-2">
-			@components.ButtonLink("/transactions", components.ButtonConfig("Back to transactions").
-				Icon(icons.ArrowLeft()).
-				Color("neutral"),
-			)
-			switch transaction.State {
-				case "draft":
-					@components.ButtonLink(fmt.Sprintf("/transactions/%s/edit", transaction.ID.String()), components.ButtonConfig("Edit").
-						Icon(icons.PencilSquare()).
-						Color("primary"),
-					)
-					@components.ButtonDropdown(components.ButtonConfig("Apply transaction").
-						Icon(icons.Check()).
-						Color("success").
-						Classes("join-item").
-						HxPost(fmt.Sprintf("/transactions/%s/apply", transaction.ID.String())).
-						HxConfirm("Are you sure you want to apply this transaction?").
-						HxSwap("none").
-						Hx("vals", `{"state":"completed"}`),
-						components.Button(components.ButtonConfig("Apply without refund").
-							Icon(icons.HourGlass()).
-							Color("warning").
-							HxPost(fmt.Sprintf("/transactions/%s/apply", transaction.ID.String())).
-							HxConfirm("Are you sure you want to apply this transaction?").
-							HxSwap("none").
-							Hx("vals", `{"state":"pendingRefund"}`),
-						),
-					)
-					@components.Button(components.ButtonConfig("Delete").
-						Icon(icons.Trash()).
-						Color("error").
-						HxDelete(fmt.Sprintf("/transactions/%s/delete", transaction.ID.String())).
-						HxConfirm("Are you sure you want to delete this transaction?"),
-					)
-				case "pendingRefund":
-					@components.Button(components.ButtonConfig("Set as completed").
-						Icon(icons.ArrowPath()).
-						Color("warning").
-						HxPost(fmt.Sprintf("/transactions/%s/apply", transaction.ID.String())).
-						HxConfirm("Are you sure you want to set this transaction as completed?").
-						HxSwap("none").
-						Hx("vals", `{"state":"completed"}`),
-					)
-			}
-		</div>
-		<dialog id="add_transaction_item_modal" class="modal">
-			<div id="modal-box" class="modal-box" hx-get={ fmt.Sprintf("/transactions/%s/show-search-products", transaction.ID.String()) } hx-trigger="load, resetAddTransactionItemModal"></div>
-			<form method="dialog" class="modal-backdrop">
-				<button>close</button>
-			</form>
-		</dialog>
 	}
 }
 
@@ -241,7 +147,7 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 	{{
 		title := "Create transaction"
 		formMethod := "post"
-		formAction := "/transactions/create"
+		formAction := routes.TransactionCreate.URLWithReturn(c)
 		submitButtonText := "Create"
 
 		transactionDate := ""
@@ -252,12 +158,14 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 		if transaction != nil {
 			title = "Update transaction from " + utils.PgDateToString(transaction.TransactionDate)
 			formMethod = "put"
-			formAction = fmt.Sprintf("/transactions/%s/update", transaction.ID.String())
+			formAction = routes.TransactionUpdate.URLWithReturn(routes.ID(transaction.ID), c)
 			submitButtonText = "Update"
 
 			transactionDate = utils.PgDateToFormString(transaction.TransactionDate)
 			transactionType = transaction.TransactionType
-			supplierID = transaction.SupplierID.String()
+			if transaction.SupplierID != nil {
+				supplierID = transaction.SupplierID.String()
+			}
 			transactionItemsList = make([]map[string]string, len(*transactionItems))
 			for i, item := range *transactionItems {
 				transactionItemsList[i] = map[string]string{
@@ -276,7 +184,7 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 			"final_unit_price": "",
 		})
 	}}
-	@layouts.Base(c, title) {
+	@layouts.OldBase(c, title) {
 		<h1 class="mb-4 text-2xl font-bold">{ title }</h1>
 		<form id="supplier-form" name="supplier-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
 			@components.FormField(components.FormFieldConfig("transaction_date").
@@ -304,7 +212,7 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 				Label("Supplier").
 				Placeholder("Select a Supplier").
 				Value(supplierID).
-				OptionsFromEndpoint("/suppliers/options"),
+				OptionsFromEndpoint(routes.SupplierOptions.URL()),
 			)
 			@components.FormField(components.FormFieldConfig("transaction_items").
 				Type("multi").
@@ -316,7 +224,7 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 						Placeholder("Select a product").
 						AsRowField().
 						Required().
-						OptionsFromEndpoint("/products/options"),
+						OptionsFromEndpoint(routes.ProductOptions.URL()),
 					components.FormFieldConfig("quantity").
 						Type("number").
 						Label("Quantity").
@@ -328,21 +236,21 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 						Label("Base unit price (CHF)").
 						Placeholder("Enter base unit price").
 						ValidationPreset("positiveNumber").
-						ValueFromEndpoint("/products/:id/values/default_buy_price").
+						ValueFromEndpoint(routes.ProductField.PatternWithParams(map[string]string{"field": "default_buy_price"})).
 						DependsOn("product_id"),
 					components.FormFieldConfig("final_unit_price").
 						Type("number").
 						Label("Final unit price (CHF)").
 						Placeholder("Enter final unit price").
 						ValidationPreset("positiveNumber").
-						ValueFromEndpoint("/products/:id/values/default_buy_price").
+						ValueFromEndpoint(routes.ProductField.PatternWithParams(map[string]string{"field": "default_buy_price"})).
 						DependsOn("product_id"),
 				), string(defaultItemsJSON)).
 				MultiValueList(transactionItemsList).
 				Required(),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink("/transactions", components.ButtonConfig("Back").
+				@components.ButtonLink(routes.TransactionList.ReturnOrURL(c), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
@@ -360,7 +268,7 @@ templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transact
 	{{
 		title := "Create transaction"
 		formMethod := "post"
-		formAction := "/transactions/create"
+		formAction := routes.TransactionCreate.URLWithReturn(c)
 		submitButtonText := "Create"
 
 		transactionDate := ""
@@ -371,16 +279,18 @@ templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transact
 		if transaction != nil {
 			title = "Update transaction from " + utils.PgDateToString(transaction.TransactionDate)
 			formMethod = "put"
-			formAction = fmt.Sprintf("/transactions/%s/update", transaction.ID.String())
+			formAction = routes.TransactionUpdate.URLWithReturn(routes.ID(transaction.ID), c)
 			submitButtonText = "Update"
 
 			transactionDate = utils.PgDateToFormString(transaction.TransactionDate)
 			transactionType = transaction.TransactionType
-			supplierID = transaction.SupplierID.String()
+			if transaction.SupplierID != nil {
+				supplierID = transaction.SupplierID.String()
+			}
 			description = transaction.Description
 		}
 	}}
-	@layouts.Base(c, title) {
+	@layouts.Base(c, title, "transactions") {
 		<h1 class="mb-4 text-2xl font-bold">{ title }</h1>
 		<form id="supplier-form" name="supplier-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
 			@components.FormField(components.FormFieldConfig("transaction_date").
@@ -408,7 +318,7 @@ templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transact
 				Label("Supplier").
 				Placeholder("Select a Supplier").
 				Value(supplierID).
-				OptionsFromEndpoint("/suppliers/options"),
+				OptionsFromEndpoint(routes.SupplierOptions.URL()),
 			)
 			@components.FormField(components.FormFieldConfig("description").
 				Type("textarea").
@@ -417,7 +327,7 @@ templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transact
 				Value(description),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink("/transactions", components.ButtonConfig("Back").
+				@components.ButtonLink(routes.TransactionList.ReturnOrURL(c), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)

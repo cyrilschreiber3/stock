@@ -35,6 +35,7 @@ func GinLoggerWithConfig(silentPaths ...string) gin.HandlerFunc {
 		level := ginLogLevel(statusCode)
 
 		// For silent routes, skip on success; downgrade to Debug on failure.
+		// TODO: https://gin-gonic.com/en/docs/logging/skip-logging/
 		if _, isSilent := silent[path]; isSilent {
 			if statusCode < 400 {
 				return

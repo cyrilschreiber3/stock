@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
@@ -41,9 +42,35 @@ func HandleGetCategoryOptions() gin.HandlerFunc {
 	}
 }
 
+func HandleSearchCategories() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tableConfig := pages.GetDefaultCategoriesTableConfig().GetConfigFromURL(c)
+
+		categories, err := db.SearchCategories(c, repository.SearchCategoriesParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
+		if err != nil {
+			slog.Error("Error searching categories", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search categories")
+			return
+		}
+
+		component := pages.CategoriesTable(c, categories, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleGetCategories() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		categories, err := db.GetAllCategories(c.Request.Context())
+		tableConfig := pages.GetDefaultCategoriesTableConfig().GetConfigFromURL(c)
+
+		categories, err := db.SearchCategories(c, repository.SearchCategoriesParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
 		if err != nil {
 			slog.Error("Error retrieving categories", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve categories")
@@ -51,6 +78,55 @@ func HandleGetCategories() gin.HandlerFunc {
 		}
 
 		component := pages.Categories(c, categories)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
+func HandleGetCategoryDetails() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		categoryId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			slog.Error("Error parsing category ID", "error", err)
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Could not parse category ID")
+			return
+		}
+
+		category, err := db.GetCategoryByID(c.Request.Context(), categoryId)
+		if err != nil {
+			slog.Error("Error retrieving category", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve category")
+			return
+		}
+
+		subcategoryTableConfig := pages.GetDefaultSubcategoriesForCategoryTableConfig(categoryId).GetConfigFromURL(c)
+
+		subcategories, err := db.SearchSubcategoriesByCategoryID(c, repository.SearchSubcategoriesByCategoryIDParams{
+			Search:        subcategoryTableConfig.SearchValue,
+			SortKey:       subcategoryTableConfig.SortKey,
+			SortDirection: subcategoryTableConfig.SortDirection,
+			CategoryID:    categoryId,
+		})
+		if err != nil {
+			slog.Error("Error retrieving subcategories", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve subcategories")
+			return
+		}
+
+		productTableConfig := pages.GetDefaultProductsForCategoryTableConfig(categoryId).GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        productTableConfig.SearchValue,
+			SortKey:       productTableConfig.SortKey,
+			SortDirection: productTableConfig.SortDirection,
+			CategoryID:    categoryId,
+		})
+		if err != nil {
+			slog.Error("Error retrieving products by category", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve products by category")
+			return
+		}
+
+		component := pages.CategoryDetails(c, category, subcategories, products)
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }
@@ -100,7 +176,7 @@ func HandleCreateCategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Category created successfully", "/categories")
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Category created successfully", routes.CategoryList.URL())
 	}
 }
 
@@ -130,7 +206,7 @@ func HandleUpdateCategory() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Category updated successfully", "/categories")
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Category updated successfully", routes.CategoryList.URL())
 	}
 }
 
@@ -156,6 +232,12 @@ func HandleDeleteCategory() gin.HandlerFunc {
 
 		if result == 0 {
 			utils.HXNotify(c, http.StatusNotFound, "error", "Category not found")
+			return
+		}
+
+		returnPath := utils.ResolveReturnPath(c, "")
+		if returnPath == routes.CategoryDetails.URL(routes.ID(categoryId)) {
+			utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Category deleted successfully", routes.CategoryList.URL())
 			return
 		}
 

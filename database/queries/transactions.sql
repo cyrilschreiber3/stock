@@ -45,36 +45,64 @@ DELETE FROM transaction_items WHERE id = $1;
 -- Rich Transaction queries
 
 -- name: GetTransactionsWithDetails :many
-SELECT t.*, s.name AS supplier_name
-FROM transactions t
-LEFT JOIN suppliers s ON t.supplier_id = s.id;
+SELECT * FROM transaction_with_details;
+
+-- name: SearchTransactionsWithDetails :many
+SELECT * FROM search_transactions_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction')
+);
+
+-- name: SearchTransactionsWithDetailsAndItems :many
+SELECT * FROM search_transactions_with_details_and_items(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('product_id')
+);
 
 -- name: GetTransactionWithDetailsByID :one
-SELECT t.*, s.name AS supplier_name
-FROM transactions t
-LEFT JOIN suppliers s ON t.supplier_id = s.id
-WHERE t.id = $1;
+SELECT * FROM transaction_with_details
+WHERE id = $1;
 
--- name: GetTransactionsWithDetailsByProductID :many
-SELECT t.*, s.name AS supplier_name
-FROM transactions t
-INNER JOIN transaction_items ti ON t.id = ti.transaction_id
-LEFT JOIN suppliers s ON t.supplier_id = s.id
-WHERE ti.product_id = $1;
+-- name: GetTransactionWithDetailsAndItemsByID :one
+SELECT * FROM transaction_with_details_and_items
+WHERE id = $1;
+
+-- name: GetTransactionWithDetailsAndItemsByProductID :many
+SELECT * FROM transaction_with_details_and_items t
+WHERE EXISTS (
+    SELECT 1
+    FROM transaction_items ti
+    WHERE ti.transaction_id = t.id AND ti.product_id = $1
+);
 
 -- Rich TransactionItem queries
 
 -- name: GetTransactionItemsWithDetailsByTransactionID :many
-SELECT ti.*, sqlc.embed(products)
-FROM transaction_items ti
-INNER JOIN products ON ti.product_id = products.id
-WHERE ti.transaction_id = $1;
+SELECT * FROM transaction_item_with_details
+WHERE transaction_id = $1;
+
+-- name: SearchTransactionItemsWithDetails :many
+SELECT * FROM search_transaction_items_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('transaction_id')
+);
+
+-- name: SearchTransactionItemsWithTransactionDetails :many
+SELECT * FROM search_transaction_items_with_transaction_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('transaction_id')
+);
 
 -- name: GetTransactionItemWithDetailsByID :one
-SELECT ti.*, sqlc.embed(products)
-FROM transaction_items ti
-INNER JOIN products ON ti.product_id = products.id
-WHERE ti.id = $1;
+SELECT * FROM transaction_item_with_details
+WHERE id = $1;
 
 -- Action queries
 

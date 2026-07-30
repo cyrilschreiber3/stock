@@ -1,21 +1,74 @@
 package handlers
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/cyrilschreiber3/stock/controllers"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/pages"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+func HandleSearchTransactions() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tableConfig := pages.GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+
+		transactions, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
+		if err != nil {
+			slog.Error("Error searching transactions", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search transactions")
+			return
+		}
+
+		component := pages.TransactionsTable(c, transactions, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
+func HandleSearchTransactionsForProduct() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		productId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid product ID")
+			return
+		}
+
+		tableConfig := pages.GetDefaultTransactionsForProductTableConfig(productId).GetConfigFromURL(c)
+
+		transactionItems, err := db.SearchTransactionsWithDetailsAndItems(c, repository.SearchTransactionsWithDetailsAndItemsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			ProductID:     productId,
+		})
+		if err != nil {
+			slog.Error("Error searching transaction items for product", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search transaction items for product")
+			return
+		}
+
+		component := pages.TransactionsForProductTable(c, productId, transactionItems, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleGetTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		transactions, err := db.GetTransactionsWithDetails(c.Request.Context())
+		tableConfig := pages.GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+
+		transactions, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
 		if err != nil {
 			slog.Error("Error retrieving transactions", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transactions")
@@ -42,7 +95,14 @@ func HandleGetTransactionDetails() gin.HandlerFunc {
 			return
 		}
 
-		transactionItems, err := db.GetTransactionItemsWithDetailsByTransactionID(c.Request.Context(), transactionId)
+		tableConfig := pages.GetDefaultTransactionItemsTableConfig(transactionId).GetConfigFromURL(c)
+
+		transactionItems, err := db.SearchTransactionItemsWithDetails(c, repository.SearchTransactionItemsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			TransactionID: transactionId,
+		})
 		if err != nil {
 			slog.Error("Error retrieving transaction items", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction items")
@@ -109,7 +169,7 @@ func HandleCreateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Transaction created successfully", fmt.Sprintf("/transactions/%s", newTransaction.ID))
+		utils.HXRedirectWithMessage(c, http.StatusCreated, "success", "Transaction created successfully", routes.TransactionDetails.ReturnOrURL(routes.ID(newTransaction.ID), c))
 
 	}
 }
@@ -145,7 +205,7 @@ func HandleUpdateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction updated successfully", fmt.Sprintf("/transactions/%s", transactionId))
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction updated successfully", routes.TransactionDetails.ReturnOrURL(routes.ID(transactionId), c))
 	}
 }
 
@@ -173,7 +233,7 @@ func HandleDeleteTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction deleted successfully", "/transactions")
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction deleted successfully", routes.TransactionList.ReturnOrURL(c))
 	}
 }
 
@@ -204,6 +264,21 @@ func HandleApplyTransaction() gin.HandlerFunc {
 			return
 		}
 
-		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction applied successfully", fmt.Sprintf("/transactions/%s", transactionId))
+		updatedTransaction, err := db.GetTransactionWithDetailsByID(c.Request.Context(), transactionId)
+		if err != nil {
+			slog.Error("Error retrieving updated transaction", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve updated transaction")
+			return
+		}
+
+		returnUrl := utils.ResolveReturnPath(c, "")
+		if returnUrl == routes.TransactionList.URL() {
+			utils.HXNotify(c, http.StatusOK, "success", "Transaction applied successfully")
+			component := pages.TransactionRow(c, updatedTransaction)
+			utils.RenderTemplate(c, http.StatusOK, component)
+			return
+		}
+
+		utils.HXRedirectWithMessage(c, http.StatusOK, "success", "Transaction applied successfully", routes.TransactionList.ReturnOrURL(c))
 	}
 }

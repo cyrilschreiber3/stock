@@ -9,5 +9,16 @@
   "tailwindCSS.includeLanguages": {
     "templ": "html"
   },
-  "alpine-intellisense.settings.languageScopes": "html,templ"
+  "alpine-intellisense.settings.languageScopes": "html,templ",
+  "sqltools.connections": [
+    {
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "driver": "PostgreSQL",
+      "name": "stockdb",
+      "connectString": "postgres://stock:stock@localhost:5432/stockdb?sslmode=disable"
+    }
+  ],
+  "github.copilot.nextEditSuggestions.eagerness": "low"
 }

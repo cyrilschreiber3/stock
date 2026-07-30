@@ -1,0 +1,277 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
+	"github.com/cyrilschreiber3/stock/templates/components"
+	"github.com/cyrilschreiber3/stock/templates/icons"
+	"github.com/cyrilschreiber3/stock/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+var ProductsTableColumns = []components.DataTableColumn{
+	components.NewDataTableColumn("Brand", "brand"),
+	components.NewDataTableColumn("Name", "name"),
+	components.NewDataTableColumn("Category", "category"),
+	components.NewDataTableColumn("Subcategory", "subcategory"),
+	components.NewDataTableColumn("Supplier", "supplier"),
+	components.NewUnsortedDataTableColumn("Aliases", "aliases"),
+	components.NewDataTableColumn("Updated", "updated_at"),
+	components.NewActionDataTableColumn(),
+}
+
+func GetDefaultProductsTableConfig() *components.DataTableConfig {
+	return components.NewDataTableConfig("products").
+		SetLabel("Products list").
+		SetSearchPlaceholder("Search products, supplier or category").
+		SetItemLabel("products", "product").
+		SetURL(routes.ProductSearch).
+		SetSortKey("name").
+		SetSortDirection("asc").
+		AddColumns(ProductsTableColumns...)
+}
+
+templ ProductsTableRow(c *gin.Context, product repository.ProductWithDetail) {
+	<tr class="hover:bg-base-300">
+		<td>{ product.Brand }</td>
+		<td>{ product.Name }</td>
+		<td>{ product.Category.Name }</td>
+		<td>{ product.Subcategory.Name }</td>
+		<td>{ product.Supplier.Name }</td>
+		<td>
+			<div class="flex flex-wrap gap-2">
+				for _, alias := range product.Aliases {
+					@components.Badge(components.BadgeConfig(alias).Color("primary"))
+				}
+			</div>
+		</td>
+		<td>
+			<div class="tooltip" data-tip={ utils.PgTimestampToString(product.UpdatedAt) }>
+				{ utils.PgTimestampToNaturalLanguage(product.UpdatedAt) }
+			</div>
+		</td>
+		<td>
+			<div class="flex space-x-2">
+				@components.ButtonLink(routes.ProductDetails.URL(routes.ID(product.ID)), components.ButtonConfig("").
+					Icon(icons.InformationCircle()).
+					Style("soft").
+					Size("sm").
+					Color("primary"),
+				)
+				@components.ButtonLink(routes.ProductEditForm.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("").
+					Icon(icons.PencilSquare()).
+					Style("soft").
+					Size("sm").
+					Color("info"),
+				)
+				@components.Button(components.ButtonConfig("").
+					Icon(icons.Trash()).
+					Color("error").
+					Style("soft").
+					Size("sm").
+					HxDelete(routes.ProductDelete.URL(routes.ID(product.ID))).
+					HxConfirm("Are you sure you want to delete this product?").
+					HxTarget("closest tr").
+					HxSwap("delete"),
+				)
+			</div>
+		</td>
+	</tr>
+}
+
+templ ProductsTable(c *gin.Context, products []repository.ProductWithDetail, tableConfig *components.DataTableConfig) {
+	{{
+		if tableConfig == nil {
+			tableConfig = GetDefaultProductsTableConfig().GetConfigFromURL(c)
+		}
+		tableConfig = tableConfig.
+			SetItemCount(len(products)).
+			SetConfigToURL(c)
+	}}
+	@components.DataTable(c, tableConfig) {
+		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(products)); i++ {
+			@ProductsTableRow(c, products[i])
+		}
+	}
+}
+
+var TransactionsForProductTableColumns = []components.DataTableColumn{
+	components.NewDataTableColumn("Date", "transaction_date"),
+	components.NewDataTableColumn("Type", "transaction_type"),
+	components.NewDataTableColumn("State", "state"),
+	components.NewDataTableColumn("Supplier", "supplier"),
+	components.NewDataTableColumn("Total product price", "total_product_price"),
+	components.NewDataTableColumn("Total price", "total_price"),
+	components.NewDataTableColumn("Applied at", "applied_at"),
+	components.NewActionDataTableColumn(),
+}
+
+func GetDefaultTransactionsForProductTableConfig(productID uuid.UUID) *components.DataTableConfig {
+	return components.NewDataTableConfig("transactions_for_product").
+		SetLabel("Transactions for product").
+		DisableSearch().
+		SetItemLabel("transactions", "transaction").
+		SetURLString(routes.ProductSearchTransactions.URL(routes.ID(productID))).
+		SetSortKey("transaction_date").
+		SetSortDirection("desc").
+		AddColumns(TransactionsForProductTableColumns...)
+}
+
+templ TransactionsForProductTableRow(c *gin.Context, productID uuid.UUID, transaction repository.TransactionWithDetailsAndItem) {
+	{{
+		supplierName := "N/A"
+		if transaction.SupplierID != nil {
+			supplierName = transaction.Supplier.Name
+		}
+
+		appliedAtString := "N/A"
+		appliedAtNL := "N/A"
+		if transaction.AppliedAt.Valid {
+			appliedAtString = utils.PgTimestampToString(transaction.AppliedAt)
+			appliedAtNL = utils.PgTimestampToNaturalLanguage(transaction.AppliedAt)
+		}
+
+		var totalProductPrice pgtype.Numeric
+		for _, item := range transaction.TransactionItems {
+			if item.ProductID == productID {
+				totalProductPrice = item.TotalPrice
+				break
+			}
+		}
+	}}
+	<tr class="hover:bg-base-300">
+		<td>{ utils.PgDateToString(transaction.TransactionDate) }</td>
+		<td>
+			@transactionTypeBadge(transaction.TransactionType)
+		</td>
+		<td>
+			@transactionStateBadge(transaction.State)
+		</td>
+		<td>{ supplierName }</td>
+		<td>{ utils.PgNumericToString(totalProductPrice, "0.00") } CHF</td>
+		<td>{ utils.PgNumericToString(transaction.FinalPrice, "0.00") } CHF</td>
+		<td>
+			<div class="tooltip" data-tip={ appliedAtString }>
+				{ appliedAtNL }
+			</div>
+		</td>
+		<td>
+			<div class="flex gap-2">
+				@components.ButtonLink(routes.TransactionDetails.URL(routes.ID(transaction.ID)), components.ButtonConfig("").
+					Icon(icons.InformationCircle()).
+					Style("soft").
+					Size("sm").
+					Color("info"),
+				)
+				switch transaction.State {
+					case "draft":
+						@components.ButtonLink(routes.TransactionEditForm.URLWithReturnToCurrent(routes.ID(transaction.ID), c), components.ButtonConfig("").
+							Icon(icons.PencilSquare()).
+							Style("soft").
+							Size("sm").
+							Color("primary"),
+						)
+						@components.Button(components.ButtonConfig("").
+							Icon(icons.Check()).
+							Style("soft").
+							Size("sm").
+							Color("success").
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
+							HxConfirm("Are you sure you want to apply this transaction?").
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
+					case "pendingRefund":
+						@components.Button(components.ButtonConfig("").
+							Icon(icons.ArrowPath()).
+							Style("soft").
+							Size("sm").
+							Color("warning").
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
+							HxConfirm("Are you sure you want to set this transaction as completed?").
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
+				}
+			</div>
+		</td>
+	</tr>
+}
+
+templ TransactionsForProductTable(c *gin.Context, productID uuid.UUID, transactions []repository.TransactionWithDetailsAndItem, tableConfig *components.DataTableConfig) {
+	{{
+		if tableConfig == nil {
+			tableConfig = GetDefaultTransactionsForProductTableConfig(productID).GetConfigFromURL(c)
+		}
+		tableConfig = tableConfig.
+			SetItemCount(len(transactions)).
+			SetConfigToURL(c)
+	}}
+	@components.DataTable(c, tableConfig) {
+		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(transactions)); i++ {
+			@TransactionsForProductTableRow(c, productID, transactions[i])
+		}
+	}
+}
+
+var InventoryLotsForProductTableColumns = []components.DataTableColumn{
+	components.NewDataTableColumn("Transaction date", "transaction_date"),
+	components.NewDataTableColumn("Received Quantity", "received_quantity"),
+	components.NewDataTableColumn("Remaining Quantity", "remaining_quantity"),
+	components.NewDataTableColumn("Unit cost", "unit_cost"),
+	components.NewDataTableColumn("Supplier", "transaction_supplier"),
+	components.NewDataTableColumn("Created at", "created_at"),
+}
+
+func GetDefaultInventoryLotsForProductTableConfig(productID uuid.UUID) *components.DataTableConfig {
+	return components.NewDataTableConfig("inventory_lots_for_product").
+		SetLabel("Inventory lots for product").
+		DisableSearch().
+		SetItemLabel("inventory lots", "inventory lot").
+		SetURLString(routes.ProductSearchInventoryLots.URL(routes.ID(productID))).
+		SetSortKey("created_at").
+		SetSortDirection("desc").
+		AddColumns(InventoryLotsForProductTableColumns...)
+}
+
+templ InventoryLotsForProductTableRow(c *gin.Context, inventoryLot repository.InventoryLotWithDetail) {
+	{{
+		supplierName := "N/A"
+		if inventoryLot.TransactionItem.Transaction.SupplierID != nil {
+			supplierName = inventoryLot.TransactionItem.Transaction.Supplier.Name
+		}
+	}}
+	<tr class="hover:bg-base-300">
+		<td>{ utils.PgDateToString(inventoryLot.TransactionItem.Transaction.TransactionDate) }</td>
+		<td>{ fmt.Sprintf("%d", inventoryLot.ReceivedQuantity) }</td>
+		<td>{ fmt.Sprintf("%d", inventoryLot.RemainingQuantity) }</td>
+		<td>{ utils.PgNumericToString(inventoryLot.UnitCost, "0.00") } CHF</td>
+		<td>{ supplierName }</td>
+		<td>
+			<div class="tooltip" data-tip={ utils.PgTimestampToString(inventoryLot.CreatedAt) }>
+				{ utils.PgTimestampToNaturalLanguage(inventoryLot.CreatedAt) }
+			</div>
+		</td>
+	</tr>
+}
+
+templ InventoryLotsForProductTable(c *gin.Context, productID uuid.UUID, inventoryLots []repository.InventoryLotWithDetail, tableConfig *components.DataTableConfig) {
+	{{
+		if tableConfig == nil {
+			tableConfig = GetDefaultInventoryLotsForProductTableConfig(productID).GetConfigFromURL(c)
+		}
+		tableConfig = tableConfig.
+			SetItemCount(len(inventoryLots)).
+			SetConfigToURL(c)
+	}}
+	@components.DataTable(c, tableConfig) {
+		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(inventoryLots)); i++ {
+			@InventoryLotsForProductTableRow(c, inventoryLots[i])
+		}
+	}
+}

@@ -1,0 +1,131 @@
+package pages
+
+import (
+	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
+	"github.com/cyrilschreiber3/stock/templates/components"
+	"github.com/cyrilschreiber3/stock/templates/icons"
+	"github.com/cyrilschreiber3/stock/utils"
+	"github.com/gin-gonic/gin"
+)
+
+var TransactionsTableColumns = []components.DataTableColumn{
+	components.NewDataTableColumn("Date", "transaction_date"),
+	components.NewDataTableColumn("Type", "transaction_type"),
+	components.NewDataTableColumn("State", "state"),
+	components.NewDataTableColumn("Supplier", "supplier"),
+	components.NewDataTableColumn("Base price", "base_price"),
+	components.NewDataTableColumn("Final price", "final_price"),
+	components.NewDataTableColumn("Last updated", "updated_at"),
+	components.NewDataTableColumn("Applied", "applied_at"),
+	components.NewActionDataTableColumn(),
+}
+
+func GetDefaultTransactionsTableConfig() *components.DataTableConfig {
+	return components.NewDataTableConfig("transactions").
+		SetLabel("Transactions Overview").
+		SetSearchPlaceholder("Search type, state or supplier name").
+		SetItemLabel("transactions", "transaction").
+		SetURL(routes.TransactionSearch).
+		SetSortKey("transaction_date").
+		SetSortDirection("desc").
+		AddColumns(TransactionsTableColumns...)
+}
+
+templ TransactionsTableRow(c *gin.Context, transaction repository.TransactionWithDetail) {
+	{{
+		supplierName := "N/A"
+		if transaction.SupplierID != nil {
+			supplierName = transaction.Supplier.Name
+		}
+
+		appliedAtString := "N/A"
+		appliedAtNL := "N/A"
+		if transaction.AppliedAt.Valid {
+			appliedAtString = utils.PgTimestampToString(transaction.AppliedAt)
+			appliedAtNL = utils.PgTimestampToNaturalLanguage(transaction.AppliedAt)
+		}
+	}}
+	<tr>
+		<td>
+			{ utils.PgDateToNaturalLanguage(transaction.TransactionDate) }
+		</td>
+		<td>
+			@transactionTypeBadge(transaction.TransactionType)
+		</td>
+		<td>
+			@transactionStateBadge(transaction.State)
+		</td>
+		<td>{ supplierName }</td>
+		<td>{ utils.PgNumericToString(transaction.BasePrice, "0.00") }</td>
+		<td>{ utils.PgNumericToString(transaction.FinalPrice, "0.00") }</td>
+		<td>
+			<div class="tooltip" data-tip={ utils.PgTimestampToString(transaction.UpdatedAt) }>
+				{ utils.PgTimestampToNaturalLanguage(transaction.UpdatedAt) }
+			</div>
+		</td>
+		<td>
+			<div class="tooltip" data-tip={ appliedAtString }>
+				{ appliedAtNL }
+			</div>
+		</td>
+		<td>
+			<div class="flex gap-2">
+				@components.ButtonLink(routes.TransactionDetails.URL(routes.ID(transaction.ID)), components.ButtonConfig("").
+					Icon(icons.InformationCircle()).
+					Style("soft").
+					Size("sm").
+					Color("info"),
+				)
+				switch transaction.State {
+					case "draft":
+						@components.ButtonLink(routes.TransactionEditForm.URLWithReturnToCurrent(routes.ID(transaction.ID), c), components.ButtonConfig("").
+							Icon(icons.PencilSquare()).
+							Style("soft").
+							Size("sm").
+							Color("primary"),
+						)
+						@components.Button(components.ButtonConfig("").
+							Icon(icons.Check()).
+							Style("soft").
+							Size("sm").
+							Color("success").
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
+							HxConfirm("Are you sure you want to apply this transaction?").
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
+					case "pendingRefund":
+						@components.Button(components.ButtonConfig("").
+							Icon(icons.ArrowPath()).
+							Style("soft").
+							Size("sm").
+							Color("warning").
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
+							HxConfirm("Are you sure you want to set this transaction as completed?").
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
+				}
+			</div>
+		</td>
+	</tr>
+}
+
+templ TransactionsTable(c *gin.Context, transactions []repository.TransactionWithDetail, tableConfig *components.DataTableConfig) {
+	{{
+		if tableConfig == nil {
+			tableConfig = GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+		}
+		tableConfig = tableConfig.
+			SetItemCount(len(transactions)).
+			SetConfigToURL(c)
+	}}
+	@components.DataTable(c, tableConfig) {
+		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(transactions)); i++ {
+			@TransactionsTableRow(c, transactions[i])
+		}
+	}
+}

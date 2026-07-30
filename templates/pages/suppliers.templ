@@ -1,81 +1,25 @@
 package pages
 
 import (
-	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
-	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
 )
 
 templ Suppliers(c *gin.Context, suppliers []repository.Supplier) {
-	@layouts.Base(c, "Stock") {
-		<div class="my-5 flex justify-between">
-			<h1 class="text-2xl font-bold">Suppliers</h1>
-			@components.ButtonLink("/suppliers/create", components.ButtonConfig("Create").
-				Icon(icons.Plus()).
-				Color("primary"),
-			)
-		</div>
-		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>Description</th>
-						<th>Created</th>
-						<th>Last updated</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					for _, supplier := range suppliers {
-						<tr>
-							<td>{ supplier.Name }</td>
-							<td>{ supplier.Description.String }</td>
-							<td>
-								<div class="tooltip" data-tip={ utils.PgTimestampToString(supplier.CreatedAt) }>
-									{ utils.PgTimestampToNaturalLanguage(supplier.CreatedAt) }
-								</div>
-							</td>
-							<td>
-								<div class="tooltip" data-tip={ utils.PgTimestampToString(supplier.UpdatedAt) }>
-									{ utils.PgTimestampToNaturalLanguage(supplier.UpdatedAt) }
-								</div>
-							</td>
-							<td>
-								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(fmt.Sprintf("/suppliers/%s/edit", supplier.ID.String()), components.ButtonConfig("Edit").
-										Icon(icons.PencilSquare()).
-										Color("info").
-										Style("soft").
-										Size("sm"),
-									)
-									@components.ButtonLink(fmt.Sprintf("/suppliers/%s/products", supplier.ID.String()), components.ButtonConfig("Products").
-										Icon(icons.Cube()).
-										Color("secondary").
-										Style("soft").
-										Size("sm"),
-									)
-									@components.Button(components.ButtonConfig("Delete").
-										Type("button").
-										Icon(icons.Trash()).
-										Color("error").
-										Style("soft").
-										Size("sm").
-										HxDelete(fmt.Sprintf("/suppliers/%s/delete", supplier.ID.String())).
-										HxConfirm("Are you sure you want to delete this supplier?").
-										HxTarget("closest tr").
-										HxSwap("delete"),
-									)
-								</div>
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
+	@layouts.Base(c, "Suppliers", "suppliers") {
+		<div class="flex flex-col gap-6">
+			<div class="flex justify-between">
+				<h1 class="text-2xl font-bold">Suppliers</h1>
+				@components.ButtonLink(routes.SupplierCreateForm.URL(), components.ButtonConfig("Create").
+					Icon(icons.Plus()).
+					Color("primary"),
+				)
+			</div>
+			@SuppliersTable(c, suppliers, nil)
 		</div>
 	}
 }
@@ -84,7 +28,7 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 	{{
 		title := "Create supplier"
 		formMethod := "post"
-		formAction := "/suppliers/create"
+		formAction := routes.SupplierCreate.URL()
 		submitButtonText := "Create"
 
 		name := ""
@@ -93,14 +37,14 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 		if supplier != nil {
 			title = "Update supplier: " + supplier.Name
 			formMethod = "put"
-			formAction = fmt.Sprintf("/suppliers/%s/update", supplier.ID.String())
+			formAction = routes.SupplierUpdate.URLWithReturn(routes.ID(supplier.ID), c)
 			submitButtonText = "Update"
 
 			name = supplier.Name
 			description = supplier.Description.String
 		}
 	}}
-	@layouts.Base(c, title) {
+	@layouts.Base(c, title, "suppliers") {
 		<h1 class="mb-4 text-2xl font-bold">{ title }</h1>
 		<form id="supplier-form" name="supplier-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
 			@components.FormField(components.FormFieldConfig("name").
@@ -114,11 +58,10 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 				Type("textarea").
 				Label("Description").
 				Placeholder("Supplier description").
-				Value(description).
-				Required(),
+				Value(description),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink("/suppliers", components.ButtonConfig("Back").
+				@components.ButtonLink(routes.SupplierList.ReturnOrURL(c), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
@@ -129,5 +72,37 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 				)
 			</div>
 		</form>
+	}
+}
+
+templ SupplierDetails(c *gin.Context, supplier repository.Supplier, products []repository.ProductWithDetail) {
+	@layouts.Base(c, "Supplier "+supplier.Name, "suppliers") {
+		<div class="flex flex-col gap-6">
+			<div class="flex justify-between">
+				<div>
+					<h1 class="text-2xl font-bold">{ supplier.Name }</h1>
+					<p class="text-base-content/70 mb-4 text-sm">{ supplier.Description.String }</p>
+				</div>
+				<div class="flex gap-2">
+					@components.ButtonLink(routes.SupplierList.ReturnOrURL(c), components.ButtonConfig("Back").
+						Icon(icons.ArrowLeft()).
+						Color("neutral"),
+					)
+					@components.ButtonLink(routes.SupplierEditForm.URLWithReturnToCurrent(routes.ID(supplier.ID), c), components.ButtonConfig("Edit").
+						Icon(icons.PencilSquare()).
+						Color("info"),
+					)
+					@components.Button(components.ButtonConfig("Delete").
+						Type("button").
+						Icon(icons.Trash()).
+						Color("error").
+						HxDelete(routes.SupplierDelete.URLWithReturn(routes.ID(supplier.ID), c)).
+						HxConfirm("Are you sure you want to delete this supplier?").
+						HxSwap("none"),
+					)
+				</div>
+			</div>
+			@ProductsForSupplierTable(c, supplier.ID, products, nil)
+		</div>
 	}
 }

@@ -1,6 +1,16 @@
 -- name: GetAllProducts :many
 SELECT * FROM products;
 
+-- name: SearchProductsWithDetails :many
+SELECT * FROM search_products_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('category_id'),
+    sqlc.arg('subcategory_id'),
+    sqlc.arg('supplier_id')
+);
+
 -- name: GetProductByID :one
 SELECT * FROM products WHERE id = $1;
 
@@ -19,17 +29,7 @@ RETURNING *;
 DELETE FROM products WHERE id = $1;
 
 -- name: SearchProducts :many
-SELECT
-    p.*,
-    sqlc.embed(categories),
-    sqlc.embed(subcategories),
-    sqlc.embed(suppliers),
-    i.total_quantity AS inventory_quantity
-FROM products p
-INNER JOIN categories ON p.category_id = categories.id
-INNER JOIN subcategories ON p.subcategory_id = subcategories.id
-INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
-LEFT JOIN inventory i ON p.id = i.product_id
+SELECT * FROM product_with_details p
 WHERE
     (
         p.name ILIKE '%' || sqlc.arg(search)::text || '%'
@@ -50,6 +50,13 @@ LIMIT $1 OFFSET $2;
 
 -- name: GetAllCategories :many
 SELECT * FROM categories;
+
+-- name: SearchCategories :many
+SELECT * FROM search_categories(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction')
+);
 
 -- name: GetCategoryByID :one
 SELECT * FROM categories WHERE id = $1;
@@ -95,6 +102,13 @@ DELETE FROM subcategories WHERE id = $1;
 -- name: GetAllSuppliers :many
 SELECT * FROM suppliers;
 
+-- name: SearchSuppliers :many
+SELECT * FROM search_suppliers(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction')
+);
+
 -- name: GetSupplierByID :one
 SELECT * FROM suppliers WHERE id = $1;
 
@@ -117,26 +131,24 @@ DELETE FROM suppliers WHERE id = $1;
 -- name: GetSubcategoriesByCategoryID :many
 SELECT * FROM subcategories WHERE category_id = $1;
 
+-- name: SearchSubcategoriesByCategoryID :many
+SELECT * FROM search_subcategories_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('category_id')
+);
+
 -- name: DeleteSubcategoriesByCategoryID :execrows
 DELETE FROM subcategories WHERE category_id = $1;
 
 -- Subcategory by category id with details
 
 -- name: GetSubcategoriesWithCategoryDetailsByCategoryID :many
-SELECT
-    sc.*,
-    sqlc.embed(categories)
-FROM subcategories sc
-INNER JOIN categories ON sc.category_id = categories.id
-WHERE sc.category_id = $1;
+SELECT * FROM subcategory_with_details WHERE category_id = $1;
 
 -- name: GetSubcategoryWithCategoryDetailsBySubcategoryID :one
-SELECT
-    sc.*,
-    sqlc.embed(categories)
-FROM subcategories sc
-INNER JOIN categories ON sc.category_id = categories.id
-WHERE sc.id = $1;
+SELECT * FROM subcategory_with_details WHERE id = $1;
 
 -- Product queries by category and subcategory
 
@@ -154,28 +166,14 @@ SELECT * FROM products WHERE default_supplier_id = $1;
 -- Product with all details
 
 -- name: GetAllProductWithDetails :many
-SELECT
-    p.*,
-    sqlc.embed(categories),
-    sqlc.embed(subcategories),
-    sqlc.embed(suppliers),
-    i.total_quantity AS inventory_quantity
-FROM products p
-INNER JOIN categories ON p.category_id = categories.id
-INNER JOIN subcategories ON p.subcategory_id = subcategories.id
-INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
-LEFT JOIN inventory i ON p.id = i.product_id;
+SELECT * FROM product_with_details;
 
 -- name: GetProductWithDetailsByID :one
-SELECT
-    p.*,
-    sqlc.embed(categories),
-    sqlc.embed(subcategories),
-    sqlc.embed(suppliers),
-    i.total_quantity AS inventory_quantity
-FROM products p
-INNER JOIN categories ON p.category_id = categories.id
-INNER JOIN subcategories ON p.subcategory_id = subcategories.id
-INNER JOIN suppliers ON p.default_supplier_id = suppliers.id
-LEFT JOIN inventory i ON p.id = i.product_id
-WHERE p.id = $1;
+SELECT * FROM product_with_details WHERE id = $1;
+
+
+-- name: GetProductsWithDetailsByCategoryID :many
+SELECT * FROM product_with_details WHERE category_id = $1;
+
+-- name: GetProductsWithDetailsBySubcategoryID :many
+SELECT * FROM product_with_details WHERE subcategory_id = $1;

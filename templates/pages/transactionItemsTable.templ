@@ -1,0 +1,85 @@
+package pages
+
+import (
+	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/routes"
+	"github.com/cyrilschreiber3/stock/templates/components"
+	"github.com/cyrilschreiber3/stock/templates/icons"
+	"github.com/cyrilschreiber3/stock/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+)
+
+var TransactionItemsTableColumns = []components.DataTableColumn{
+	components.NewDataTableColumn("Product brand", "product_brand"),
+	components.NewDataTableColumn("Product Name", "product_name"),
+	components.NewDataTableColumn("Quantity", "quantity"),
+	components.NewDataTableColumn("Base Unit Price", "base_unit_price"),
+	components.NewDataTableColumn("Final Unit Cost", "final_unit_cost"),
+}
+
+func GetDefaultTransactionItemsTableConfig(transactionID uuid.UUID) *components.DataTableConfig {
+	return components.NewDataTableConfig("transaction_items").
+		SetLabel("Transaction Items Overview").
+		SetSearchPlaceholder("Search transaction items").
+		SetItemLabel("transaction items", "transaction item").
+		SetURLString(routes.TransactionItemSearch.URL(routes.ID(transactionID))).
+		AddAdditionalTriggers("txItemsTableRefresh").
+		SetSortKey("product_name").
+		SetSortDirection("asc").
+		AddColumns(TransactionItemsTableColumns...)
+}
+
+templ TransactionItemsTableRow(c *gin.Context, transactionItem repository.TransactionItemWithDetail, editable bool) {
+	<tr class="hover:bg-base-300">
+		<td>{ transactionItem.Product.Brand }</td>
+		<td>{ transactionItem.Product.Name }</td>
+		<td>{ transactionItem.Quantity }</td>
+		<td>{ utils.PgNumericToString(transactionItem.BaseUnitPrice, "0.00") } CHF</td>
+		<td>{ utils.PgNumericToString(transactionItem.FinalUnitPrice, "0.00") } CHF</td>
+		<td>
+			if editable {
+				<div class="flex space-x-2">
+					@components.Button(components.ButtonConfig("").
+						Icon(icons.PencilSquare()).
+						Style("soft").
+						Size("sm").
+						Color("info").
+						HxGet(routes.TransactionItemEditForm.URL(routes.TxItem(transactionItem.TransactionID, transactionItem.ID))).
+						HxTarget("#edit_transaction_item_modal>#modal-box").
+						HxSwap("innerHTML"),
+					)
+					@components.Button(components.ButtonConfig("").
+						Icon(icons.Trash()).
+						Color("error").
+						Style("soft").
+						Size("sm").
+						HxDelete(routes.TransactionItemDelete.URL(routes.TxItem(transactionItem.TransactionID, transactionItem.ID))).
+						HxConfirm("Are you sure you want to delete this transaction item?").
+						HxTarget("closest tr").
+						HxSwap("delete"),
+					)
+				</div>
+			}
+		</td>
+	</tr>
+}
+
+templ TransactionItemsTable(c *gin.Context, transactionID uuid.UUID, transactionItems []repository.TransactionItemWithDetail, editable bool, tableConfig *components.DataTableConfig) {
+	{{
+		if tableConfig == nil {
+			tableConfig = GetDefaultTransactionItemsTableConfig(transactionID).GetConfigFromURL(c)
+		}
+		if editable {
+			tableConfig = tableConfig.AddColumns(components.NewActionDataTableColumn())
+		}
+		tableConfig = tableConfig.
+			SetItemCount(len(transactionItems)).
+			SetConfigToURL(c)
+	}}
+	@components.DataTable(c, tableConfig) {
+		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(transactionItems)); i++ {
+			@TransactionItemsTableRow(c, transactionItems[i], editable)
+		}
+	}
+}

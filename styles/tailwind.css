@@ -5,7 +5,38 @@
 @source "./tailwind-safelist.txt";
 
 @plugin "./daisyui.mjs" {
-  themes:
-    light --default,
-    night --prefersdark;
+  themes: night --prefersdark;
+}
+
+/* TokyoNight custom theme */
+@plugin "./daisyui-theme.mjs" {
+  name: "tokyonight";
+  default: false;
+  color-scheme: dark;
+  --color-base-100: #0c0d18;
+  --color-base-200: #1a1b26;
+  --color-base-300: #24283b;
+  --color-base-content: #c0caf5;
+  --color-primary: #7aa2f7;
+  --color-primary-content: #0c0d18;
+  --color-secondary: #bb9af7;
+  --color-secondary-content: #0c0d18;
+  --color-accent: #7dcfff;
+  --color-accent-content: #0c0d18;
+  --color-neutral: #2f334d;
+  --color-neutral-content: #c0caf5;
+  --color-info: #0db9d7;
+  --color-info-content: #0c0d18;
+  --color-success: #9ece6a;
+  --color-success-content: #0c0d18;
+  --color-warning: #e0af68;
+  --color-warning-content: #0c0d18;
+  --color-error: #f7768e;
+  --color-error-content: #0c0d18;
+  --radius-selector: 0.25rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.75rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
 }

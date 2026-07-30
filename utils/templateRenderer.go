@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"log/slog"
 	"net/http"
 
@@ -9,19 +10,25 @@ import (
 )
 
 func RenderTemplate(c *gin.Context, status int, template templ.Component) {
-	c.Status(status)
-	err := template.Render(c.Request.Context(), c.Writer)
+	var buf bytes.Buffer
+	err := template.Render(c.Request.Context(), &buf)
 	if err != nil {
 		slog.Error("Error rendering template", "error", err)
 		c.Status(http.StatusInternalServerError)
+		return
 	}
+	c.Status(status)
+	_, _ = c.Writer.Write(buf.Bytes())
 }
 
 func RenderTemplateFragment(c *gin.Context, status int, template templ.Component, fragments ...string) {
-	c.Status(status)
-	err := templ.RenderFragments(c.Request.Context(), c.Writer, template, fragments)
+	var buf bytes.Buffer
+	err := templ.RenderFragments(c.Request.Context(), &buf, template, fragments)
 	if err != nil {
 		slog.Error("Error rendering template with fragments", "error", err)
 		c.Status(http.StatusInternalServerError)
+		return
 	}
+	c.Status(status)
+	_, _ = c.Writer.Write(buf.Bytes())
 }
