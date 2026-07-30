@@ -15,7 +15,7 @@ type transactionFormDTO struct {
 type transactionFormPayload struct {
 	TransactionDate pgtype.Date
 	TransactionType string
-	SupplierId      uuid.UUID
+	SupplierId      *uuid.UUID
 	Description     string
 }
 

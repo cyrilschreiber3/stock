@@ -6,86 +6,12 @@ import (
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
-	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
 )
 
-templ Subcategories(c *gin.Context, subcategories []repository.SubcategoryWithDetail) {
-	@layouts.Base(c, "Stock") {
-		<div class="my-5 flex flex-wrap items-center justify-between gap-3">
-			<div>
-				<h1 class="text-2xl font-bold">Sub-categories</h1>
-				<p class="text-base-content/70 text-sm">Category: { subcategories[0].Category.Name }</p>
-			</div>
-			<div class="flex gap-2">
-				@components.ButtonLink(routes.CategoryList.URL(), components.ButtonConfig("Back to categories").
-					Icon(icons.ArrowLeft()).
-					Color("neutral"),
-				)
-				@components.ButtonLink(routes.SubcategoryCreateForm.URL(routes.ID(subcategories[0].Category.ID)), components.ButtonConfig("Create").
-					Icon(icons.Plus()).
-					Color("primary"),
-				)
-			</div>
-		</div>
-		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>Description</th>
-						<th>Created</th>
-						<th>Last updated</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					for _, subcategory := range subcategories {
-						<tr>
-							<td>{ subcategory.Name }</td>
-							<td>{ subcategory.Description.String }</td>
-							<td>
-								<div class="tooltip" data-tip={ utils.PgTimestampToString(subcategory.CreatedAt) }>
-									{ utils.PgTimestampToNaturalLanguage(subcategory.CreatedAt) }
-								</div>
-							</td>
-							<td>
-								<div class="tooltip" data-tip={ utils.PgTimestampToString(subcategory.UpdatedAt) }>
-									{ utils.PgTimestampToNaturalLanguage(subcategory.UpdatedAt) }
-								</div>
-							</td>
-							<td>
-								<div class="flex justify-end space-x-2">
-									@components.ButtonLink(routes.SubcategoryEditForm.URLWithReturnToCurrent(routes.Subcategory(subcategory.CategoryID, subcategory.ID), c), components.ButtonConfig("Edit").
-										Icon(icons.PencilSquare()).
-										Color("info").
-										Style("soft").
-										Size("sm"),
-									)
-									@components.Button(components.ButtonConfig("Delete").
-										Type("button").
-										Icon(icons.Trash()).
-										Color("error").
-										Style("soft").
-										Size("sm").
-										HxDelete(routes.SubcategoryDelete.URL(routes.Subcategory(subcategory.Category.ID, subcategory.ID))).
-										HxConfirm("Are you sure you want to delete this sub-category?").
-										HxTarget("closest tr").
-										HxSwap("delete"),
-									)
-								</div>
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
-		</div>
-	}
-}
-
 templ CreateUpdateSubcategory(c *gin.Context, category repository.Category, subcategory *repository.Subcategory) {
 	{{
-		title := "Create sub-category"
+		title := "Create subcategory"
 		formMethod := "post"
 		formAction := routes.SubcategoryCreate.URL(routes.ID(category.ID))
 		submitButtonText := "Create"
@@ -94,7 +20,7 @@ templ CreateUpdateSubcategory(c *gin.Context, category repository.Category, subc
 		description := ""
 
 		if subcategory != nil {
-			title = "Update sub-category: " + subcategory.Name
+			title = "Update subcategory: " + subcategory.Name
 			formMethod = "put"
 			formAction = routes.SubcategoryUpdate.URLWithReturn(routes.Subcategory(category.ID, subcategory.ID), c)
 			submitButtonText = "Update"
@@ -103,7 +29,7 @@ templ CreateUpdateSubcategory(c *gin.Context, category repository.Category, subc
 			description = subcategory.Description.String
 		}
 	}}
-	@layouts.Base(c, title) {
+	@layouts.Base(c, title, "categories") {
 		<h1 class="mb-1 text-2xl font-bold">{ title }</h1>
 		<p class="text-base-content/70 mb-4 text-sm">Category: { category.Name }</p>
 		<form id="subcategory-form" name="subcategory-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
@@ -123,7 +49,7 @@ templ CreateUpdateSubcategory(c *gin.Context, category repository.Category, subc
 				Required(),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(routes.SubcategoryList.ReturnOrURL(routes.ID(category.ID), c), components.ButtonConfig("Back").
+				@components.ButtonLink(routes.CategoryDetails.ReturnOrURL(routes.ID(category.ID), c), components.ButtonConfig("Back").
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
@@ -134,5 +60,45 @@ templ CreateUpdateSubcategory(c *gin.Context, category repository.Category, subc
 				)
 			</div>
 		</form>
+	}
+}
+
+templ SubcategoryDetails(c *gin.Context, subcategory repository.SubcategoryWithDetail, products []repository.ProductWithDetail) {
+	{{
+		safeToDelete := false
+
+		if len(products) == 0 {
+			safeToDelete = true
+		}
+	}}
+	@layouts.Base(c, "Subcategory details", "categories") {
+		<div class="flex flex-col gap-6">
+			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+				<div>
+					<h1 class="mb-1 text-2xl font-bold">{ subcategory.Name }</h1>
+					<p class="text-base-content/70 text-sm">Category: { subcategory.Category.Name }</p>
+					<p class="text-base-content/70 text-sm">{ subcategory.Description.String }</p>
+				</div>
+				<div class="flex gap-2">
+					@components.ButtonLink(routes.CategoryDetails.ReturnOrURL(routes.ID(subcategory.CategoryID), c), components.ButtonConfig("Back").
+						Icon(icons.ArrowLeft()).
+						Color("neutral"),
+					)
+					@components.ButtonLink(routes.SubcategoryEditForm.URLWithReturnToCurrent(routes.Subcategory(subcategory.CategoryID, subcategory.ID), c), components.ButtonConfig("Edit").
+						Icon(icons.PencilSquare()).
+						Color("info"),
+					)
+					@components.Button(components.ButtonConfig("Delete").
+						Icon(icons.Trash()).
+						Color("error").
+						Disabled(!safeToDelete).
+						HxDelete(routes.SubcategoryDelete.URLWithReturn(routes.Subcategory(subcategory.CategoryID, subcategory.ID), c)).
+						HxConfirm("Are you sure you want to delete this sub-category?").
+						HxSwap("none"),
+					)
+				</div>
+			</div>
+			@ProductsForSubcategoryTable(c, subcategory.CategoryID, subcategory.ID, products, nil)
+		</div>
 	}
 }

@@ -1,6 +1,16 @@
 -- name: GetAllProducts :many
 SELECT * FROM products;
 
+-- name: SearchProductsWithDetails :many
+SELECT * FROM search_products_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('category_id'),
+    sqlc.arg('subcategory_id'),
+    sqlc.arg('supplier_id')
+);
+
 -- name: GetProductByID :one
 SELECT * FROM products WHERE id = $1;
 
@@ -40,6 +50,13 @@ LIMIT $1 OFFSET $2;
 
 -- name: GetAllCategories :many
 SELECT * FROM categories;
+
+-- name: SearchCategories :many
+SELECT * FROM search_categories(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction')
+);
 
 -- name: GetCategoryByID :one
 SELECT * FROM categories WHERE id = $1;
@@ -85,6 +102,13 @@ DELETE FROM subcategories WHERE id = $1;
 -- name: GetAllSuppliers :many
 SELECT * FROM suppliers;
 
+-- name: SearchSuppliers :many
+SELECT * FROM search_suppliers(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction')
+);
+
 -- name: GetSupplierByID :one
 SELECT * FROM suppliers WHERE id = $1;
 
@@ -106,6 +130,14 @@ DELETE FROM suppliers WHERE id = $1;
 
 -- name: GetSubcategoriesByCategoryID :many
 SELECT * FROM subcategories WHERE category_id = $1;
+
+-- name: SearchSubcategoriesByCategoryID :many
+SELECT * FROM search_subcategories_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('category_id')
+);
 
 -- name: DeleteSubcategoriesByCategoryID :execrows
 DELETE FROM subcategories WHERE category_id = $1;

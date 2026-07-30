@@ -3,6 +3,13 @@
 -- name: GetAllInventoryWithProductDetails :many
 SELECT * FROM inventory_with_details;
 
+-- name: SearchInventoryWithProductDetails :many
+SELECT * FROM search_inventory_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction')
+);
+
 -- name: GetInventoryByProductID :one
 SELECT * FROM inventory WHERE product_id = $1;
 
@@ -48,6 +55,14 @@ WHERE
 RETURNING *;
 
 -- Inventory Lot Queries
+
+-- name: SearchInventoryLotsWithDetails :many
+SELECT * FROM search_inventory_lots_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('product_id')
+);
 
 -- name: GetInventoryLotsByProductID :many
 SELECT * FROM inventory_lots WHERE product_id = $1 ORDER BY created_at ASC;

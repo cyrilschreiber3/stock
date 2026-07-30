@@ -42,9 +42,35 @@ func HandleGetCategoryOptions() gin.HandlerFunc {
 	}
 }
 
+func HandleSearchCategories() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tableConfig := pages.GetDefaultCategoriesTableConfig().GetConfigFromURL(c)
+
+		categories, err := db.SearchCategories(c, repository.SearchCategoriesParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
+		if err != nil {
+			slog.Error("Error searching categories", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search categories")
+			return
+		}
+
+		component := pages.CategoriesTable(c, categories, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleGetCategories() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		categories, err := db.GetAllCategories(c.Request.Context())
+		tableConfig := pages.GetDefaultCategoriesTableConfig().GetConfigFromURL(c)
+
+		categories, err := db.SearchCategories(c, repository.SearchCategoriesParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
 		if err != nil {
 			slog.Error("Error retrieving categories", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve categories")
@@ -72,17 +98,31 @@ func HandleGetCategoryDetails() gin.HandlerFunc {
 			return
 		}
 
-		subcategories, err := db.GetSubcategoriesByCategoryID(c.Request.Context(), categoryId)
+		subcategoryTableConfig := pages.GetDefaultSubcategoriesForCategoryTableConfig(categoryId).GetConfigFromURL(c)
+
+		subcategories, err := db.SearchSubcategoriesByCategoryID(c, repository.SearchSubcategoriesByCategoryIDParams{
+			Search:        subcategoryTableConfig.SearchValue,
+			SortKey:       subcategoryTableConfig.SortKey,
+			SortDirection: subcategoryTableConfig.SortDirection,
+			CategoryID:    categoryId,
+		})
 		if err != nil {
 			slog.Error("Error retrieving subcategories", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve subcategories")
 			return
 		}
 
-		products, err := db.GetProductsWithDetailsByCategoryID(c.Request.Context(), categoryId)
+		productTableConfig := pages.GetDefaultProductsForCategoryTableConfig(categoryId).GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        productTableConfig.SearchValue,
+			SortKey:       productTableConfig.SortKey,
+			SortDirection: productTableConfig.SortDirection,
+			CategoryID:    categoryId,
+		})
 		if err != nil {
-			slog.Error("Error retrieving products", "error", err)
-			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve products")
+			slog.Error("Error retrieving products by category", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve products by category")
 			return
 		}
 

@@ -13,9 +13,62 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+func HandleSearchTransactions() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tableConfig := pages.GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+
+		transactions, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
+		if err != nil {
+			slog.Error("Error searching transactions", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search transactions")
+			return
+		}
+
+		component := pages.TransactionsTable(c, transactions, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
+func HandleSearchTransactionsForProduct() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		productId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid product ID")
+			return
+		}
+
+		tableConfig := pages.GetDefaultTransactionsForProductTableConfig(productId).GetConfigFromURL(c)
+
+		transactionItems, err := db.SearchTransactionsWithDetailsAndItems(c, repository.SearchTransactionsWithDetailsAndItemsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			ProductID:     productId,
+		})
+		if err != nil {
+			slog.Error("Error searching transaction items for product", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search transaction items for product")
+			return
+		}
+
+		component := pages.TransactionsForProductTable(c, productId, transactionItems, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleGetTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		transactions, err := db.GetTransactionsWithDetails(c.Request.Context())
+		tableConfig := pages.GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+
+		transactions, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
 		if err != nil {
 			slog.Error("Error retrieving transactions", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transactions")
@@ -35,14 +88,28 @@ func HandleGetTransactionDetails() gin.HandlerFunc {
 			return
 		}
 
-		transaction, err := db.GetTransactionWithDetailsAndItemsByID(c.Request.Context(), transactionId)
+		transaction, err := db.GetTransactionWithDetailsByID(c.Request.Context(), transactionId)
 		if err != nil {
 			slog.Error("Error retrieving transaction details", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction details")
 			return
 		}
 
-		component := pages.TransactionDetails(c, transaction)
+		tableConfig := pages.GetDefaultTransactionItemsTableConfig(transactionId).GetConfigFromURL(c)
+
+		transactionItems, err := db.SearchTransactionItemsWithDetails(c, repository.SearchTransactionItemsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			TransactionID: transactionId,
+		})
+		if err != nil {
+			slog.Error("Error retrieving transaction items", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction items")
+			return
+		}
+
+		component := pages.TransactionDetails(c, transaction, transactionItems)
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }

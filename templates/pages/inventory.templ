@@ -3,44 +3,16 @@ package pages
 import (
 	"github.com/cyrilschreiber3/stock/database/repository"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
-	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
 )
 
 templ Inventory(c *gin.Context, inventory []repository.InventoryWithDetail) {
-	@layouts.Base(c, "Stock") {
-		<div class="my-5 flex justify-between">
-			<h1 class="text-2xl font-bold">Inventory</h1>
-		</div>
-		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Product brand</th>
-						<th>Product name</th>
-						<th>Quantity</th>
-						<th>Average unit price</th>
-						<th>Average unit cost</th>
-						<th>Last updated</th>
-					</tr>
-				</thead>
-				<tbody>
-					for _, product := range inventory {
-						<tr>
-							<td>{ product.Product.Brand }</td>
-							<td>{ product.Product.Name }</td>
-							<td>{ product.TotalQuantity }</td>
-							<td>{ utils.PgNumericToString(averageUnitPrice(product.TotalBuyPrice, product.TotalBuyQuantity), "0.00") } CHF</td>
-							<td>{ utils.PgNumericToString(averageUnitPrice(product.TotalSellPrice, product.TotalSellQuantity), "0.00") } CHF</td>
-							<td>
-								<div class="tooltip" data-tip={ utils.PgTimestampToString(product.UpdatedAt) }>
-									{ utils.PgTimestampToNaturalLanguage(product.UpdatedAt) }
-								</div>
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
+	@layouts.Base(c, "Inventory", "inventory") {
+		<div class="flex flex-col gap-6">
+			<div class="flex justify-between">
+				<h1 class="text-2xl font-bold">Inventory</h1>
+			</div>
+			@InventoryTable(c, inventory, nil)
 		</div>
 	}
 }

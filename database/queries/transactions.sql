@@ -47,6 +47,21 @@ DELETE FROM transaction_items WHERE id = $1;
 -- name: GetTransactionsWithDetails :many
 SELECT * FROM transaction_with_details;
 
+-- name: SearchTransactionsWithDetails :many
+SELECT * FROM search_transactions_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction')
+);
+
+-- name: SearchTransactionsWithDetailsAndItems :many
+SELECT * FROM search_transactions_with_details_and_items(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('product_id')
+);
+
 -- name: GetTransactionWithDetailsByID :one
 SELECT * FROM transaction_with_details
 WHERE id = $1;
@@ -68,6 +83,22 @@ WHERE EXISTS (
 -- name: GetTransactionItemsWithDetailsByTransactionID :many
 SELECT * FROM transaction_item_with_details
 WHERE transaction_id = $1;
+
+-- name: SearchTransactionItemsWithDetails :many
+SELECT * FROM search_transaction_items_with_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('transaction_id')
+);
+
+-- name: SearchTransactionItemsWithTransactionDetails :many
+SELECT * FROM search_transaction_items_with_transaction_details(
+    sqlc.arg('search'),
+    sqlc.arg('sort_key'),
+    sqlc.arg('sort_direction'),
+    sqlc.arg('transaction_id')
+);
 
 -- name: GetTransactionItemWithDetailsByID :one
 SELECT * FROM transaction_item_with_details

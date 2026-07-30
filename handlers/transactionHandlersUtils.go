@@ -22,26 +22,30 @@ func parseTransactionForm(c *gin.Context) (*transactionFormPayload, int, error) 
 	}
 
 	supplierUuid, err := parseUUIDField(form.SupplierId, "supplier")
+	supplierUuidPtr := &supplierUuid
 	if err != nil {
-		return nil, http.StatusBadRequest, err
+		if form.SupplierId != "" {
+			return nil, http.StatusBadRequest, err
+		}
+		supplierUuidPtr = nil
 	}
 
 	payload := transactionFormPayload{
 		TransactionDate: transactionDate,
 		TransactionType: form.TransactionType,
-		SupplierId:      supplierUuid,
+		SupplierId:      supplierUuidPtr,
 		Description:     form.Description,
 	}
 
 	return &payload, http.StatusOK, nil
 }
 
-func isTransactionApplied(transactionState string) (bool, error) {
+func isTransactionApplied(transactionState string) bool {
 	switch transactionState {
 	case "completed", "pendingRefund":
-		return true, nil
+		return true
 	default:
-		return false, nil
+		return false
 	}
 }
 
@@ -59,12 +63,7 @@ func checkTransactionWritable(c *gin.Context) bool {
 		return false
 	}
 
-	isApplied, err := isTransactionApplied(transaction.State)
-	if err != nil {
-		utils.HXNotify(c, http.StatusInternalServerError, "error", "Error checking transaction state")
-		return false
-	}
-
+	isApplied := isTransactionApplied(transaction.State)
 	if isApplied {
 		utils.HXNotify(c, http.StatusBadRequest, "error", "Cannot modify an applied transaction")
 		return false
@@ -74,12 +73,7 @@ func checkTransactionWritable(c *gin.Context) bool {
 }
 
 func checkTransactionWritableLite(c *gin.Context, transactionState string) bool {
-	isApplied, err := isTransactionApplied(transactionState)
-	if err != nil {
-		utils.HXNotify(c, http.StatusInternalServerError, "error", "Error checking transaction state")
-		return false
-	}
-
+	isApplied := isTransactionApplied(transactionState)
 	if isApplied {
 		utils.HXNotify(c, http.StatusBadRequest, "error", "Cannot modify an applied transaction")
 		return false

@@ -4,6 +4,8 @@ var TransactionGroup = Group("/transactions")
 
 var TransactionList = Spec0("TransactionList", MethodGET, TransactionGroup, "")
 
+var TransactionSearch = Spec0("TransactionSearch", MethodGET, TransactionGroup, "/search")
+
 var TransactionCreateForm = Spec0("TransactionCreateForm", MethodGET, TransactionGroup, "/create")
 
 var TransactionCreate = Spec0("TransactionCreate", MethodPOST, TransactionGroup, "/create")
@@ -38,6 +40,7 @@ var TransactionRoutes = ResourceRoutes{
 		TransactionList,
 		TransactionCreateForm,
 		TransactionCreate,
+		TransactionSearch,
 		TransactionSearchProductsForm,
 		TransactionSearchProducts,
 		TransactionSelectProduct,
@@ -51,6 +54,8 @@ var TransactionRoutes = ResourceRoutes{
 
 var TransactionItemGroupDefaultParams = WithRouteParams[IDParam](ParamID)
 var TransactionItemGroup = Group("/:id/items", WithParent(TransactionGroup))
+
+var TransactionItemSearch = Spec("TransactionItemSearch", MethodGET, TransactionItemGroup, "/search", TransactionItemGroupDefaultParams)
 
 var TransactionItemCreate = Spec("TransactionItemCreate", MethodPOST, TransactionItemGroup, "/create", TransactionItemGroupDefaultParams)
 
@@ -66,6 +71,7 @@ var TransactionItemDelete = Spec("TransactionItemDelete", MethodDELETE, Transact
 var TransactionItemRoutes = ResourceRoutes{
 	Group: TransactionItemGroup,
 	Routes: []RouteHandler{
+		TransactionItemSearch,
 		TransactionItemCreate,
 		TransactionItemEditForm,
 		TransactionItemUpdate,

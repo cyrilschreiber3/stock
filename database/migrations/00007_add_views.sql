@@ -40,6 +40,17 @@ CREATE OR REPLACE VIEW transaction_with_details AS (
   LEFT JOIN suppliers s ON s.id = t.supplier_id
 );
 
+CREATE OR REPLACE VIEW transaction_item_with_transaction_details AS (
+  SELECT
+    ti.*,
+    COALESCE(to_jsonb(twd), 'null'::jsonb) AS transaction,
+    COALESCE(to_jsonb(p), 'null'::jsonb) AS product,
+    (ti.final_unit_price * ti.quantity)::numeric AS total_price
+  FROM transaction_items ti
+  LEFT JOIN transaction_with_details twd ON twd.id = ti.transaction_id
+  LEFT JOIN products p ON p.id = ti.product_id
+);
+
 CREATE OR REPLACE VIEW transaction_with_details_and_items AS (
   SELECT
     t.*,
@@ -69,11 +80,12 @@ CREATE OR REPLACE VIEW inventory_lot_with_details AS (
   SELECT
     il.*,
     COALESCE(to_jsonb(pwd), 'null'::jsonb) AS product,
-    COALESCE(to_jsonb(tiwd), 'null'::jsonb) AS transaction_item
+    COALESCE(to_jsonb(tiwtd), 'null'::jsonb) AS transaction_item
   FROM inventory_lots il
   LEFT JOIN product_with_details pwd ON pwd.id = il.product_id
-  LEFT JOIN transaction_item_with_details tiwd ON tiwd.id = il.transaction_item_id
+  LEFT JOIN transaction_item_with_transaction_details tiwtd ON tiwtd.id = il.transaction_item_id
 );
+
 -- +goose StatementEnd
 
 -- +goose Down
@@ -81,6 +93,7 @@ CREATE OR REPLACE VIEW inventory_lot_with_details AS (
 DROP VIEW IF EXISTS inventory_lot_with_details;
 DROP VIEW IF EXISTS inventory_with_details;
 DROP VIEW IF EXISTS transaction_with_details_and_items;
+DROP VIEW IF EXISTS transaction_item_with_transaction_details;
 DROP VIEW IF EXISTS transaction_with_details;
 DROP VIEW IF EXISTS transaction_item_with_details;
 DROP VIEW IF EXISTS subcategory_with_details;

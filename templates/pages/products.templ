@@ -12,92 +12,27 @@ import (
 )
 
 templ Products(c *gin.Context, products []repository.ProductWithDetail) {
-	@layouts.Base(c, "Stock") {
-		<div class="my-5 flex justify-between">
-			<h1 class="text-2xl font-bold">Products</h1>
-			@components.ButtonLink(routes.ProductCreateForm.URL(), components.ButtonConfig("Create").
-				Icon(icons.Plus()).
-				Color("primary"),
-			)
-		</div>
-		<div class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Brand</th>
-						<th>Name</th>
-						<th>Category</th>
-						<th>Sub-category</th>
-						<th>Default supplier</th>
-						<th>Base buy price</th>
-						<th>Base sell price</th>
-						<th>Aliases</th>
-						<th>Created</th>
-						<th>Last updated</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					for _, product := range products {
-						<tr>
-							<td>{ product.Brand }</td>
-							<td>{ product.Name }</td>
-							<td>{ product.Category.Name }</td>
-							<td>{ product.Subcategory.Name }</td>
-							<td>{ product.Supplier.Name }</td>
-							<td>{ utils.PgNumericToString(product.DefaultBuyPrice, "0.00") } CHF</td>
-							<td>{ utils.PgNumericToString(product.DefaultSellPrice, "0.00") } CHF</td>
-							<td class="space-x-2 space-y-2">
-								for _, alias := range product.Aliases {
-									@components.Badge(components.BadgeConfig(alias).Color("primary"))
-								}
-							</td>
-							<td>
-								<div class="tooltip" data-tip={ utils.PgTimestampToString(product.CreatedAt) }>
-									{ utils.PgTimestampToNaturalLanguage(product.CreatedAt) }
-								</div>
-							</td>
-							<td>
-								<div class="tooltip" data-tip={ utils.PgTimestampToString(product.UpdatedAt) }>
-									{ utils.PgTimestampToNaturalLanguage(product.UpdatedAt) }
-								</div>
-							</td>
-							<td>
-								<div class="flex space-x-2">
-									@components.ButtonLink(routes.ProductDetails.URL(routes.ID(product.ID)), components.ButtonConfig("Details").
-										Icon(icons.InformationCircle()).
-										Style("soft").
-										Size("sm").
-										Color("primary"),
-									)
-									@components.ButtonLink(routes.ProductEditForm.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("Edit").
-										Icon(icons.PencilSquare()).
-										Style("soft").
-										Size("sm").
-										Color("info"),
-									)
-									@components.Button(components.ButtonConfig("Delete").
-										Icon(icons.Trash()).
-										Color("error").
-										Style("soft").
-										Size("sm").
-										HxDelete(routes.ProductDelete.URL(routes.ID(product.ID))).
-										HxConfirm("Are you sure you want to delete this product?").
-										HxTarget("closest tr").
-										HxSwap("delete"),
-									)
-								</div>
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
+	@layouts.Base(c, "Products", "products") {
+		<div class="flex flex-col gap-6">
+			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+				<div>
+					<h1 class="text-base-content text-3xl font-bold">Products</h1>
+					<p class="text-base-content/60 mt-1 text-sm">Manage your product inventory</p>
+				</div>
+				<div class="flex gap-2">
+					@components.ButtonLink(routes.ProductCreateForm.URL(), components.ButtonConfig("Create").
+						Icon(icons.Plus()).
+						Color("primary"),
+					)
+				</div>
+			</div>
+			@ProductsTable(c, products, nil)
 		</div>
 	}
 }
 
 templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
-	@layouts.Base(c, "Stock") {
+	@layouts.Base(c, "Edit", "products") {
 		{{
 			title := "Create product"
 			formMethod := "post"
@@ -211,151 +146,97 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 	}
 }
 
-templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inventoryLots []repository.InventoryLot, transactions []repository.TransactionWithDetailsAndItem) {
-	@layouts.Base(c, "Stock") {
-		<div class="my-5 flex justify-between">
-			<h1 class="text-2xl font-bold">{ product.Brand + " - " + product.Name }</h1>
-			<div class="flex space-x-2">
-				@components.ButtonLink(routes.ProductEditForm.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("Edit").
-					Icon(icons.PencilSquare()).
-					Color("info"),
-				)
-				@components.Button(components.ButtonConfig("Delete").
-					Icon(icons.Trash()).
-					Color("error").
-					HxDelete(routes.ProductDelete.URLWithReturnToCurrent(routes.ID(product.ID), c)).
-					HxConfirm("Are you sure you want to delete this product?").
-					HxSwap("none"),
-				)
+templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inventoryLots []repository.InventoryLotWithDetail, transactions []repository.TransactionWithDetailsAndItem) {
+	@layouts.Base(c, "Product", "products") {
+		<div class="flex flex-col gap-6">
+			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+				<h1 class="text-2xl font-bold">{ product.Brand + " - " + product.Name }</h1>
+				<div class="flex gap-2">
+					@components.ButtonLink(routes.ProductList.ReturnOrURL(c), components.ButtonConfig("Back").
+						Icon(icons.ArrowLeft()).
+						Color("neutral"),
+					)
+					@components.ButtonLink(routes.ProductEditForm.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("Edit").
+						Icon(icons.PencilSquare()).
+						Color("info"),
+					)
+					@components.Button(components.ButtonConfig("Delete").
+						Icon(icons.Trash()).
+						Color("error").
+						HxDelete(routes.ProductDelete.URLWithReturn(routes.ID(product.ID), c)).
+						HxConfirm("Are you sure you want to delete this product?").
+						HxSwap("none"),
+					)
+				</div>
 			</div>
-		</div>
-		<div id="product-details" class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
-			<table class="table w-full">
-				<tbody>
-					<tr>
-						<th>Brand</th>
-						<td>{ product.Brand }</td>
-					</tr>
-					<tr>
-						<th>Name</th>
-						<td>{ product.Name }</td>
-					</tr>
-					<tr>
-						<th>Category</th>
-						<td>{ product.Category.Name }</td>
-					</tr>
-					<tr>
-						<th>Sub-category</th>
-						<td>{ product.Subcategory.Name }</td>
-					</tr>
-					<tr>
-						<th>Default supplier</th>
-						<td>{ product.Supplier.Name }</td>
-					</tr>
-					<tr>
-						<th>Base buy price</th>
-						<td>{ utils.PgNumericToString(product.DefaultBuyPrice, "0.00") } CHF</td>
-					</tr>
-					<tr>
-						<th>Base sell price</th>
-						<td>{ utils.PgNumericToString(product.DefaultSellPrice, "0.00") } CHF</td>
-					</tr>
-					<tr>
-						<th>Aliases</th>
-						for _, alias := range product.Aliases {
-							if alias != "" {
-								<td>
-									@components.Badge(components.BadgeConfig(alias).Color("primary"))
-								</td>
-							}
-						}
-					</tr>
-					<tr>
-						<th>Created</th>
-						<td>
-							<div class="tooltip" data-tip={ utils.PgTimestampToString(product.CreatedAt) }>
-								{ utils.PgTimestampToNaturalLanguage(product.CreatedAt) }
-							</div>
-						</td>
-					</tr>
-					<tr>
-						<th>Last updated</th>
-						<td>
-							<div class="tooltip" data-tip={ utils.PgTimestampToString(product.UpdatedAt) }>
-								{ utils.PgTimestampToNaturalLanguage(product.UpdatedAt) }
-							</div>
-						</td>
-					</tr>
-					<tr>
-						<th>Inventory quantity</th>
-						<td>{ fmt.Sprintf("%d", product.InventoryQuantity) }</td>
-					</tr>
-				</tbody>
-			</table>
-		</div>
-		<h2 class="mt-6 text-2xl font-bold">Transactions</h2>
-		<div id="product-transactions" class="rounded-box border-base-content/5 bg-base-100 mt-6 overflow-x-auto border">
-			<table class="table w-full">
-				<thead>
-					<tr>
-						<th>Transaction ID</th>
-						<th>Type</th>
-						<th>Total price</th>
-						<th>Supplier</th>
-						<th>Date</th>
-					</tr>
-				</thead>
-				<tbody>
-					for _, transaction := range transactions {
-						{{
-							supplierName := "N/A"
-							if transaction.Supplier.Name != "" {
-								supplierName = transaction.Supplier.Name
-							}
-						}}
+			<div id="product-details" class="rounded-box border-base-content/5 bg-base-100 overflow-x-auto border">
+				<table class="table w-full">
+					<tbody>
 						<tr>
-							<td>{ transaction.ID.String() }</td>
-							<td>{ transaction.TransactionType }</td>
-							<td>{ utils.PgNumericToString(transaction.FinalPrice, "0.00") } CHF</td>
-							<td>{ supplierName }</td>
+							<th>Brand</th>
+							<td>{ product.Brand }</td>
+						</tr>
+						<tr>
+							<th>Name</th>
+							<td>{ product.Name }</td>
+						</tr>
+						<tr>
+							<th>Category</th>
+							<td>{ product.Category.Name }</td>
+						</tr>
+						<tr>
+							<th>Sub-category</th>
+							<td>{ product.Subcategory.Name }</td>
+						</tr>
+						<tr>
+							<th>Default supplier</th>
+							<td>{ product.Supplier.Name }</td>
+						</tr>
+						<tr>
+							<th>Base buy price</th>
+							<td>{ utils.PgNumericToString(product.DefaultBuyPrice, "0.00") } CHF</td>
+						</tr>
+						<tr>
+							<th>Base sell price</th>
+							<td>{ utils.PgNumericToString(product.DefaultSellPrice, "0.00") } CHF</td>
+						</tr>
+						<tr>
+							<th>Aliases</th>
 							<td>
-								<div class="tooltip" data-tip={ utils.PgTimestampToString(transaction.CreatedAt) }>
-									{ utils.PgTimestampToNaturalLanguage(transaction.CreatedAt) }
+								<div class="flex flex-wrap gap-2">
+									for _, alias := range product.Aliases {
+										if alias != "" {
+											@components.Badge(components.BadgeConfig(alias).Color("primary"))
+										}
+									}
 								</div>
 							</td>
 						</tr>
-					}
-				</tbody>
-			</table>
-		</div>
-		<h2 class="mt-6 text-2xl font-bold">Inventory Lots</h2>
-		<div id="product-inventory-lots" class="rounded-box border-base-content/5 bg-base-100 mt-6 overflow-x-auto border">
-			<table class="table w-full">
-				<thead>
-					<tr>
-						<th>Lot ID</th>
-						<th>Received quantity</th>
-						<th>Remaining quantity</th>
-						<th>Unit Cost</th>
-						<th>Created</th>
-					</tr>
-				</thead>
-				<tbody>
-					for _, lot := range inventoryLots {
 						<tr>
-							<td>{ lot.ID.String() }</td>
-							<td>{ fmt.Sprintf("%d", lot.ReceivedQuantity) }</td>
-							<td>{ fmt.Sprintf("%d", lot.RemainingQuantity) }</td>
-							<td>{ utils.PgNumericToString(lot.UnitCost, "0.00") } CHF</td>
+							<th>Created</th>
 							<td>
-								<div class="tooltip" data-tip={ utils.PgTimestampToString(lot.CreatedAt) }>
-									{ utils.PgTimestampToNaturalLanguage(lot.CreatedAt) }
+								<div class="tooltip" data-tip={ utils.PgTimestampToString(product.CreatedAt) }>
+									{ utils.PgTimestampToNaturalLanguage(product.CreatedAt) }
 								</div>
 							</td>
 						</tr>
-					}
-				</tbody>
-			</table>
+						<tr>
+							<th>Last updated</th>
+							<td>
+								<div class="tooltip" data-tip={ utils.PgTimestampToString(product.UpdatedAt) }>
+									{ utils.PgTimestampToNaturalLanguage(product.UpdatedAt) }
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<th>Inventory quantity</th>
+							<td>{ fmt.Sprintf("%d", product.InventoryQuantity) }</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			@TransactionsForProductTable(c, product.ID, transactions, nil)
+			@InventoryLotsForProductTable(c, product.ID, inventoryLots, nil)
 		</div>
 	}
 }

@@ -14,6 +14,41 @@ import (
 	"github.com/google/uuid"
 )
 
+func HandleSearchTransactionItems() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		transactionID, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid transaction ID")
+			return
+		}
+
+		transaction, err := db.GetTransactionByID(c.Request.Context(), transactionID)
+		if err != nil {
+			slog.Error("Error retrieving transaction", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction")
+			return
+		}
+
+		tableConfig := pages.GetDefaultTransactionItemsTableConfig(transactionID).GetConfigFromURL(c)
+
+		transactionItems, err := db.SearchTransactionItemsWithDetails(c, repository.SearchTransactionItemsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			TransactionID: transactionID,
+		})
+		if err != nil {
+			slog.Error("Error searching transaction items", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search transaction items")
+			return
+		}
+
+		editable := !isTransactionApplied(transaction.State)
+		component := pages.TransactionItemsTable(c, transactionID, transactionItems, editable, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleShowSearchProductsForTransactionItems() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		transactionID, err := parseUUIDParam(c, "id")
@@ -182,13 +217,6 @@ func HandleCreateTransactionItem() gin.HandlerFunc {
 			return
 		}
 
-		newTransactionItemWithDetails, err := db.GetTransactionItemWithDetailsByID(c.Request.Context(), newTransactionItem.ID)
-		if err != nil {
-			slog.Error("Error retrieving transaction item with details", "error", err)
-			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction item with details")
-			return
-		}
-
 		updatedTransaction, err := db.GetTransactionByID(c.Request.Context(), newTransactionItem.TransactionID)
 		if err != nil {
 			slog.Error("Error retrieving transaction", "error", err)
@@ -196,12 +224,10 @@ func HandleCreateTransactionItem() gin.HandlerFunc {
 			return
 		}
 
-		c.Header("HX-Retarget", "#transaction-items")
-		c.Header("HX-Reswap", "beforeend")
-
 		returnStatus := http.StatusCreated
-		component := pages.TransactionItemRow(c, newTransactionItemWithDetails, true)
-		utils.RenderTemplate(c, returnStatus, component)
+		utils.HXNotify(c, returnStatus, "success", "Transaction item created successfully")
+		c.Header("HX-Trigger", "txItemsTableRefresh")
+
 		c.String(returnStatus, fmt.Sprintf("<span id=\"transaction-base-price\" hx-swap-oob=\"true\">%s CHF</span><span id=\"transaction-final-price\" hx-swap-oob=\"true\">%s CHF</span>", utils.PgNumericToString(updatedTransaction.BasePrice, "0.00"), utils.PgNumericToString(updatedTransaction.FinalPrice, "0.00")))
 	}
 }
@@ -249,13 +275,6 @@ func HandleUpdateTransactionItem() gin.HandlerFunc {
 			return
 		}
 
-		updatedTransactionItemWithDetails, err := db.GetTransactionItemWithDetailsByID(c.Request.Context(), updatedTransactionItem.ID)
-		if err != nil {
-			slog.Error("Error retrieving transaction item with details", "error", err)
-			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve transaction item with details")
-			return
-		}
-
 		updatedTransaction, err := db.GetTransactionByID(c.Request.Context(), updatedTransactionItem.TransactionID)
 		if err != nil {
 			slog.Error("Error retrieving transaction", "error", err)
@@ -263,12 +282,9 @@ func HandleUpdateTransactionItem() gin.HandlerFunc {
 			return
 		}
 
-		c.Header("HX-Retarget", fmt.Sprintf("#transaction_item_%s", updatedTransactionItemWithDetails.ID.String()))
-		c.Header("HX-Reswap", "outerHTML")
-
 		returnStatus := http.StatusOK
-		component := pages.TransactionItemRow(c, updatedTransactionItemWithDetails, true)
-		utils.RenderTemplate(c, returnStatus, component)
+		utils.HXNotify(c, returnStatus, "success", "Transaction item updated successfully")
+		c.Header("HX-Trigger", "txItemsTableRefresh")
 		c.String(returnStatus, fmt.Sprintf("<span id=\"transaction-base-price\" hx-swap-oob=\"true\">%s CHF</span><span id=\"transaction-final-price\" hx-swap-oob=\"true\">%s CHF</span>", utils.PgNumericToString(updatedTransaction.BasePrice, "0.00"), utils.PgNumericToString(updatedTransaction.FinalPrice, "0.00")))
 	}
 }

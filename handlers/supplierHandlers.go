@@ -43,9 +43,35 @@ func HandleGetSupplierOptions() gin.HandlerFunc {
 	}
 }
 
+func HandleSearchSuppliers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tableConfig := pages.GetDefaultSupplierTableConfig().GetConfigFromURL(c)
+
+		suppliers, err := db.SearchSuppliers(c, repository.SearchSuppliersParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
+		if err != nil {
+			slog.Error("Error searching suppliers", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search suppliers")
+			return
+		}
+
+		component := pages.SuppliersTable(c, suppliers, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleGetSuppliers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		suppliers, err := db.GetAllSuppliers(c.Request.Context())
+		tableConfig := pages.GetDefaultSupplierTableConfig().GetConfigFromURL(c)
+
+		suppliers, err := db.SearchSuppliers(c, repository.SearchSuppliersParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+		})
 		if err != nil {
 			slog.Error("Error retrieving suppliers", "error", err)
 			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve suppliers")
@@ -53,6 +79,42 @@ func HandleGetSuppliers() gin.HandlerFunc {
 		}
 
 		component := pages.Suppliers(c, suppliers)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
+func HandleGetSupplierDetails() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		supplierIdStr := c.Param("id")
+
+		supplierIdUUID, err := uuid.Parse(supplierIdStr)
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Could not parse supplier ID")
+			return
+		}
+
+		supplier, err := db.GetSupplierByID(c.Request.Context(), supplierIdUUID)
+		if err != nil {
+			slog.Error("Error retrieving supplier", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not retrieve supplier")
+			return
+		}
+
+		tableConfig := pages.GetDefaultProductsForSupplierTableConfig(supplierIdUUID).GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			SupplierID:    supplierIdUUID,
+		})
+		if err != nil {
+			slog.Error("Error searching products for supplier", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search products for supplier")
+			return
+		}
+
+		component := pages.SupplierDetails(c, supplier, products)
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }
@@ -151,7 +213,8 @@ func HandleDeleteSupplier() gin.HandlerFunc {
 		if err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) && (pgErr.Code == "23503" || pgErr.Code == "23001") {
-				utils.HXNotify(c, http.StatusConflict, "error", "Cannot delete supplier because it is referenced by products")
+				slog.Error("Error deleting supplier due to foreign key constraint", "error", err)
+				utils.HXNotify(c, http.StatusConflict, "error", "Cannot delete supplier because it is referenced by products or transactions")
 				return
 			}
 

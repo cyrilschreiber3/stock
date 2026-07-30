@@ -19,6 +19,7 @@ sql:
             go_type:
               import: github.com/google/uuid
               type: UUID
+              pointer: true
           - db_type: pg_catalog.int4
             go_type: int
 
@@ -43,6 +44,14 @@ sql:
           - column: "transaction_with_details.supplier"
             go_type:
               type: Supplier
+              pointer: true
+
+          - column: "transaction_item_with_transaction_details.product"
+            go_type:
+              type: Product
+          - column: "transaction_item_with_transaction_details.transaction"
+            go_type:
+              type: TransactionWithDetail
 
           - column: "transaction_with_details_and_items.transaction_items"
             go_type:
@@ -51,6 +60,7 @@ sql:
           - column: "transaction_with_details_and_items.supplier"
             go_type:
               type: Supplier
+              pointer: true
 
           - column: "inventory_with_details.product"
             go_type:
@@ -61,4 +71,4 @@ sql:
               type: ProductWithDetail
           - column: "inventory_lot_with_details.transaction_item"
             go_type:
-              type: TransactionItemWithDetail
+              type: TransactionItemWithTransactionDetail

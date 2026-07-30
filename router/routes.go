@@ -17,6 +17,9 @@ func registerApiRoutes(r *gin.Engine) {
 func registerProductRoutes(r *gin.Engine) {
 	routes.ProductList.Register(r, handlers.HandleGetProducts())
 	routes.ProductOptions.Register(r, handlers.HandleGetProductOptions())
+	routes.ProductSearch.Register(r, handlers.HandleSearchProducts())
+	routes.ProductSearchTransactions.Register(r, handlers.HandleSearchTransactionsForProduct())
+	routes.ProductSearchInventoryLots.Register(r, handlers.HandleSearchInventoryLotsForProduct())
 	routes.ProductCreateForm.Register(r, handlers.HandleShowCreateProductForm())
 	routes.ProductCreate.Register(r, handlers.HandleCreateProduct())
 	routes.ProductDetails.Register(r, handlers.HandleGetProductDetails())
@@ -29,20 +32,23 @@ func registerProductRoutes(r *gin.Engine) {
 func registerCategoryRoutes(r *gin.Engine) {
 	routes.CategoryList.Register(r, handlers.HandleGetCategories())
 	routes.CategoryOptions.Register(r, handlers.HandleGetCategoryOptions())
+	routes.CategorySearch.Register(r, handlers.HandleSearchCategories())
 	routes.CategoryCreateForm.Register(r, handlers.HandleShowCreateCategoryForm())
 	routes.CategoryCreate.Register(r, handlers.HandleCreateCategory())
 	routes.CategoryDetails.Register(r, handlers.HandleGetCategoryDetails())
+	routes.CategorySearchProducts.Register(r, handlers.HandleSearchProductsByCategory())
 	routes.CategoryEditForm.Register(r, handlers.HandleShowUpdateCategoryForm())
 	routes.CategoryUpdate.Register(r, handlers.HandleUpdateCategory())
 	routes.CategoryDelete.Register(r, handlers.HandleDeleteCategory())
 }
 
 func registerSubcategoryRoutes(r *gin.Engine) {
-	routes.SubcategoryList.Register(r, handlers.HandleGetSubcategories())
 	routes.SubcategoryOptions.Register(r, handlers.HandleGetSubcategoryOptions())
+	routes.SubcategorySearch.Register(r, handlers.HandleSearchSubcategories())
 	routes.SubcategoryCreateForm.Register(r, handlers.HandleShowCreateSubcategoryForm())
 	routes.SubcategoryCreate.Register(r, handlers.HandleCreateSubcategory())
-	// routes.SubcategoryDetails.Register(r, handlers.HandleGetSubcategoryDetails())
+	routes.SubcategoryDetails.Register(r, handlers.HandleGetSubcategoryDetails())
+	routes.SubcategorySearchProducts.Register(r, handlers.HandleSearchProductsBySubcategory())
 	routes.SubcategoryEditForm.Register(r, handlers.HandleShowUpdateSubcategoryForm())
 	routes.SubcategoryUpdate.Register(r, handlers.HandleUpdateSubcategory())
 	routes.SubcategoryDelete.Register(r, handlers.HandleDeleteSubcategory())
@@ -51,9 +57,11 @@ func registerSubcategoryRoutes(r *gin.Engine) {
 func registerSupplierRoutes(r *gin.Engine) {
 	routes.SupplierList.Register(r, handlers.HandleGetSuppliers())
 	routes.SupplierOptions.Register(r, handlers.HandleGetSupplierOptions())
+	routes.SupplierSearch.Register(r, handlers.HandleSearchSuppliers())
 	routes.SupplierCreateForm.Register(r, handlers.HandleShowCreateSupplierForm())
 	routes.SupplierCreate.Register(r, handlers.HandleCreateSupplier())
-	// routes.SupplierDetails.Register(r, handlers.HandleGetSupplierDetails())
+	routes.SupplierDetails.Register(r, handlers.HandleGetSupplierDetails())
+	routes.SupplierSearchProducts.Register(r, handlers.HandleSearchProductsBySupplier())
 	routes.SupplierEditForm.Register(r, handlers.HandleShowUpdateSupplierForm())
 	routes.SupplierUpdate.Register(r, handlers.HandleUpdateSupplier())
 	routes.SupplierDelete.Register(r, handlers.HandleDeleteSupplier())
@@ -61,6 +69,7 @@ func registerSupplierRoutes(r *gin.Engine) {
 
 func registerTransactionRoutes(r *gin.Engine) {
 	routes.TransactionList.Register(r, handlers.HandleGetTransactions())
+	routes.TransactionSearch.Register(r, handlers.HandleSearchTransactions())
 	routes.TransactionCreateForm.Register(r, handlers.HandleShowCreateTransactionForm())
 	routes.TransactionCreate.Register(r, handlers.HandleCreateTransaction())
 	routes.TransactionSearchProductsForm.Register(r, handlers.HandleShowSearchProductsForTransactionItems())
@@ -74,6 +83,7 @@ func registerTransactionRoutes(r *gin.Engine) {
 }
 
 func registerTransactionItemRoutes(r *gin.Engine) {
+	routes.TransactionItemSearch.Register(r, handlers.HandleSearchTransactionItems())
 	routes.TransactionItemCreate.Register(r, handlers.HandleCreateTransactionItem())
 	routes.TransactionItemEditForm.Register(r, handlers.HandleShowUpdateTransactionItemForm())
 	routes.TransactionItemUpdate.Register(r, handlers.HandleUpdateTransactionItem())
@@ -83,4 +93,5 @@ func registerTransactionItemRoutes(r *gin.Engine) {
 func registerInventoryRoutes(r *gin.Engine) {
 	routes.InventoryList.Register(r, handlers.HandleGetInventory())
 	// routes.InventoryDetails.Register(r, handlers.HandleGetInventoryDetails())
+	routes.InventorySearch.Register(r, handlers.HandleSearchInventory())
 }
