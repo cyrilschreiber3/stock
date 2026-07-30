@@ -10,6 +10,7 @@ stock
 
 /static/alpine.min.js
 /static/htmx.min.js
+/static/idiomorph-ext.min.js
 /static/styles.css
 /styles/daisyui*
 

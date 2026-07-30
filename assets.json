@@ -14,6 +14,11 @@
     "sha256": "e209dda5c8235479f3166defc7750e1dbcd5a5c1808b7792fc2e6733768fb447",
     "destination": "./static/htmx.min.js"
   },
+  "htmx-morph": {
+    "url": "https://unpkg.com/idiomorph@0.7.4/dist/idiomorph-ext.min.js",
+    "sha256": "a6437e55b1b6a07bc421f0d230266a39399b6826c6ed19e0ed9c63b707444a5f",
+    "destination": "./static/idiomorph-ext.min.js"
+  },
   "alpine": {
     "url": "https://unpkg.com/alpinejs@3.15.11/dist/cdn.min.js",
     "sha256": "beeba63d08956f64fa060f6b6a29c87a341bf069fb96c9459c222c6fd42e58ae",
