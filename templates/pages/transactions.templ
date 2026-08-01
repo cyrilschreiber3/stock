@@ -8,6 +8,7 @@ import (
 	"github.com/cyrilschreiber3/stock/templates/layouts"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 templ Transactions(c *gin.Context, transactions []repository.TransactionWithDetail) {
@@ -148,7 +149,7 @@ templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transactio
 		formAction := routes.TransactionCreate.URLWithReturn(c)
 		submitButtonText := "Create"
 
-		transactionDate := ""
+		transactionDate := time.Now().Format("2006-01-02")
 		transactionType := ""
 		supplierID := ""
 		description := ""
