@@ -71,8 +71,13 @@ func HandleGetBrandDetails() gin.HandlerFunc {
 			return
 		}
 
+		tableConfig := pages.GetDefaultProductsForBrandTableConfig(brandName).GetConfigFromURL(c)
+
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
-			BrandFilter: brandName,
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			BrandFilter:   brandName,
 		})
 		if err != nil {
 			statusCode = http.StatusInternalServerError
