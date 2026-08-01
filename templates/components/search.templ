@@ -39,7 +39,12 @@ templ Search(config *searchConfig) {
 			let activeIndex = -1;
 
 			const getInput = () => document.getElementById(searchInputId);
-			const getResultButtons = () => Array.from(document.querySelectorAll("#search-results [data-search-result='true']"));
+			const getResultButtons = () =>
+				Array.from(
+					document.querySelectorAll(
+						"#search-results [data-search-result='true']",
+					),
+				);
 
 			const setActiveResult = (nextIndex) => {
 				const buttons = getResultButtons();
@@ -65,7 +70,7 @@ templ Search(config *searchConfig) {
 
 				if (event.key === "ArrowDown") {
 					event.preventDefault();
-					const next = activeIndex >= buttons.length-1 ? 0 : activeIndex + 1;
+					const next = activeIndex >= buttons.length - 1 ? 0 : activeIndex + 1;
 					setActiveResult(next);
 					return;
 				}
@@ -77,14 +82,21 @@ templ Search(config *searchConfig) {
 					return;
 				}
 
-				if (event.key === "Enter" && activeIndex >= 0 && activeIndex < buttons.length) {
+				if (
+					event.key === "Enter" &&
+					activeIndex >= 0 &&
+					activeIndex < buttons.length
+				) {
 					event.preventDefault();
 					buttons[activeIndex].click();
 				}
 			});
 
 			document.body.addEventListener("htmx:afterSwap", (event) => {
-				if (!(event.target instanceof HTMLElement) || event.target.id !== searchResultsId) {
+				if (
+					!(event.target instanceof HTMLElement) ||
+					event.target.id !== searchResultsId
+				) {
 					return;
 				}
 
