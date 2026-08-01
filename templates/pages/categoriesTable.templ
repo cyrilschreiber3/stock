@@ -30,7 +30,11 @@ func GetDefaultCategoriesTableConfig() *components.DataTableConfig {
 
 templ CategoriesTableRow(c *gin.Context, category repository.Category) {
 	<tr class="hover:bg-base-300">
-		<td>{ category.Name }</td>
+		<td>
+			<a class="link link-hover" href={ routes.CategoryDetails.URL(routes.ID(category.ID)) }>
+				{ category.Name }
+			</a>
+		</td>
 		<td>{ category.Description.String }</td>
 		<td>
 			<div class="tooltip" data-tip={ utils.PgTimestampToString(category.UpdatedAt) }>
@@ -92,7 +96,7 @@ var SubcategoriesForCategoryTableColumns = []components.DataTableColumn{
 
 func GetDefaultSubcategoriesForCategoryTableConfig(categoryID uuid.UUID) *components.DataTableConfig {
 	return components.NewDataTableConfig("subcategories").
-		SetLabel("Subcategories list").
+		SetLabel("Subcategories for category").
 		SetSearchPlaceholder("Search subcategories").
 		SetItemLabel("subcategories", "subcategory").
 		SetURLString(routes.SubcategorySearch.URL(routes.ID(categoryID))).
@@ -103,7 +107,11 @@ func GetDefaultSubcategoriesForCategoryTableConfig(categoryID uuid.UUID) *compon
 
 templ SubcategoriesForCategoryTableRow(c *gin.Context, subcategory repository.SubcategoryWithDetail) {
 	<tr class="hover:bg-base-300">
-		<td>{ subcategory.Name }</td>
+		<td>
+			<a class="link link-hover" href={ routes.SubcategoryDetails.URLWithReturnToCurrent(routes.Subcategory(subcategory.CategoryID, subcategory.ID), c) }>
+				{ subcategory.Name }
+			</a>
+		</td>
 		<td>{ subcategory.Description.String }</td>
 		<td>
 			<div class="tooltip" data-tip={ utils.PgTimestampToString(subcategory.UpdatedAt) }>
@@ -112,7 +120,7 @@ templ SubcategoriesForCategoryTableRow(c *gin.Context, subcategory repository.Su
 		</td>
 		<td>
 			<div class="flex space-x-2">
-				@components.ButtonLink(routes.SubcategoryDetails.URL(routes.Subcategory(subcategory.CategoryID, subcategory.ID)), components.ButtonConfig("").
+				@components.ButtonLink(routes.SubcategoryDetails.URLWithReturnToCurrent(routes.Subcategory(subcategory.CategoryID, subcategory.ID), c), components.ButtonConfig("").
 					Icon(icons.InformationCircle()).
 					Color("primary").
 					Style("soft").
@@ -168,7 +176,7 @@ var ProductsForCategoryTableColumns = []components.DataTableColumn{
 
 func GetDefaultProductsForCategoryTableConfig(categoryID uuid.UUID) *components.DataTableConfig {
 	return components.NewDataTableConfig("products").
-		SetLabel("Products list").
+		SetLabel("Products for category").
 		SetSearchPlaceholder("Search products").
 		SetItemLabel("products", "product").
 		SetURLString(routes.CategorySearchProducts.URL(routes.ID(categoryID))).
@@ -179,10 +187,24 @@ func GetDefaultProductsForCategoryTableConfig(categoryID uuid.UUID) *components.
 
 templ ProductsForCategoryTableRow(c *gin.Context, product repository.ProductWithDetail) {
 	<tr class="hover:bg-base-300">
-		<td>{ product.Brand }</td>
-		<td>{ product.Name }</td>
-		<td>{ product.Subcategory.Name }</td>
-		<td>{ product.Supplier.Name }</td>
+		<td>
+			{ product.Brand }
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.ProductDetails.URLWithReturnToCurrent(routes.ID(product.ID), c) }>
+				{ product.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.SubcategoryDetails.URLWithReturnToCurrent(routes.Subcategory(product.CategoryID, product.SubcategoryID), c) }>
+				{ product.Subcategory.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.SupplierDetails.URLWithReturnToCurrent(routes.ID(product.DefaultSupplierID), c) }>
+				{ product.Supplier.Name }
+			</a>
+		</td>
 		<td>
 			<div class="flex flex-wrap gap-2">
 				for _, alias := range product.Aliases {
@@ -197,7 +219,7 @@ templ ProductsForCategoryTableRow(c *gin.Context, product repository.ProductWith
 		</td>
 		<td>
 			<div class="flex gap-2">
-				@components.ButtonLink(routes.ProductDetails.URL(routes.ID(product.ID)), components.ButtonConfig("").
+				@components.ButtonLink(routes.ProductDetails.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("").
 					Icon(icons.InformationCircle()).
 					Color("primary").
 					Style("soft").

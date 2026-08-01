@@ -36,11 +36,29 @@ func GetDefaultProductsTableConfig() *components.DataTableConfig {
 
 templ ProductsTableRow(c *gin.Context, product repository.ProductWithDetail) {
 	<tr class="hover:bg-base-300">
-		<td>{ product.Brand }</td>
-		<td>{ product.Name }</td>
-		<td>{ product.Category.Name }</td>
-		<td>{ product.Subcategory.Name }</td>
-		<td>{ product.Supplier.Name }</td>
+		<td>
+			{ product.Brand }
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.ProductDetails.URL(routes.ID(product.ID)) }>
+				{ product.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.CategoryDetails.URLWithReturnToCurrent(routes.ID(product.CategoryID), c) }>
+				{ product.Category.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.SubcategoryDetails.URLWithReturnToCurrent(routes.Subcategory(product.CategoryID, product.SubcategoryID), c) }>
+				{ product.Subcategory.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.SupplierDetails.URLWithReturnToCurrent(routes.ID(product.DefaultSupplierID), c) }>
+				{ product.Supplier.Name }
+			</a>
+		</td>
 		<td>
 			<div class="flex flex-wrap gap-2">
 				for _, alias := range product.Aliases {
@@ -122,11 +140,6 @@ func GetDefaultTransactionsForProductTableConfig(productID uuid.UUID) *component
 
 templ TransactionsForProductTableRow(c *gin.Context, productID uuid.UUID, transaction repository.TransactionWithDetailsAndItem) {
 	{{
-		supplierName := "N/A"
-		if transaction.SupplierID != nil {
-			supplierName = transaction.Supplier.Name
-		}
-
 		appliedAtString := "N/A"
 		appliedAtNL := "N/A"
 		if transaction.AppliedAt.Valid {
@@ -143,14 +156,26 @@ templ TransactionsForProductTableRow(c *gin.Context, productID uuid.UUID, transa
 		}
 	}}
 	<tr class="hover:bg-base-300">
-		<td>{ utils.PgDateToString(transaction.TransactionDate) }</td>
+		<td>
+			<a class="link link-hover" href={ routes.TransactionDetails.URLWithReturnToCurrent(routes.ID(transaction.ID), c) }>
+				{ utils.PgDateToString(transaction.TransactionDate) }
+			</a>
+		</td>
 		<td>
 			@transactionTypeBadge(transaction.TransactionType)
 		</td>
 		<td>
 			@transactionStateBadge(transaction.State)
 		</td>
-		<td>{ supplierName }</td>
+		<td>
+			if transaction.SupplierID != nil {
+				<a class="link link-hover" href={ routes.SupplierDetails.URLWithReturnToCurrent(routes.ID(*transaction.SupplierID), c) }>
+					{ transaction.Supplier.Name }
+				</a>
+			} else {
+				N/A
+			}
+		</td>
 		<td>{ utils.PgNumericToString(totalProductPrice, "0.00") } CHF</td>
 		<td>{ utils.PgNumericToString(transaction.FinalPrice, "0.00") } CHF</td>
 		<td>
@@ -160,7 +185,7 @@ templ TransactionsForProductTableRow(c *gin.Context, productID uuid.UUID, transa
 		</td>
 		<td>
 			<div class="flex gap-2">
-				@components.ButtonLink(routes.TransactionDetails.URL(routes.ID(transaction.ID)), components.ButtonConfig("").
+				@components.ButtonLink(routes.TransactionDetails.URLWithReturnToCurrent(routes.ID(transaction.ID), c), components.ButtonConfig("").
 					Icon(icons.InformationCircle()).
 					Style("soft").
 					Size("sm").
@@ -240,18 +265,20 @@ func GetDefaultInventoryLotsForProductTableConfig(productID uuid.UUID) *componen
 }
 
 templ InventoryLotsForProductTableRow(c *gin.Context, inventoryLot repository.InventoryLotWithDetail) {
-	{{
-		supplierName := "N/A"
-		if inventoryLot.TransactionItem.Transaction.SupplierID != nil {
-			supplierName = inventoryLot.TransactionItem.Transaction.Supplier.Name
-		}
-	}}
 	<tr class="hover:bg-base-300">
 		<td>{ utils.PgDateToString(inventoryLot.TransactionItem.Transaction.TransactionDate) }</td>
 		<td>{ fmt.Sprintf("%d", inventoryLot.ReceivedQuantity) }</td>
 		<td>{ fmt.Sprintf("%d", inventoryLot.RemainingQuantity) }</td>
 		<td>{ utils.PgNumericToString(inventoryLot.UnitCost, "0.00") } CHF</td>
-		<td>{ supplierName }</td>
+		<td>
+			if inventoryLot.TransactionItem.Transaction.SupplierID != nil {
+				<a class="link link-hover" href={ routes.SupplierDetails.URLWithReturnToCurrent(routes.ID(*inventoryLot.TransactionItem.Transaction.SupplierID), c) }>
+					{ inventoryLot.TransactionItem.Transaction.Supplier.Name }
+				</a>
+			} else {
+				N/A
+			}
+		</td>
 		<td>
 			<div class="tooltip" data-tip={ utils.PgTimestampToString(inventoryLot.CreatedAt) }>
 				{ utils.PgTimestampToNaturalLanguage(inventoryLot.CreatedAt) }

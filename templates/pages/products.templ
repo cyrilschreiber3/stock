@@ -182,15 +182,27 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 						</tr>
 						<tr>
 							<th>Category</th>
-							<td>{ product.Category.Name }</td>
+							<td>
+								<a class="link link-hover" href={ routes.CategoryDetails.URLWithReturnToCurrent(routes.ID(product.CategoryID), c) }>
+									{ product.Category.Name }
+								</a>
+							</td>
 						</tr>
 						<tr>
 							<th>Sub-category</th>
-							<td>{ product.Subcategory.Name }</td>
+							<td>
+								<a class="link link-hover" href={ routes.SubcategoryDetails.URLWithReturnToCurrent(routes.Subcategory(product.CategoryID, product.SubcategoryID), c) }>
+									{ product.Subcategory.Name }
+								</a>
+							</td>
 						</tr>
 						<tr>
 							<th>Default supplier</th>
-							<td>{ product.Supplier.Name }</td>
+							<td>
+								<a class="link link-hover" href={ routes.SupplierDetails.URLWithReturnToCurrent(routes.ID(product.DefaultSupplierID), c) }>
+									{ product.Supplier.Name }
+								</a>
+							</td>
 						</tr>
 						<tr>
 							<th>Base buy price</th>

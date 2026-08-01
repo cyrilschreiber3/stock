@@ -34,11 +34,6 @@ func GetDefaultTransactionsTableConfig() *components.DataTableConfig {
 
 templ TransactionsTableRow(c *gin.Context, transaction repository.TransactionWithDetail) {
 	{{
-		supplierName := "N/A"
-		if transaction.SupplierID != nil {
-			supplierName = transaction.Supplier.Name
-		}
-
 		appliedAtString := "N/A"
 		appliedAtNL := "N/A"
 		if transaction.AppliedAt.Valid {
@@ -48,7 +43,9 @@ templ TransactionsTableRow(c *gin.Context, transaction repository.TransactionWit
 	}}
 	<tr>
 		<td>
-			{ utils.PgDateToNaturalLanguage(transaction.TransactionDate) }
+			<a class="link link-hover" href={ routes.TransactionDetails.URL(routes.ID(transaction.ID)) }>
+				{ utils.PgDateToNaturalLanguage(transaction.TransactionDate) }
+			</a>
 		</td>
 		<td>
 			@transactionTypeBadge(transaction.TransactionType)
@@ -56,7 +53,15 @@ templ TransactionsTableRow(c *gin.Context, transaction repository.TransactionWit
 		<td>
 			@transactionStateBadge(transaction.State)
 		</td>
-		<td>{ supplierName }</td>
+		<td>
+			if transaction.SupplierID != nil {
+				<a class="link link-hover" href={ routes.SupplierDetails.URLWithReturnToCurrent(routes.ID(*transaction.SupplierID), c) }>
+					{ transaction.Supplier.Name }
+				</a>
+			} else {
+				N/A
+			}
+		</td>
 		<td>{ utils.PgNumericToString(transaction.BasePrice, "0.00") }</td>
 		<td>{ utils.PgNumericToString(transaction.FinalPrice, "0.00") }</td>
 		<td>
