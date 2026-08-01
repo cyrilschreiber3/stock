@@ -134,6 +134,7 @@ templ Base(c *gin.Context, title string, currentSection string) {
 				</main>
 			</div>
 			@partials.NotificationHandler(c)
+			@partials.MobileTooltipOpener()
 		</body>
 	</html>
 }
