@@ -17,6 +17,7 @@ func registerApiRoutes(r *gin.Engine) {
 func registerProductRoutes(r *gin.Engine) {
 	routes.ProductList.Register(r, handlers.HandleGetProducts())
 	routes.ProductOptions.Register(r, handlers.HandleGetProductOptions())
+	routes.ProductBrandsOptions.Register(r, handlers.HandleGetProductBrandOptions())
 	routes.ProductSearch.Register(r, handlers.HandleSearchProducts())
 	routes.ProductSearchTransactions.Register(r, handlers.HandleSearchTransactionsForProduct())
 	routes.ProductSearchInventoryLots.Register(r, handlers.HandleSearchInventoryLotsForProduct())

@@ -45,6 +45,23 @@ func HandleGetProductOptions() gin.HandlerFunc {
 	}
 }
 
+func HandleGetProductBrandOptions() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		statusCode := http.StatusOK
+		brands, err := db.GetProductBrands(c.Request.Context())
+		if err != nil {
+			statusCode = http.StatusInternalServerError
+			slog.Error("Error retrieving product brands", "error", err)
+			utils.HXNotify(c, statusCode, "error", "Could not retrieve product brands")
+			return
+		}
+
+		component := components.DatalistOptions(brands)
+
+		utils.RenderTemplate(c, statusCode, component)
+	}
+}
+
 func HandleSearchProducts() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tableConfig := pages.GetDefaultProductsTableConfig().GetConfigFromURL(c)

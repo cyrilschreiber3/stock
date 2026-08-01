@@ -71,6 +71,7 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 				Label("Product Brand").
 				Placeholder("Dr. Gabs").
 				Value(brand).
+				DatalistOptionsFromEndpoint(routes.ProductBrandsOptions.URL()).
 				Required(),
 			)
 			@components.FormField(components.FormFieldConfig("name").

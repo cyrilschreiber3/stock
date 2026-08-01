@@ -6,6 +6,8 @@ var ProductList = Spec0("ProductList", MethodGET, ProductGroup, "/")
 
 var ProductOptions = Spec0("ProductOptions", MethodGET, ProductGroup, "/options")
 
+var ProductBrandsOptions = Spec0("ProductBrandsOptions", MethodGET, ProductGroup, "/brands/options")
+
 var ProductSearch = Spec0("ProductSearch", MethodGET, ProductGroup, "/search")
 
 var ProductCreateForm = Spec0("ProductCreateForm", MethodGET, ProductGroup, "/create")
@@ -38,6 +40,7 @@ var ProductRoutes = ResourceRoutes{
 	Routes: []RouteHandler{
 		ProductList,
 		ProductOptions,
+		ProductBrandsOptions,
 		ProductSearch,
 		ProductSearchTransactions,
 		ProductSearchInventoryLots,
