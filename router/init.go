@@ -69,6 +69,7 @@ func RegisterRoutes(router *gin.Engine) {
 	routes.RegisterSpecialRoutes(router)
 	registerApiRoutes(router)
 	registerProductRoutes(router)
+	registerBrandRoutes(router)
 	registerCategoryRoutes(router)
 	registerSubcategoryRoutes(router)
 	registerSupplierRoutes(router)

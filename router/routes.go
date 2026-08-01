@@ -29,6 +29,12 @@ func registerProductRoutes(r *gin.Engine) {
 	routes.ProductDelete.Register(r, handlers.HandleDeleteProduct())
 }
 
+func registerBrandRoutes(r *gin.Engine) {
+	routes.BrandOptions.Register(r, handlers.HandleGetProductBrandOptions())
+	routes.BrandDetails.Register(r, handlers.HandleGetBrandDetails())
+	routes.BrandSearchProducts.Register(r, handlers.HandleSearchProductsByBrand())
+}
+
 func registerCategoryRoutes(r *gin.Engine) {
 	routes.CategoryList.Register(r, handlers.HandleGetCategories())
 	routes.CategoryOptions.Register(r, handlers.HandleGetCategoryOptions())

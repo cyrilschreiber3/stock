@@ -7,6 +7,7 @@ func GetAllRoutes() []RouteHandler {
 	routes = append(routes, IndexRoutes.Routes...)
 	routes = append(routes, ApiRoutes.Routes...)
 	routes = append(routes, ProductRoutes.Routes...)
+	routes = append(routes, BrandRoutes.Routes...)
 	routes = append(routes, SupplierRoutes.Routes...)
 	routes = append(routes, CategoryRoutes.Routes...)
 	routes = append(routes, SubcategoryRoutes.Routes...)

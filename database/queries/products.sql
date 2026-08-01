@@ -6,6 +6,7 @@ SELECT * FROM search_products_with_details(
     sqlc.arg('search'),
     sqlc.arg('sort_key'),
     sqlc.arg('sort_direction'),
+    sqlc.arg('brand_filter'),
     sqlc.arg('category_id'),
     sqlc.arg('subcategory_id'),
     sqlc.arg('supplier_id')
@@ -45,6 +46,9 @@ WHERE
     AND (sqlc.arg(supplier_id)::UUID = '00000000-0000-0000-0000-000000000000'::UUID OR p.default_supplier_id = sqlc.arg(supplier_id)::UUID)
 ORDER BY p.name ASC
 LIMIT $1 OFFSET $2;
+
+-- name: GetProductBrands :many
+SELECT DISTINCT brand FROM products ORDER BY brand ASC;
 
 -- Category queries
 

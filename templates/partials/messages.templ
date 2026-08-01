@@ -34,49 +34,56 @@ templ MessagesHandler(c *gin.Context) {
 			</div>
 		</template>
 		<script>
-        function pageMessages() {
-            return {
-                messages: [],
-                init() {
-                    function getCookie(name) {
-                        const m = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
-                        return m ? m[2] : null;
-                    }
-                    // console.log("Initializing page messages");
-                    // console.log("Cookies:", document.cookie);
-                    const raw = getCookie("notification-message");
-                    if (!raw) return;
-                    // console.log("Found page message cookie:", raw);
+			function pageMessages() {
+				return {
+					messages: [],
+					init() {
+						function getCookie(name) {
+							const m = document.cookie.match(
+								new RegExp("(^| )" + name + "=([^;]+)"),
+							);
+							return m ? m[2] : null;
+						}
+						// console.log("Initializing page messages");
+						// console.log("Cookies:", document.cookie);
+						const raw = getCookie("notification-message");
+						if (!raw) return;
+						// console.log("Found page message cookie:", raw);
 
-                    try {
-                        const data = JSON.parse(decodeURIComponent(raw.replace(/\+/g, "%20")));
-                        this.messages.push({
-                            id: Date.now(),
-                            severity: data.severity,
-                            message: data.content,
-                        });
-                    } catch (e) {
-                        console.error(e);
-                    }
+						try {
+							const data = JSON.parse(
+								decodeURIComponent(raw.replace(/\+/g, "%20")),
+							);
+							this.messages.push({
+								id: Date.now(),
+								severity: data.severity,
+								message: data.content,
+							});
+						} catch (e) {
+							console.error(e);
+						}
 
-                    // remove only when the page is being reloaded/unloaded
-                    window.addEventListener("beforeunload", () => {
-                        document.cookie = "notification-message=; Max-Age=0; Path=/";
-                    });
-                },
-                getIcon(severity) {
-                    const el = document.getElementById('icon-' + severity);
-                    return el?.innerHTML || document.getElementById('icon-default')?.innerHTML;
-                },
-                colorBySeverity: {
-                    default: "alert-info",
-                    info: "alert-info",
-                    success: "alert-success",
-                    warning: "alert-warning",
-                    error: "alert-error",
-                },
-            };
-        }
-        </script>
+						// remove only when the page is being reloaded/unloaded
+						window.addEventListener("beforeunload", () => {
+							document.cookie = "notification-message=; Max-Age=0; Path=/";
+						});
+					},
+					getIcon(severity) {
+						const el = document.getElementById("icon-" + severity);
+						return (
+							el?.innerHTML ||
+							document.getElementById("icon-default")?.innerHTML
+						);
+					},
+					colorBySeverity: {
+						default: "alert-info",
+						info: "alert-info",
+						success: "alert-success",
+						warning: "alert-warning",
+						error: "alert-error",
+					},
+				};
+			}
+		</script>
 	</div>
 }

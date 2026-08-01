@@ -6,6 +6,7 @@ var (
 	ParamID        = ParamSpec{Name: "id", Type: ParamUUID}
 	ParamField     = ParamSpec{Name: "field", Type: ParamText}
 	ParamProductID = ParamSpec{Name: "product_id", Type: ParamUUID}
+	ParamName      = ParamSpec{Name: "name", Type: ParamText}
 )
 
 // Deprecated: Use the StaticRoute type instead of Route[NoParams]
@@ -38,4 +39,16 @@ func (p ObjectFieldParams) Values() map[string]string {
 
 func ObjectField(id uuid.UUID, field string) ObjectFieldParams {
 	return ObjectFieldParams{ID: id, Field: field}
+}
+
+type NameParam struct {
+	Name string
+}
+
+func (p NameParam) Values() map[string]string {
+	return map[string]string{"name": p.Name}
+}
+
+func Name(name string) NameParam {
+	return NameParam{Name: name}
 }

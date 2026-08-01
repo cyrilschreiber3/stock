@@ -28,6 +28,7 @@ templ FormField(config *formFieldConfig) {
 		} else {
 			@config.getInputComponent()
 		}
+		@datalist(config)
 	</fieldset>
 }
 
@@ -232,6 +233,27 @@ templ radioFormInput(name string, classes []string, options map[string]string) {
 
 templ textareaFormInput(classes []string, attributes templ.Attributes, value string) {
 	<textarea class={ strings.Join(classes, " ") } { attributes... }>{ value }</textarea>
+}
+
+templ datalist(config *formFieldConfig) {
+	{{
+		datalistAttributes := templ.Attributes{}
+		if config.datalistEndpoint != "" {
+			datalistAttributes["hx-get"] = config.datalistEndpoint
+			datalistAttributes["hx-trigger"] = "load, refreshOptions from:closest fieldset, refreshDatalist"
+			datalistAttributes["hx-target"] = "this"
+			datalistAttributes["hx-swap"] = "innerHTML"
+		}
+	}}
+	<datalist id={ config.name + "-datalist" } { datalistAttributes... }>
+		@DatalistOptions(config.datalist)
+	</datalist>
+}
+
+templ DatalistOptions(options []string) {
+	for _, value := range options {
+		<option value={ value }></option>
+	}
 }
 
 // templ TextInput(name string, placeholder string, value string, required bool) {

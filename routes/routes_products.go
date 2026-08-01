@@ -50,3 +50,22 @@ var ProductRoutes = ResourceRoutes{
 		ProductDelete,
 	},
 }
+
+var BrandGroup = Group("/brands", WithParent(ProductGroup))
+
+var BrandOptions = Spec0("BrandOptions", MethodGET, BrandGroup, "/options")
+
+var BrandDetailsRouteParams = WithRouteParams[NameParam](ParamName)
+var BrandDetails = Spec("BrandDetails", MethodGET, BrandGroup, "/:name", BrandDetailsRouteParams)
+
+var BrandSearchProductsRouteParams = WithRouteParams[NameParam](ParamName)
+var BrandSearchProducts = Spec("BrandSearchProducts", MethodGET, BrandGroup, "/:name/products/search", BrandSearchProductsRouteParams)
+
+var BrandRoutes = ResourceRoutes{
+	Group: BrandGroup,
+	Routes: []RouteHandler{
+		BrandOptions,
+		BrandDetails,
+		BrandSearchProducts,
+	},
+}

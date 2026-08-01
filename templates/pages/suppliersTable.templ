@@ -30,7 +30,11 @@ func GetDefaultSupplierTableConfig() *components.DataTableConfig {
 
 templ SuppliersTableRow(c *gin.Context, supplier repository.Supplier) {
 	<tr class="hover:bg-base-300">
-		<td>{ supplier.Name }</td>
+		<td>
+			<a class="link link-hover" href={ routes.SupplierDetails.URL(routes.ID(supplier.ID)) }>
+				{ supplier.Name }
+			</a>
+		</td>
 		<td>{ supplier.Description.String }</td>
 		<td>
 			<div class="tooltip" data-tip={ utils.PgTimestampToString(supplier.UpdatedAt) }>
@@ -103,10 +107,26 @@ func GetDefaultProductsForSupplierTableConfig(supplierID uuid.UUID) *components.
 
 templ ProductsForSupplierTableRow(c *gin.Context, product repository.ProductWithDetail) {
 	<tr class="hover:bg-base-300">
-		<td>{ product.Brand }</td>
-		<td>{ product.Name }</td>
-		<td>{ product.Category.Name }</td>
-		<td>{ product.Subcategory.Name }</td>
+		<td>
+			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Brand), c) }>
+				{ product.Brand }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.ProductDetails.URLWithReturnToCurrent(routes.ID(product.ID), c) }>
+				{ product.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.CategoryDetails.URLWithReturnToCurrent(routes.ID(product.CategoryID), c) }>
+				{ product.Category.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.SubcategoryDetails.URLWithReturnToCurrent(routes.Subcategory(product.CategoryID, product.SubcategoryID), c) }>
+				{ product.Subcategory.Name }
+			</a>
+		</td>
 		<td>
 			<div class="flex flex-wrap gap-2">
 				for _, alias := range product.Aliases {
@@ -121,7 +141,7 @@ templ ProductsForSupplierTableRow(c *gin.Context, product repository.ProductWith
 		</td>
 		<td>
 			<div class="flex gap-2">
-				@components.ButtonLink(routes.ProductDetails.URL(routes.ID(product.ID)), components.ButtonConfig("").
+				@components.ButtonLink(routes.ProductDetails.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("").
 					Icon(icons.InformationCircle()).
 					Color("primary").
 					Style("soft").

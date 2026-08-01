@@ -116,7 +116,7 @@ func HandleGetTransactionDetails() gin.HandlerFunc {
 
 func HandleShowCreateTransactionForm() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		utils.RenderTemplate(c, http.StatusOK, pages.CreateUpdateTransactionV2(c, nil))
+		utils.RenderTemplate(c, http.StatusOK, pages.CreateUpdateTransaction(c, nil))
 	}
 }
 
@@ -135,7 +135,7 @@ func HandleShowUpdateTransactionForm() gin.HandlerFunc {
 			return
 		}
 
-		component := pages.CreateUpdateTransactionV2(c, &transaction)
+		component := pages.CreateUpdateTransaction(c, &transaction)
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }

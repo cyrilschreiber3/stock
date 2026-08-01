@@ -18,7 +18,7 @@ import (
 func HandleGetProductOptions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		statusCode := http.StatusOK
-		products, err := db.GetAllProducts(c.Request.Context())
+		products, err := db.GetAllProducts(c)
 		if err != nil {
 			statusCode = http.StatusInternalServerError
 			slog.Error("Error retrieving products", "error", err)
@@ -42,6 +42,74 @@ func HandleGetProductOptions() gin.HandlerFunc {
 		component := components.SelectOptions(placeholder, selectedId, productOptions, required)
 
 		utils.RenderTemplate(c, statusCode, component)
+	}
+}
+
+func HandleGetProductBrandOptions() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		statusCode := http.StatusOK
+		brands, err := db.GetProductBrands(c)
+		if err != nil {
+			statusCode = http.StatusInternalServerError
+			slog.Error("Error retrieving product brands", "error", err)
+			utils.HXNotify(c, statusCode, "error", "Could not retrieve product brands")
+			return
+		}
+
+		component := components.DatalistOptions(brands)
+
+		utils.RenderTemplate(c, statusCode, component)
+	}
+}
+
+func HandleGetBrandDetails() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		statusCode := http.StatusOK
+		brandName := c.Param("name")
+		if brandName == "" {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Brand name is required")
+			return
+		}
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			BrandFilter: brandName,
+		})
+		if err != nil {
+			statusCode = http.StatusInternalServerError
+			slog.Error("Error retrieving products for brand", "error", err)
+			utils.HXNotify(c, statusCode, "error", "Could not retrieve products for brand")
+			return
+		}
+
+		component := pages.BrandDetails(c, brandName, products)
+		utils.RenderTemplate(c, statusCode, component)
+	}
+}
+
+func HandleSearchProductsByBrand() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		brandName := c.Param("name")
+		if brandName == "" {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Brand name is required")
+			return
+		}
+
+		tableConfig := pages.GetDefaultProductsForBrandTableConfig(brandName).GetConfigFromURL(c)
+
+		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			BrandFilter:   brandName,
+		})
+		if err != nil {
+			slog.Error("Error searching products by brand", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search products by brand")
+			return
+		}
+
+		component := pages.ProductsForBrandTable(c, brandName, products, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }
 

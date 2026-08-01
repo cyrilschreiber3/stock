@@ -65,6 +65,9 @@ init: init-deps sqlc templ-build tailwind ## Initialize the project (fetch libra
 	@test -f .env || cp example.env .env
 
 test: init ## Run tests
+	@templ fmt -fail .
+	@prettier --check ./**/*.templ
+	@test -z "$$(gofmt -l .)" || (echo "gofmt issues in:"; gofmt -l .; exit 1)
 	@go test ./...
 
 build: init sqlc templ-build tailwind ## Build the project

@@ -30,8 +30,16 @@ func GetDefaultInventoryTableConfig() *components.DataTableConfig {
 
 templ InventoryTableRow(c *gin.Context, product repository.InventoryWithDetail) {
 	<tr class="hover:bg-base-300">
-		<td>{ product.Product.Brand }</td>
-		<td>{ product.Product.Name }</td>
+		<td>
+			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Product.Brand), c) }>
+				{ product.Product.Brand }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.ProductDetails.URLWithReturnToCurrent(routes.ID(product.ProductID), c) }>
+				{ product.Product.Name }
+			</a>
+		</td>
 		<td>{ product.TotalQuantity }</td>
 		<td>{ utils.PgNumericToString(averageUnitPrice(product.TotalBuyPrice, product.TotalBuyQuantity), "0.00") } CHF</td>
 		<td>{ utils.PgNumericToString(averageUnitPrice(product.TotalSellPrice, product.TotalSellQuantity), "0.00") } CHF</td>

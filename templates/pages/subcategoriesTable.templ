@@ -32,9 +32,21 @@ func GetDefaultProductsForSubcategoryTableConfig(categoryID, subcategoryID uuid.
 
 templ ProductsForSubcategoryTableRow(c *gin.Context, product repository.ProductWithDetail) {
 	<tr class="hover:bg-base-300">
-		<td>{ product.Brand }</td>
-		<td>{ product.Name }</td>
-		<td>{ product.Supplier.Name }</td>
+		<td>
+			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Brand), c) }>
+				{ product.Brand }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.ProductDetails.URLWithReturnToCurrent(routes.ID(product.ID), c) }>
+				{ product.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.SupplierDetails.URLWithReturnToCurrent(routes.ID(product.DefaultSupplierID), c) }>
+				{ product.Supplier.Name }
+			</a>
+		</td>
 		<td>
 			<div class="flex flex-wrap gap-2">
 				for _, alias := range product.Aliases {
@@ -49,7 +61,7 @@ templ ProductsForSubcategoryTableRow(c *gin.Context, product repository.ProductW
 		</td>
 		<td>
 			<div class="flex justify-end gap-2">
-				@components.ButtonLink(routes.ProductDetails.URL(routes.ID(product.ID)), components.ButtonConfig("").
+				@components.ButtonLink(routes.ProductDetails.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("").
 					Icon(icons.InformationCircle()).
 					Color("primary").
 					Style("soft").

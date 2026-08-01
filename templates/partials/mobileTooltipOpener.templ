@@ -1,0 +1,19 @@
+package partials
+
+templ MobileTooltipOpener() {
+	<script>
+		document.addEventListener(
+			"touchstart",
+			function (e) {
+				var tooltip = e.target.closest(".tooltip");
+				document
+					.querySelectorAll(".tooltip.tooltip-open")
+					.forEach(function (el) {
+						if (el !== tooltip) el.classList.remove("tooltip-open");
+					});
+				if (tooltip) tooltip.classList.toggle("tooltip-open");
+			},
+			{ passive: true },
+		);
+	</script>
+}
