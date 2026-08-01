@@ -18,6 +18,8 @@ type formFieldConfig struct {
 	multiValueList   []map[string]string
 	options          map[string]string
 	optionsEndpoint  string
+	datalist         []string
+	datalistEndpoint string
 	valueEndpoint    string
 	dependsOn        string
 	placeholder      string
@@ -214,6 +216,18 @@ func (c *formFieldConfig) OptionsFromEndpoint(endpoint string) *formFieldConfig 
 	c.inputAttributes["hx-target"] = "this"
 	c.inputAttributes["hx-swap"] = "innerHTML"
 	// c.inputAttributes["hx-on:htmx:afterSwap"] = `this.dispatchEvent(new CustomEvent("change", { bubbles: true }))`
+	return c
+}
+
+func (c *formFieldConfig) DatalistOptions(options []string) *formFieldConfig {
+	c.datalist = options
+	c.inputAttributes["list"] = fmt.Sprintf("%s-datalist", c.name)
+	return c
+}
+
+func (c *formFieldConfig) DatalistOptionsFromEndpoint(endpoint string) *formFieldConfig {
+	c.datalistEndpoint = endpoint
+	c.inputAttributes["list"] = fmt.Sprintf("%s-datalist", c.name)
 	return c
 }
 
