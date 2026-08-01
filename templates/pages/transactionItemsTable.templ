@@ -32,7 +32,11 @@ func GetDefaultTransactionItemsTableConfig(transactionID uuid.UUID) *components.
 
 templ TransactionItemsTableRow(c *gin.Context, transactionItem repository.TransactionItemWithDetail, editable bool) {
 	<tr class="hover:bg-base-300">
-		<td>{ transactionItem.Product.Brand }</td>
+		<td>
+			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(transactionItem.Product.Brand), c) }>
+				{ transactionItem.Product.Brand }
+			</a>
+		</td>
 		<td>
 			<a class="link link-hover" href={ routes.ProductDetails.URLWithReturnToCurrent(routes.ID(transactionItem.ProductID), c) }>
 				{ transactionItem.Product.Name }

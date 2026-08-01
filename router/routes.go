@@ -17,7 +17,6 @@ func registerApiRoutes(r *gin.Engine) {
 func registerProductRoutes(r *gin.Engine) {
 	routes.ProductList.Register(r, handlers.HandleGetProducts())
 	routes.ProductOptions.Register(r, handlers.HandleGetProductOptions())
-	routes.ProductBrandsOptions.Register(r, handlers.HandleGetProductBrandOptions())
 	routes.ProductSearch.Register(r, handlers.HandleSearchProducts())
 	routes.ProductSearchTransactions.Register(r, handlers.HandleSearchTransactionsForProduct())
 	routes.ProductSearchInventoryLots.Register(r, handlers.HandleSearchInventoryLotsForProduct())
@@ -28,6 +27,12 @@ func registerProductRoutes(r *gin.Engine) {
 	routes.ProductEditForm.Register(r, handlers.HandleShowUpdateProductForm())
 	routes.ProductUpdate.Register(r, handlers.HandleUpdateProduct())
 	routes.ProductDelete.Register(r, handlers.HandleDeleteProduct())
+}
+
+func registerBrandRoutes(r *gin.Engine) {
+	routes.BrandOptions.Register(r, handlers.HandleGetProductBrandOptions())
+	routes.BrandDetails.Register(r, handlers.HandleGetBrandDetails())
+	routes.BrandSearchProducts.Register(r, handlers.HandleSearchProductsByBrand())
 }
 
 func registerCategoryRoutes(r *gin.Engine) {

@@ -71,7 +71,7 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 				Label("Product Brand").
 				Placeholder("Dr. Gabs").
 				Value(brand).
-				DatalistOptionsFromEndpoint(routes.ProductBrandsOptions.URL()).
+				DatalistOptionsFromEndpoint(routes.BrandOptions.URL()).
 				Required(),
 			)
 			@components.FormField(components.FormFieldConfig("name").
@@ -175,7 +175,11 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 					<tbody>
 						<tr>
 							<th>Brand</th>
-							<td>{ product.Brand }</td>
+							<td>
+								<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Brand), c) }>
+									{ product.Brand }
+								</a>
+							</td>
 						</tr>
 						<tr>
 							<th>Name</th>
@@ -250,6 +254,23 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 			</div>
 			@TransactionsForProductTable(c, product.ID, transactions, nil)
 			@InventoryLotsForProductTable(c, product.ID, inventoryLots, nil)
+		</div>
+	}
+}
+
+templ BrandDetails(c *gin.Context, brand string, products []repository.ProductWithDetail) {
+	@layouts.Base(c, "Brand", "products") {
+		<div class="flex flex-col gap-6">
+			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+				<h1 class="text-2xl font-bold">{ brand }</h1>
+				<div class="flex gap-2">
+					@components.ButtonLink(routes.ProductList.ReturnOrURL(c), components.ButtonConfig("Back").
+						Icon(icons.ArrowLeft()).
+						Color("neutral"),
+					)
+				</div>
+			</div>
+			@ProductsForBrandTable(c, brand, products, nil)
 		</div>
 	}
 }

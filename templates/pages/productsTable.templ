@@ -37,7 +37,9 @@ func GetDefaultProductsTableConfig() *components.DataTableConfig {
 templ ProductsTableRow(c *gin.Context, product repository.ProductWithDetail) {
 	<tr class="hover:bg-base-300">
 		<td>
-			{ product.Brand }
+			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Brand), c) }>
+				{ product.Brand }
+			</a>
 		</td>
 		<td>
 			<a class="link link-hover" href={ routes.ProductDetails.URL(routes.ID(product.ID)) }>
@@ -299,6 +301,106 @@ templ InventoryLotsForProductTable(c *gin.Context, productID uuid.UUID, inventor
 	@components.DataTable(c, tableConfig) {
 		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(inventoryLots)); i++ {
 			@InventoryLotsForProductTableRow(c, inventoryLots[i])
+		}
+	}
+}
+
+var ProductsForBrandTableColumns = []components.DataTableColumn{
+	components.NewDataTableColumn("Name", "name"),
+	components.NewDataTableColumn("Category", "category"),
+	components.NewDataTableColumn("Subcategory", "subcategory"),
+	components.NewDataTableColumn("Supplier", "supplier"),
+	components.NewUnsortedDataTableColumn("Aliases", "aliases"),
+	components.NewDataTableColumn("Updated", "updated_at"),
+	components.NewActionDataTableColumn(),
+}
+
+func GetDefaultProductsForBrandTableConfig(brand string) *components.DataTableConfig {
+	return components.NewDataTableConfig("products_for_brand").
+		SetLabel("Products for brand").
+		SetSearchPlaceholder("Search products for brand").
+		SetItemLabel("products", "product").
+		SetURLString(routes.BrandSearchProducts.URL(routes.Name(brand))).
+		SetSortKey("name").
+		SetSortDirection("asc").
+		AddColumns(ProductsForBrandTableColumns...)
+}
+
+templ ProductsForBrandTableRow(c *gin.Context, product repository.ProductWithDetail) {
+	<tr class="hover:bg-base-300">
+		<td>
+			<a class="link link-hover" href={ routes.ProductDetails.URL(routes.ID(product.ID)) }>
+				{ product.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.CategoryDetails.URLWithReturnToCurrent(routes.ID(product.CategoryID), c) }>
+				{ product.Category.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.SubcategoryDetails.URLWithReturnToCurrent(routes.Subcategory(product.CategoryID, product.SubcategoryID), c) }>
+				{ product.Subcategory.Name }
+			</a>
+		</td>
+		<td>
+			<a class="link link-hover" href={ routes.SupplierDetails.URLWithReturnToCurrent(routes.ID(product.DefaultSupplierID), c) }>
+				{ product.Supplier.Name }
+			</a>
+		</td>
+		<td>
+			<div class="flex flex-wrap gap-2">
+				for _, alias := range product.Aliases {
+					@components.Badge(components.BadgeConfig(alias).Color("primary"))
+				}
+			</div>
+		</td>
+		<td>
+			<div class="tooltip" data-tip={ utils.PgTimestampToString(product.UpdatedAt) }>
+				{ utils.PgTimestampToNaturalLanguage(product.UpdatedAt) }
+			</div>
+		</td>
+		<td>
+			<div class="flex space-x-2">
+				@components.ButtonLink(routes.ProductDetails.URL(routes.ID(product.ID)), components.ButtonConfig("").
+					Icon(icons.InformationCircle()).
+					Style("soft").
+					Size("sm").
+					Color("primary"),
+				)
+				@components.ButtonLink(routes.ProductEditForm.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("").
+					Icon(icons.PencilSquare()).
+					Style("soft").
+					Size("sm").
+					Color("info"),
+				)
+				@components.Button(components.ButtonConfig("").
+					Icon(icons.Trash()).
+					Color("error").
+					Style("soft").
+					Size("sm").
+					HxDelete(routes.ProductDelete.URL(routes.ID(product.ID))).
+					HxConfirm("Are you sure you want to delete this product?").
+					HxTarget("closest tr").
+					HxSwap("delete"),
+				)
+			</div>
+		</td>
+	</tr>
+}
+
+templ ProductsForBrandTable(c *gin.Context, brand string, products []repository.ProductWithDetail, tableConfig *components.DataTableConfig) {
+	{{
+		if tableConfig == nil {
+			tableConfig = GetDefaultProductsForBrandTableConfig(brand).GetConfigFromURL(c)
+		}
+		tableConfig = tableConfig.
+			SetItemCount(len(products)).
+			SetConfigToURL(c)
+	}}
+	@components.DataTable(c, tableConfig) {
+		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(products)); i++ {
+			@ProductsForBrandTableRow(c, products[i])
 		}
 	}
 }

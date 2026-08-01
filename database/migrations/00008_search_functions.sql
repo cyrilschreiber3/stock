@@ -13,6 +13,7 @@ CREATE OR REPLACE FUNCTION search_products_with_details(
   search_text text,
   sort_key text DEFAULT 'name',
   sort_direction text DEFAULT 'asc',
+  brand_filter text DEFAULT '',
   category_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID,
   subcategory_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID,
   supplier_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID
@@ -48,8 +49,9 @@ BEGIN
       ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR category_id = $2::uuid)
       AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR subcategory_id = $3::uuid)
       AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR default_supplier_id = $4::uuid)
+      AND ($5 = '' OR brand = $5)
       AND (
-        brand ILIKE '%%' || $1 || '%%'
+        ($5 = '' AND brand ILIKE '%%' || $1 || '%%')
         OR name ILIKE '%%' || $1 || '%%'
         OR category->>'name' ILIKE '%%' || $1 || '%%'
         OR subcategory->>'name' ILIKE '%%' || $1 || '%%'
@@ -60,7 +62,7 @@ BEGIN
     order_by_sql,
     direction_sql
   )
-  USING search_text, category_id, subcategory_id, supplier_id;
+  USING search_text, category_id, subcategory_id, supplier_id, brand_filter;
 END;
 $$;
 
@@ -455,6 +457,6 @@ DROP FUNCTION IF EXISTS search_transactions_with_details(text, text, text);
 DROP FUNCTION IF EXISTS search_suppliers(text, text, text);
 DROP FUNCTION IF EXISTS search_subcategories_with_details(text, text, text, uuid);
 DROP FUNCTION IF EXISTS search_categories(text, text, text);
-DROP FUNCTION IF EXISTS search_products_with_details(text, text, text, uuid, uuid, uuid);
+DROP FUNCTION IF EXISTS search_products_with_details(text, text, text, text, uuid, uuid, uuid);
 DROP FUNCTION IF EXISTS normalize_sort_direction(text);
 -- +goose StatementEnd

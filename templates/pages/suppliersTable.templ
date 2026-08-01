@@ -108,7 +108,9 @@ func GetDefaultProductsForSupplierTableConfig(supplierID uuid.UUID) *components.
 templ ProductsForSupplierTableRow(c *gin.Context, product repository.ProductWithDetail) {
 	<tr class="hover:bg-base-300">
 		<td>
-			{ product.Brand }
+			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Brand), c) }>
+				{ product.Brand }
+			</a>
 		</td>
 		<td>
 			<a class="link link-hover" href={ routes.ProductDetails.URLWithReturnToCurrent(routes.ID(product.ID), c) }>

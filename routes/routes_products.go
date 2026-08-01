@@ -6,8 +6,6 @@ var ProductList = Spec0("ProductList", MethodGET, ProductGroup, "/")
 
 var ProductOptions = Spec0("ProductOptions", MethodGET, ProductGroup, "/options")
 
-var ProductBrandsOptions = Spec0("ProductBrandsOptions", MethodGET, ProductGroup, "/brands/options")
-
 var ProductSearch = Spec0("ProductSearch", MethodGET, ProductGroup, "/search")
 
 var ProductCreateForm = Spec0("ProductCreateForm", MethodGET, ProductGroup, "/create")
@@ -40,7 +38,6 @@ var ProductRoutes = ResourceRoutes{
 	Routes: []RouteHandler{
 		ProductList,
 		ProductOptions,
-		ProductBrandsOptions,
 		ProductSearch,
 		ProductSearchTransactions,
 		ProductSearchInventoryLots,
@@ -51,5 +48,24 @@ var ProductRoutes = ResourceRoutes{
 		ProductEditForm,
 		ProductUpdate,
 		ProductDelete,
+	},
+}
+
+var BrandGroup = Group("/brands", WithParent(ProductGroup))
+
+var BrandOptions = Spec0("BrandOptions", MethodGET, BrandGroup, "/options")
+
+var BrandDetailsRouteParams = WithRouteParams[NameParam](ParamName)
+var BrandDetails = Spec("BrandDetails", MethodGET, BrandGroup, "/:name", BrandDetailsRouteParams)
+
+var BrandSearchProductsRouteParams = WithRouteParams[NameParam](ParamName)
+var BrandSearchProducts = Spec("BrandSearchProducts", MethodGET, BrandGroup, "/:name/products/search", BrandSearchProductsRouteParams)
+
+var BrandRoutes = ResourceRoutes{
+	Group: BrandGroup,
+	Routes: []RouteHandler{
+		BrandOptions,
+		BrandDetails,
+		BrandSearchProducts,
 	},
 }
