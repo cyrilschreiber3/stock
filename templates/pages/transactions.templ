@@ -1,8 +1,6 @@
 package pages
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
@@ -143,128 +141,7 @@ templ TransactionDetails(c *gin.Context, transaction repository.TransactionWithD
 	}
 }
 
-templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transaction, transactionItems *[]repository.TransactionItem) {
-	{{
-		title := "Create transaction"
-		formMethod := "post"
-		formAction := routes.TransactionCreate.URLWithReturn(c)
-		submitButtonText := "Create"
-
-		transactionDate := ""
-		transactionType := ""
-		supplierID := ""
-		transactionItemsList := []map[string]string{}
-
-		if transaction != nil {
-			title = "Update transaction from " + utils.PgDateToString(transaction.TransactionDate)
-			formMethod = "put"
-			formAction = routes.TransactionUpdate.URLWithReturn(routes.ID(transaction.ID), c)
-			submitButtonText = "Update"
-
-			transactionDate = utils.PgDateToFormString(transaction.TransactionDate)
-			transactionType = transaction.TransactionType
-			if transaction.SupplierID != nil {
-				supplierID = transaction.SupplierID.String()
-			}
-			transactionItemsList = make([]map[string]string, len(*transactionItems))
-			for i, item := range *transactionItems {
-				transactionItemsList[i] = map[string]string{
-					"product_id":       item.ProductID.String(),
-					"quantity":         fmt.Sprintf("%d", item.Quantity),
-					"base_unit_price":  utils.PgNumericToString(item.BaseUnitPrice, "0.00"),
-					"final_unit_price": utils.PgNumericToString(item.FinalUnitPrice, "0.00"),
-				}
-			}
-		}
-
-		defaultItemsJSON, _ := json.Marshal(map[string]string{
-			"product_id":       "",
-			"quantity":         "",
-			"base_unit_price":  "",
-			"final_unit_price": "",
-		})
-	}}
-	@layouts.OldBase(c, title) {
-		<h1 class="mb-4 text-2xl font-bold">{ title }</h1>
-		<form id="supplier-form" name="supplier-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
-			@components.FormField(components.FormFieldConfig("transaction_date").
-				Type("date").
-				Label("Transaction date").
-				Placeholder("DD-MM-YYYY").
-				ValidationPreset("dateInPast").
-				Value(transactionDate).
-				Required(),
-			)
-			@components.FormField(components.FormFieldConfig("transaction_type").
-				Type("select").
-				Label("Transaction type").
-				Placeholder("Select a transaction type").
-				Value(transactionType).
-				Options(map[string]string{
-					"buy":        "Purchase",
-					"sell":       "Sale",
-					"adjustment": "Adjustment",
-				}).
-				Required(),
-			)
-			@components.FormField(components.FormFieldConfig("supplier_id").
-				Type("select").
-				Label("Supplier").
-				Placeholder("Select a Supplier").
-				Value(supplierID).
-				OptionsFromEndpoint(routes.SupplierOptions.URL()),
-			)
-			@components.FormField(components.FormFieldConfig("transaction_items").
-				Type("multi").
-				Label("Transaction items").
-				AsMultiFieldList(components.NewFormFieldConfigList(
-					components.FormFieldConfig("product_id").
-						Type("select").
-						Label("Product").
-						Placeholder("Select a product").
-						AsRowField().
-						Required().
-						OptionsFromEndpoint(routes.ProductOptions.URL()),
-					components.FormFieldConfig("quantity").
-						Type("number").
-						Label("Quantity").
-						Placeholder("Enter quantity").
-						ValidationPreset("positiveNumber").
-						Required(),
-					components.FormFieldConfig("base_unit_price").
-						Type("number").
-						Label("Base unit price (CHF)").
-						Placeholder("Enter base unit price").
-						ValidationPreset("positiveNumber").
-						ValueFromEndpoint(routes.ProductField.PatternWithParams(map[string]string{"field": "default_buy_price"})).
-						DependsOn("product_id"),
-					components.FormFieldConfig("final_unit_price").
-						Type("number").
-						Label("Final unit price (CHF)").
-						Placeholder("Enter final unit price").
-						ValidationPreset("positiveNumber").
-						ValueFromEndpoint(routes.ProductField.PatternWithParams(map[string]string{"field": "default_buy_price"})).
-						DependsOn("product_id"),
-				), string(defaultItemsJSON)).
-				MultiValueList(transactionItemsList).
-				Required(),
-			)
-			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(routes.TransactionList.ReturnOrURL(c), components.ButtonConfig("Back").
-					Icon(icons.ArrowLeft()).
-					Color("neutral"),
-				)
-				@components.Button(components.ButtonConfig(submitButtonText).
-					Type("submit").
-					Icon(icons.FloppyDisk()).
-					Color("primary"),
-				)
-			</div>
-		</form>
-	}
-}
-
-templ CreateUpdateTransactionV2(c *gin.Context, transaction *repository.Transaction) {
+templ CreateUpdateTransaction(c *gin.Context, transaction *repository.Transaction) {
 	{{
 		title := "Create transaction"
 		formMethod := "post"
