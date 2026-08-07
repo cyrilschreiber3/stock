@@ -14,9 +14,9 @@ CREATE OR REPLACE FUNCTION search_products_with_details(
   sort_key text DEFAULT 'name',
   sort_direction text DEFAULT 'asc',
   brand_filter text DEFAULT '',
-  category_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID,
-  subcategory_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID,
-  supplier_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID
+  category_id UUID DEFAULT uuid_nil(),
+  subcategory_id UUID DEFAULT uuid_nil(),
+  supplier_id UUID DEFAULT uuid_nil()
 )
 RETURNS SETOF product_with_details
 LANGUAGE plpgsql
@@ -46,16 +46,16 @@ BEGIN
     SELECT *
     FROM product_with_details
     WHERE
-      ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR category_id = $2::uuid)
-      AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR subcategory_id = $3::uuid)
-      AND ($4::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR default_supplier_id = $4::uuid)
+      ($2::uuid = uuid_nil() OR category_id = $2::uuid)
+      AND ($3::uuid = uuid_nil() OR subcategory_id = $3::uuid)
+      AND ($4::uuid = uuid_nil() OR default_supplier_id = $4::uuid)
       AND ($5 = '' OR brand = $5)
       AND (
-        ($5 = '' AND brand ILIKE '%%' || $1 || '%%')
-        OR name ILIKE '%%' || $1 || '%%'
-        OR category->>'name' ILIKE '%%' || $1 || '%%'
-        OR subcategory->>'name' ILIKE '%%' || $1 || '%%'
-        OR supplier->>'name' ILIKE '%%' || $1 || '%%'
+        name ILIKE '%%' || $1 || '%%'
+        OR ($5 = '' AND brand ILIKE '%%' || $1 || '%%')
+        OR ($2 = uuid_nil() AND category->>'name' ILIKE '%%' || $1 || '%%')
+        OR ($3 = uuid_nil() AND subcategory->>'name' ILIKE '%%' || $1 || '%%')
+        OR ($4 = uuid_nil() AND supplier->>'name' ILIKE '%%' || $1 || '%%')
       )
     ORDER BY %s %s
     $sql$,
@@ -106,7 +106,7 @@ CREATE OR REPLACE FUNCTION search_subcategories_with_details(
   search_text text,
   sort_key text DEFAULT 'name',
   sort_direction text DEFAULT 'asc',
-  category_id_filter UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID
+  category_id_filter UUID DEFAULT uuid_nil()
 )
 RETURNS SETOF subcategory_with_details
 LANGUAGE plpgsql
@@ -130,10 +130,10 @@ BEGIN
     SELECT *
     FROM subcategory_with_details
     WHERE
-      ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR category_id = $2::uuid)
+      ($2::uuid = uuid_nil() OR category_id = $2::uuid)
       AND (
         name ILIKE '%%' || $1 || '%%'
-        OR category->>'name' ILIKE '%%' || $1 || '%%'
+        OR ($2::uuid = uuid_nil() AND category->>'name' ILIKE '%%' || $1 || '%%')
       )
     ORDER BY %s %s
     $sql$,
@@ -158,8 +158,8 @@ DECLARE
 BEGIN
   order_by_sql := CASE sort_key
     WHEN 'name' THEN 'name'
-    WHEN 'created' THEN 'created_at'
-    WHEN 'updated' THEN 'updated_at'
+    WHEN 'created_at' THEN 'created_at'
+    WHEN 'updated_at' THEN 'updated_at'
     ELSE 'name'
   END;
 
@@ -183,7 +183,8 @@ $$;
 CREATE OR REPLACE FUNCTION search_transactions_with_details(
   search_text text,
   sort_key text DEFAULT 'transaction_date',
-  sort_direction text DEFAULT 'desc'
+  sort_direction text DEFAULT 'desc',
+  supplier_id UUID DEFAULT uuid_nil()
 )
 RETURNS SETOF transaction_with_details
 LANGUAGE plpgsql
@@ -212,15 +213,18 @@ BEGIN
     SELECT *
     FROM transaction_with_details
     WHERE
-      transaction_type ILIKE '%%' || $1 || '%%'
-      OR state ILIKE '%%' || $1 || '%%'
-      OR supplier->>'name' ILIKE '%%' || $1 || '%%'
+      ($2::uuid = uuid_nil() OR supplier_id = $2::uuid)
+      AND (
+        transaction_type ILIKE '%%' || $1 || '%%'
+        OR state ILIKE '%%' || $1 || '%%'
+        OR ($2::uuid = uuid_nil() AND supplier->>'name' ILIKE '%%' || $1 || '%%')
+      )
     ORDER BY %s %s
     $sql$,
     order_by_sql,
     direction_sql
   )
-  USING search_text;
+  USING search_text, supplier_id;
 END;
 $$;
 
@@ -228,7 +232,7 @@ CREATE OR REPLACE FUNCTION search_transactions_with_details_and_items(
   search_text text,
   sort_key text DEFAULT 'transaction_date',
   sort_direction text DEFAULT 'desc',
-  product_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID
+  product_id UUID DEFAULT uuid_nil()
 )
 RETURNS SETOF transaction_with_details_and_items
 LANGUAGE plpgsql
@@ -257,7 +261,7 @@ BEGIN
     SELECT *
     FROM transaction_with_details_and_items
     WHERE
-      ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR EXISTS (
+      ($2::uuid = uuid_nil() OR EXISTS (
         SELECT 1
         FROM jsonb_array_elements(transaction_items) AS ti
         WHERE (ti->>'product_id')::uuid = $2::uuid
@@ -280,7 +284,7 @@ CREATE OR REPLACE FUNCTION search_transaction_items_with_details(
   search_text text,
   sort_key text DEFAULT 'product_name',
   sort_direction text DEFAULT 'asc',
-  transaction_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID
+  transaction_id UUID DEFAULT uuid_nil()
 )
 RETURNS SETOF transaction_item_with_details
 LANGUAGE plpgsql
@@ -294,7 +298,8 @@ BEGIN
     WHEN 'product_name' THEN 'product->>''name'''
     WHEN 'received_quantity' THEN 'received_quantity'
     WHEN 'remaining_quantity' THEN 'remaining_quantity'
-    WHEN 'unit_cost' THEN 'unit_cost'
+    WHEN 'base_unit_price' THEN 'base_unit_price'
+    WHEN 'final_unit_price' THEN 'final_unit_price'
     WHEN 'created_at' THEN 'created_at'
     ELSE 'product->>''name'''
   END;
@@ -306,7 +311,7 @@ BEGIN
     SELECT *
     FROM transaction_item_with_details
     WHERE
-      ($2 = '00000000-0000-0000-0000-000000000000'::UUID OR transaction_id = $2)
+      ($2 = uuid_nil() OR transaction_id = $2)
       AND (product->>'name' ILIKE '%%' || $1 || '%%'
       OR product->>'brand' ILIKE '%%' || $1 || '%%')
     ORDER BY %s %s
@@ -322,7 +327,7 @@ CREATE OR REPLACE FUNCTION search_transaction_items_with_transaction_details(
   search_text text,
   sort_key text DEFAULT 'product_name',
   sort_direction text DEFAULT 'asc',
-  transaction_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID
+  transaction_id UUID DEFAULT uuid_nil()
 )
 RETURNS SETOF transaction_item_with_transaction_details
 LANGUAGE plpgsql
@@ -336,7 +341,8 @@ BEGIN
     WHEN 'product_name' THEN 'product->>''name'''
     WHEN 'received_quantity' THEN 'received_quantity'
     WHEN 'remaining_quantity' THEN 'remaining_quantity'
-    WHEN 'unit_cost' THEN 'unit_cost'
+    WHEN 'base_unit_price' THEN 'base_unit_price'
+    WHEN 'final_unit_price' THEN 'final_unit_price'
     WHEN 'created_at' THEN 'created_at'
     WHEN 'transaction_date' THEN 'transaction->>''transaction_date'''
     ELSE 'transaction->>''transaction_date'''
@@ -349,7 +355,7 @@ BEGIN
     SELECT *
     FROM transaction_item_with_transaction_details
     WHERE
-      ($2 = '00000000-0000-0000-0000-000000000000'::UUID OR transaction_id = $2)
+      ($2 = uuid_nil() OR transaction_id = $2)
       AND (product->>'name' ILIKE '%%' || $1 || '%%'
       OR product->>'brand' ILIKE '%%' || $1 || '%%')
     ORDER BY %s %s
@@ -379,7 +385,7 @@ BEGIN
     WHEN 'quantity' THEN 'total_quantity'
     WHEN 'average_unit_price' THEN '(total_buy_price / NULLIF(total_buy_quantity, 0))'
     WHEN 'average_unit_cost' THEN '(total_sell_price / NULLIF(total_sell_quantity, 0))'
-    WHEN 'updated' THEN 'updated_at'
+    WHEN 'updated_at' THEN 'updated_at'
     ELSE 'product->>''name'''
   END;
 
@@ -405,7 +411,7 @@ CREATE OR REPLACE FUNCTION search_inventory_lots_with_details(
   search_text text,
   sort_key text DEFAULT 'created_at',
   sort_direction text DEFAULT 'asc',
-  product_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'::UUID
+  product_id UUID DEFAULT uuid_nil()
 )
 RETURNS SETOF inventory_lot_with_details
 LANGUAGE plpgsql
@@ -433,7 +439,7 @@ BEGIN
     SELECT *
     FROM inventory_lot_with_details
     WHERE
-      ($2 = '00000000-0000-0000-0000-000000000000'::UUID OR product_id = $2)
+      ($2 = uuid_nil() OR product_id = $2)
       AND (product->>'name' ILIKE '%%' || $1 || '%%'
       OR product->>'brand' ILIKE '%%' || $1 || '%%')
     ORDER BY %s %s
@@ -451,9 +457,10 @@ $$;
 -- +goose StatementBegin
 DROP FUNCTION IF EXISTS search_inventory_lots_with_details(text, text, text, uuid);
 DROP FUNCTION IF EXISTS search_inventory_with_details(text, text, text);
+DROP FUNCTION IF EXISTS search_transaction_items_with_transaction_details(text, text, text, uuid);
 DROP FUNCTION IF EXISTS search_transaction_items_with_details(text, text, text, uuid);
 DROP FUNCTION IF EXISTS search_transactions_with_details_and_items(text, text, text, uuid);
-DROP FUNCTION IF EXISTS search_transactions_with_details(text, text, text);
+DROP FUNCTION IF EXISTS search_transactions_with_details(text, text, text, uuid);
 DROP FUNCTION IF EXISTS search_suppliers(text, text, text);
 DROP FUNCTION IF EXISTS search_subcategories_with_details(text, text, text, uuid);
 DROP FUNCTION IF EXISTS search_categories(text, text, text);
