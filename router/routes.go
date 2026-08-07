@@ -8,6 +8,7 @@ import (
 
 func registerCoreRoutes(r *gin.Engine) {
 	routes.Index.Register(r, handlers.Index())
+	routes.LangRoute.Register(r, handlers.HandleLanguageSelection())
 }
 
 func registerApiRoutes(r *gin.Engine) {

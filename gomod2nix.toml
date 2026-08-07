@@ -61,6 +61,14 @@ schema = 3
     version = 'v1.6.0'
     hash = 'sha256-VWl9sqUzdOuhW0KzQlv0gwwUQClYkmZwSydHG2sALYw='
 
+  [mod.'github.com/invopop/ctxi18n']
+    version = 'v0.9.0'
+    hash = 'sha256-Qhyim2NQC/ofcpxN+cIookNwQahclhNld86VN/uDemw='
+
+  [mod.'github.com/invopop/yaml']
+    version = 'v0.2.0'
+    hash = 'sha256-RxeDuvwOSWYaLc8Q7T39rfFT3bZX3g9Bu0RFwxH6sLw='
+
   [mod.'github.com/jackc/pgpassfile']
     version = 'v1.0.0'
     hash = 'sha256-H0nFbC34/3pZUFnuiQk9W7yvAMh6qJDrqvHp+akBPLM='
@@ -172,3 +180,7 @@ schema = 3
   [mod.'google.golang.org/protobuf']
     version = 'v1.36.11'
     hash = 'sha256-7W+6jntfI/awWL3JP6yQedxqP5S9o3XvPgJ2XxxsIeE='
+
+  [mod.'gopkg.in/yaml.v3']
+    version = 'v3.0.1'
+    hash = 'sha256-FqL9TKYJ0XkNwJFnq9j0VvJ5ZUU1RvH/52h/f5bkYAU='
