@@ -51,7 +51,8 @@ SELECT * FROM transaction_with_details;
 SELECT * FROM search_transactions_with_details(
     sqlc.arg('search'),
     sqlc.arg('sort_key'),
-    sqlc.arg('sort_direction')
+    sqlc.arg('sort_direction'),
+    sqlc.arg('supplier_id')
 );
 
 -- name: SearchTransactionsWithDetailsAndItems :many

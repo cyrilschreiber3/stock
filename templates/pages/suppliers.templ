@@ -82,7 +82,7 @@ templ CreateUpdateSupplier(c *gin.Context, supplier *repository.Supplier) {
 	}
 }
 
-templ SupplierDetails(c *gin.Context, supplier repository.Supplier, products []repository.ProductWithDetail) {
+templ SupplierDetails(c *gin.Context, supplier repository.Supplier, products []repository.ProductWithDetail, transactions []repository.TransactionWithDetail) {
 	{{ l := locales.New(c) }}
 	@layouts.Base(c, l.Tc("suppliers.titles.show"), "suppliers") {
 		<div class="flex flex-col gap-6">
@@ -111,6 +111,7 @@ templ SupplierDetails(c *gin.Context, supplier repository.Supplier, products []r
 				</div>
 			</div>
 			@ProductsForSupplierTable(c, supplier.ID, products, nil)
+			@TransactionsForSupplierTable(c, supplier.ID, transactions, nil)
 		</div>
 	}
 }

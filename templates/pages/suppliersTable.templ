@@ -194,3 +194,125 @@ templ ProductsForSupplierTable(c *gin.Context, supplierID uuid.UUID, products []
 		}
 	}
 }
+
+func GetTransactionsForSupplierTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("transactions.fields.date"), "transaction_date"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.type"), "transaction_type"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.state"), "state"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.base_price"), "base_price"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.final_price"), "final_price"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.applied_at"), "applied_at"),
+		components.NewActionDataTableColumn(),
+	}
+}
+
+func GetDefaultTransactionsForSupplierTableConfig(c *gin.Context, supplierID uuid.UUID) *components.DataTableConfig {
+	l := locales.New(c)
+	return components.NewDataTableConfig("transactions-for-supplier").
+		SetLabel(l.Tc("suppliers.related.transactions")).
+		SetSearchPlaceholder(l.Tc("suppliers.placeholders.search_transactions")).
+		SetItemLabel(l.T("transactions.label_plural"), l.T("transactions.label")).
+		SetURLString(routes.SupplierSearchTransactions.URL(routes.ID(supplierID))).
+		SetSortKey("transaction_date").
+		SetSortDirection("desc").
+		AddColumns(GetTransactionsForSupplierTableColumns(c)...)
+}
+
+templ TransactionsForSupplierTableRow(c *gin.Context, transaction repository.TransactionWithDetail) {
+	{{
+		l := locales.New(c)
+
+		appliedAtString := "N/A"
+		appliedAtNL := "N/A"
+		if transaction.AppliedAt.Valid {
+			appliedAtString = utils.PgTimestampToString(transaction.AppliedAt)
+			appliedAtNL = utils.PgTimestampToNaturalLanguage(transaction.AppliedAt)
+		}
+	}}
+	<tr>
+		<td>
+			<a class="link link-hover" href={ routes.TransactionDetails.URL(routes.ID(transaction.ID)) }>
+				{ utils.PgDateToNaturalLanguage(transaction.TransactionDate) }
+			</a>
+		</td>
+		<td>
+			@transactionTypeBadge(transaction.TransactionType)
+		</td>
+		<td>
+			@transactionStateBadge(transaction.State)
+		</td>
+		<td>{ utils.PgNumericToString(transaction.BasePrice, "0.00") }</td>
+		<td>{ utils.PgNumericToString(transaction.FinalPrice, "0.00") }</td>
+		<td>
+			<div class="tooltip" data-tip={ utils.PgTimestampToString(transaction.UpdatedAt) }>
+				{ utils.PgTimestampToNaturalLanguage(transaction.UpdatedAt) }
+			</div>
+		</td>
+		<td>
+			<div class="tooltip" data-tip={ appliedAtString }>
+				{ appliedAtNL }
+			</div>
+		</td>
+		<td>
+			<div class="flex gap-2">
+				@components.ButtonLink(routes.TransactionDetails.URL(routes.ID(transaction.ID)), components.ButtonConfig("").
+					Icon(icons.InformationCircle()).
+					Style("soft").
+					Size("sm").
+					Color("info"),
+				)
+				switch transaction.State {
+					case "draft":
+						@components.ButtonLink(routes.TransactionEditForm.URLWithReturnToCurrent(routes.ID(transaction.ID), c), components.ButtonConfig("").
+							Icon(icons.PencilSquare()).
+							Style("soft").
+							Size("sm").
+							Color("primary"),
+						)
+						@components.Button(components.ButtonConfig("").
+							Icon(icons.Check()).
+							Style("soft").
+							Size("sm").
+							Color("success").
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
+							HxConfirm(l.Tc("transactions.confirm.apply")).
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
+					case "pendingRefund":
+						@components.Button(components.ButtonConfig("").
+							Icon(icons.ArrowPath()).
+							Style("soft").
+							Size("sm").
+							Color("warning").
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
+							HxConfirm(l.Tc("transactions.confirm.complete")).
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
+				}
+			</div>
+		</td>
+	</tr>
+}
+
+templ TransactionsForSupplierTable(c *gin.Context, supplierID uuid.UUID, transactions []repository.TransactionWithDetail, tableConfig *components.DataTableConfig) {
+	{{
+		if tableConfig == nil {
+			tableConfig = GetDefaultTransactionsForSupplierTableConfig(c, supplierID).GetConfigFromURL(c)
+		}
+		tableConfig = tableConfig.
+			SetItemCount(len(transactions)).
+			SetConfigToURL(c)
+	}}
+	@components.DataTable(c, tableConfig) {
+		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(transactions)); i++ {
+			@TransactionsForSupplierTableRow(c, transactions[i])
+		}
+	}
+}

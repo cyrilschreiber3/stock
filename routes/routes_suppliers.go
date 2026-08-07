@@ -18,6 +18,9 @@ var SupplierDetails = Spec("SupplierDetails", MethodGET, SupplierGroup, "/:id", 
 var SupplierSearchProductsRouteParams = WithRouteParams[IDParam](ParamID)
 var SupplierSearchProducts = Spec("SupplierSearchProducts", MethodGET, SupplierGroup, "/:id/products/search", SupplierSearchProductsRouteParams)
 
+var SupplierSearchTransactionsRouteParams = WithRouteParams[IDParam](ParamID)
+var SupplierSearchTransactions = Spec("SupplierSearchTransactions", MethodGET, SupplierGroup, "/:id/transactions/search", SupplierSearchTransactionsRouteParams)
+
 var SupplierEditFormRouteParams = WithRouteParams[IDParam](ParamID)
 var SupplierEditForm = Spec("SupplierEditForm", MethodGET, SupplierGroup, "/:id/edit", SupplierEditFormRouteParams)
 
@@ -37,6 +40,7 @@ var SupplierRoutes = ResourceRoutes{
 		SupplierCreate,
 		SupplierDetails,
 		SupplierSearchProducts,
+		SupplierSearchTransactions,
 		SupplierEditForm,
 		SupplierUpdate,
 		SupplierDelete,

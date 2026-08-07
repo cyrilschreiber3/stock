@@ -133,8 +133,10 @@ en:
     placeholders:
       search: search suppliers
       search_products: search brand, name, (sub)category
+      search_transactions: search type or state
     related:
       products: products for this supplier
+      transactions: transactions for this supplier
     confirm:
       delete: are you sure you want to delete this supplier?
 

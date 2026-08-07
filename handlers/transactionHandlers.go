@@ -60,6 +60,33 @@ func HandleSearchTransactionsForProduct() gin.HandlerFunc {
 	}
 }
 
+func HandleSearchTransactionsForSupplier() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		supplierId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid supplier ID")
+			return
+		}
+
+		tableConfig := pages.GetDefaultTransactionsForSupplierTableConfig(c, supplierId).GetConfigFromURL(c)
+
+		transactionItems, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			SupplierID:    supplierId,
+		})
+		if err != nil {
+			slog.Error("Error searching transaction items for supplier", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search transaction items for supplier")
+			return
+		}
+
+		component := pages.TransactionsForSupplierTable(c, supplierId, transactionItems, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleGetTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tableConfig := pages.GetDefaultTransactionsTableConfig(c).GetConfigFromURL(c)

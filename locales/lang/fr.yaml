@@ -133,8 +133,10 @@ fr:
     placeholders:
       search: rechercher des fournisseurs
       search_products: rechercher marque, nom, (sous-)catégorie
+      search_transactions: rechercher type ou statut
     related:
       products: produits pour ce fournisseur
+      transactions: transactions pour ce fournisseur
     confirm:
       delete: êtes-vous que vous voulez supprimer ce fournisseur ?
 

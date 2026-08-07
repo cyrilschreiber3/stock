@@ -100,12 +100,12 @@ func HandleGetSupplierDetails() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultProductsForSupplierTableConfig(c, supplierIdUUID).GetConfigFromURL(c)
+		productsTableConfig := pages.GetDefaultProductsForSupplierTableConfig(c, supplierIdUUID).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
-			Search:        tableConfig.SearchValue,
-			SortKey:       tableConfig.SortKey,
-			SortDirection: tableConfig.SortDirection,
+			Search:        productsTableConfig.SearchValue,
+			SortKey:       productsTableConfig.SortKey,
+			SortDirection: productsTableConfig.SortDirection,
 			SupplierID:    supplierIdUUID,
 		})
 		if err != nil {
@@ -114,7 +114,21 @@ func HandleGetSupplierDetails() gin.HandlerFunc {
 			return
 		}
 
-		component := pages.SupplierDetails(c, supplier, products)
+		transactionsTableConfig := pages.GetDefaultTransactionsForSupplierTableConfig(c, supplierIdUUID).GetConfigFromURL(c)
+
+		transactions, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
+			Search:        transactionsTableConfig.SearchValue,
+			SortKey:       transactionsTableConfig.SortKey,
+			SortDirection: transactionsTableConfig.SortDirection,
+			SupplierID:    supplierIdUUID,
+		})
+		if err != nil {
+			slog.Error("Error searching transactions for supplier", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search transactions for supplier")
+			return
+		}
+
+		component := pages.SupplierDetails(c, supplier, products, transactions)
 		utils.RenderTemplate(c, http.StatusOK, component)
 	}
 }
