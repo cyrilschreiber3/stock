@@ -15,7 +15,7 @@ import (
 
 func HandleSearchTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultTransactionsTableConfig(c).GetConfigFromURL(c)
 
 		transactions, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -41,7 +41,7 @@ func HandleSearchTransactionsForProduct() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultTransactionsForProductTableConfig(productId).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultTransactionsForProductTableConfig(c, productId).GetConfigFromURL(c)
 
 		transactionItems, err := db.SearchTransactionsWithDetailsAndItems(c, repository.SearchTransactionsWithDetailsAndItemsParams{
 			Search:        tableConfig.SearchValue,
@@ -62,7 +62,7 @@ func HandleSearchTransactionsForProduct() gin.HandlerFunc {
 
 func HandleGetTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultTransactionsTableConfig(c).GetConfigFromURL(c)
 
 		transactions, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -95,7 +95,7 @@ func HandleGetTransactionDetails() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultTransactionItemsTableConfig(transactionId).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultTransactionItemsTableConfig(c, transactionId).GetConfigFromURL(c)
 
 		transactionItems, err := db.SearchTransactionItemsWithDetails(c, repository.SearchTransactionItemsWithDetailsParams{
 			Search:        tableConfig.SearchValue,

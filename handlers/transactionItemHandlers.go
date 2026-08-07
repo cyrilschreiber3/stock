@@ -29,7 +29,7 @@ func HandleSearchTransactionItems() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultTransactionItemsTableConfig(transactionID).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultTransactionItemsTableConfig(c, transactionID).GetConfigFromURL(c)
 
 		transactionItems, err := db.SearchTransactionItemsWithDetails(c, repository.SearchTransactionItemsWithDetailsParams{
 			Search:        tableConfig.SearchValue,

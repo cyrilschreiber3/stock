@@ -12,7 +12,7 @@ import (
 
 func HandleGetInventory() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultInventoryTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultInventoryTableConfig(c).GetConfigFromURL(c)
 
 		inventory, err := db.SearchInventoryWithProductDetails(c, repository.SearchInventoryWithProductDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -32,7 +32,7 @@ func HandleGetInventory() gin.HandlerFunc {
 
 func HandleSearchInventory() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultInventoryTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultInventoryTableConfig(c).GetConfigFromURL(c)
 
 		inventory, err := db.SearchInventoryWithProductDetails(c, repository.SearchInventoryWithProductDetailsParams{
 			Search:        tableConfig.SearchValue,

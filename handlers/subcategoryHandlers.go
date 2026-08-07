@@ -63,7 +63,7 @@ func HandleSearchSubcategories() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultSubcategoriesForCategoryTableConfig(categoryId).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultSubcategoriesForCategoryTableConfig(c, categoryId).GetConfigFromURL(c)
 
 		subcategories, err := db.SearchSubcategoriesByCategoryID(c, repository.SearchSubcategoriesByCategoryIDParams{
 			Search:        tableConfig.SearchValue,
@@ -103,7 +103,7 @@ func HandleGetSubcategoryDetails() gin.HandlerFunc {
 			return
 		}
 
-		productsTableConfig := pages.GetDefaultProductsForSubcategoryTableConfig(categoryId, subcategoryId).GetConfigFromURL(c)
+		productsTableConfig := pages.GetDefaultProductsForSubcategoryTableConfig(c, categoryId, subcategoryId).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
 			Search:        productsTableConfig.SearchValue,

@@ -3,11 +3,13 @@ package components
 import (
 	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"strings"
 )
 
 templ Search(config *searchConfig) {
+	{{ l := locales.New(ctx) }}
 	<form
 		hx-get={ config.endpoint }
 		hx-target="#search-results"
@@ -23,7 +25,7 @@ templ Search(config *searchConfig) {
 			<span class="[&>svg]:!size-4">
 				@icons.MagnifyingGlass()
 			</span>
-			<input type="search" id="product-search" name="search" autocomplete="off" autofocus required placeholder="Search" { config.inputAttributes... }/>
+			<input type="search" id="product-search" name="search" autocomplete="off" autofocus required placeholder={ l.Tc("form.search") } { config.inputAttributes... }/>
 		</label>
 	</form>
 	<div id="search-results" role="listbox"></div>
@@ -113,9 +115,10 @@ templ Search(config *searchConfig) {
 }
 
 templ ProductResultsForTransactionItem(transactionID string, results []repository.ProductWithDetail) {
+	{{ l := locales.New(ctx) }}
 	if len(results) == 0 {
 		<div class="rounded-box border-base-300 bg-base-100 text-base-content/70 mt-3 border px-4 py-3 text-sm">
-			No products found.
+			{ l.Tc("table.empty") }
 		</div>
 	}
 	if len(results) > 0 {
@@ -134,7 +137,7 @@ templ ProductResultsForTransactionItem(transactionID string, results []repositor
 				>
 					<div class="font-semibold">{ result.Brand + " - " + result.Name }</div>
 					<div class="text-base-content/70 mt-0.5 text-sm">
-						Subcategory: { result.Subcategory.Name } · Stock: { fmt.Sprintf("%d", result.InventoryQuantity) }
+						{ l.Tc("subcategories.label") }: { result.Subcategory.Name } · { l.Tc("products.fields.stock") }: { fmt.Sprintf("%d", result.InventoryQuantity) }
 					</div>
 				</button>
 			}

@@ -45,7 +45,7 @@ func HandleGetSupplierOptions() gin.HandlerFunc {
 
 func HandleSearchSuppliers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultSupplierTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultSupplierTableConfig(c).GetConfigFromURL(c)
 
 		suppliers, err := db.SearchSuppliers(c, repository.SearchSuppliersParams{
 			Search:        tableConfig.SearchValue,
@@ -65,7 +65,7 @@ func HandleSearchSuppliers() gin.HandlerFunc {
 
 func HandleGetSuppliers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultSupplierTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultSupplierTableConfig(c).GetConfigFromURL(c)
 
 		suppliers, err := db.SearchSuppliers(c, repository.SearchSuppliersParams{
 			Search:        tableConfig.SearchValue,
@@ -100,7 +100,7 @@ func HandleGetSupplierDetails() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultProductsForSupplierTableConfig(supplierIdUUID).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultProductsForSupplierTableConfig(c, supplierIdUUID).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
 			Search:        tableConfig.SearchValue,

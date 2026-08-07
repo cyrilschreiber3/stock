@@ -1,7 +1,9 @@
 package layouts
 
 import (
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/static"
+	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/partials"
 	"github.com/gin-gonic/gin"
 )
@@ -41,6 +43,7 @@ templ baseNavItem(label string, href string, section string, currentSection stri
 }
 
 templ Base(c *gin.Context, title string, currentSection string) {
+	{{ l := locales.New(c) }}
 	<!DOCTYPE html>
 	<html lang="en" data-theme="night">
 		<head>
@@ -74,7 +77,7 @@ templ Base(c *gin.Context, title string, currentSection string) {
 				<div class="border-base-content/10 flex items-center justify-between border-b px-5 py-5">
 					<div>
 						<p class="text-primary text-lg font-bold leading-none tracking-tight">Stock</p>
-						<p class="text-base-content/55 mt-1 text-xs tracking-wide">Inventory Management</p>
+						<p class="text-base-content/55 mt-1 text-xs tracking-wide">{ l.T("nav.title") }</p>
 					</div>
 					<button
 						type="button"
@@ -88,15 +91,15 @@ templ Base(c *gin.Context, title string, currentSection string) {
 				// Navigation
 				<nav class="flex-1 overflow-y-auto px-2 py-4">
 					<ul class="menu menu-md w-full gap-1 p-0">
-						<li class="menu-title text-[0.7rem] uppercase tracking-[0.2em]">Overview</li>
-						@baseNavItem("Home", "/", "home", currentSection)
-						<li class="menu-title pt-3 text-[0.7rem] uppercase tracking-[0.2em]">Catalog</li>
-						@baseNavItem("Products", "/products", "products", currentSection)
-						@baseNavItem("Categories", "/categories", "categories", currentSection)
-						@baseNavItem("Suppliers", "/suppliers", "suppliers", currentSection)
-						<li class="menu-title pt-3 text-[0.7rem] uppercase tracking-[0.2em]">Operations</li>
-						@baseNavItem("Transactions", "/transactions", "transactions", currentSection)
-						@baseNavItem("Inventory", "/inventory", "inventory", currentSection)
+						<li class="menu-title text-[0.7rem] uppercase tracking-[0.2em]">{ l.Tc("nav.sections.overview") }</li>
+						@baseNavItem(l.Tc("nav.home"), "/", "home", currentSection)
+						<li class="menu-title pt-3 text-[0.7rem] uppercase tracking-[0.2em]">{ l.Tc("nav.sections.catalog") }</li>
+						@baseNavItem(l.Tc("products.label_plural"), "/products", "products", currentSection)
+						@baseNavItem(l.Tc("categories.label_plural"), "/categories", "categories", currentSection)
+						@baseNavItem(l.Tc("suppliers.label_plural"), "/suppliers", "suppliers", currentSection)
+						<li class="menu-title pt-3 text-[0.7rem] uppercase tracking-[0.2em]">{ l.Tc("nav.sections.operations") }</li>
+						@baseNavItem(l.Tc("transactions.label_plural"), "/transactions", "transactions", currentSection)
+						@baseNavItem(l.Tc("nav.sections.inventory"), "/inventory", "inventory", currentSection)
 					</ul>
 				</nav>
 			</aside>

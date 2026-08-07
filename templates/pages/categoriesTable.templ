@@ -2,6 +2,7 @@ package pages
 
 import (
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
@@ -10,25 +11,30 @@ import (
 	"github.com/google/uuid"
 )
 
-var CategoriesTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Name", "name"),
-	components.NewUnsortedDataTableColumn("Description", "description"),
-	components.NewDataTableColumn("Last updated", "updated_at"),
-	components.NewActionDataTableColumn(),
+func GetCategoriesTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("table.columns.name"), "name"),
+		components.NewUnsortedDataTableColumn(l.Tc("table.columns.description"), "description"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewActionDataTableColumn(),
+	}
 }
 
-func GetDefaultCategoriesTableConfig() *components.DataTableConfig {
+func GetDefaultCategoriesTableConfig(c *gin.Context) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("categories").
-		SetLabel("Categories list").
-		SetSearchPlaceholder("Search categories").
-		SetItemLabel("categories", "category").
+		SetLabel(l.Tc("categories.titles.index")).
+		SetSearchPlaceholder(l.Tc("categories.placeholders.search")).
+		SetItemLabel(l.T("categories.label_plural"), l.T("categories.label")).
 		SetURL(routes.CategorySearch).
 		SetSortKey("name").
 		SetSortDirection("asc").
-		AddColumns(CategoriesTableColumns...)
+		AddColumns(GetCategoriesTableColumns(c)...)
 }
 
 templ CategoriesTableRow(c *gin.Context, category repository.Category) {
+	{{ l := locales.New(c) }}
 	<tr class="hover:bg-base-300">
 		<td>
 			<a class="link link-hover" href={ routes.CategoryDetails.URL(routes.ID(category.ID)) }>
@@ -62,7 +68,7 @@ templ CategoriesTableRow(c *gin.Context, category repository.Category) {
 					Style("soft").
 					Size("sm").
 					HxDelete(routes.CategoryDelete.URL(routes.ID(category.ID))).
-					HxConfirm("Are you sure you want to delete this category?").
+					HxConfirm(l.Tc("categories.confirm.delete")).
 					HxTarget("closest tr").
 					HxSwap("delete"),
 				)
@@ -74,7 +80,7 @@ templ CategoriesTableRow(c *gin.Context, category repository.Category) {
 templ CategoriesTable(c *gin.Context, categories []repository.Category, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultCategoriesTableConfig().GetConfigFromURL(c)
+			tableConfig = GetDefaultCategoriesTableConfig(c).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(categories)).
@@ -87,25 +93,30 @@ templ CategoriesTable(c *gin.Context, categories []repository.Category, tableCon
 	}
 }
 
-var SubcategoriesForCategoryTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Name", "name"),
-	components.NewUnsortedDataTableColumn("Description", "description"),
-	components.NewDataTableColumn("Last updated", "updated_at"),
-	components.NewActionDataTableColumn(),
+func GetSubcategoriesForCategoryTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("table.columns.name"), "name"),
+		components.NewUnsortedDataTableColumn(l.Tc("table.columns.description"), "description"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewActionDataTableColumn(),
+	}
 }
 
-func GetDefaultSubcategoriesForCategoryTableConfig(categoryID uuid.UUID) *components.DataTableConfig {
+func GetDefaultSubcategoriesForCategoryTableConfig(c *gin.Context, categoryID uuid.UUID) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("subcategories").
-		SetLabel("Subcategories for category").
-		SetSearchPlaceholder("Search subcategories").
-		SetItemLabel("subcategories", "subcategory").
+		SetLabel(l.Tc("categories.related.subcategories")).
+		SetSearchPlaceholder(l.Tc("categories.placeholders.search_subcategories")).
+		SetItemLabel(l.T("subcategories.label_plural"), l.T("subcategories.label")).
 		SetURLString(routes.SubcategorySearch.URL(routes.ID(categoryID))).
 		SetSortKey("name").
 		SetSortDirection("asc").
-		AddColumns(SubcategoriesForCategoryTableColumns...)
+		AddColumns(GetSubcategoriesForCategoryTableColumns(c)...)
 }
 
 templ SubcategoriesForCategoryTableRow(c *gin.Context, subcategory repository.SubcategoryWithDetail) {
+	{{ l := locales.New(c) }}
 	<tr class="hover:bg-base-300">
 		<td>
 			<a class="link link-hover" href={ routes.SubcategoryDetails.URLWithReturnToCurrent(routes.Subcategory(subcategory.CategoryID, subcategory.ID), c) }>
@@ -139,7 +150,7 @@ templ SubcategoriesForCategoryTableRow(c *gin.Context, subcategory repository.Su
 					Style("soft").
 					Size("sm").
 					HxDelete(routes.SubcategoryDelete.URL(routes.Subcategory(subcategory.CategoryID, subcategory.ID))).
-					HxConfirm("Are you sure you want to delete this sub-category?").
+					HxConfirm(l.Tc("subcategories.confirm.delete")).
 					HxTarget("closest tr").
 					HxSwap("delete"),
 				)
@@ -151,7 +162,7 @@ templ SubcategoriesForCategoryTableRow(c *gin.Context, subcategory repository.Su
 templ SubcategoriesForCategoryTable(c *gin.Context, categoryID uuid.UUID, subcategories []repository.SubcategoryWithDetail, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultSubcategoriesForCategoryTableConfig(categoryID).GetConfigFromURL(c)
+			tableConfig = GetDefaultSubcategoriesForCategoryTableConfig(c, categoryID).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(subcategories)).
@@ -164,28 +175,33 @@ templ SubcategoriesForCategoryTable(c *gin.Context, categoryID uuid.UUID, subcat
 	}
 }
 
-var ProductsForCategoryTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Brand", "brand"),
-	components.NewDataTableColumn("Name", "name"),
-	components.NewDataTableColumn("Sub-category", "subcategory_name"),
-	components.NewDataTableColumn("Default supplier", "supplier_name"),
-	components.NewUnsortedDataTableColumn("Aliases", "aliases"),
-	components.NewDataTableColumn("Last updated", "updated_at"),
-	components.NewActionDataTableColumn(),
+func GetProductsForCategoryTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("products.fields.brand"), "brand"),
+		components.NewDataTableColumn(l.Tc("table.columns.name"), "name"),
+		components.NewDataTableColumn(l.Tc("subcategories.label"), "subcategory_name"),
+		components.NewDataTableColumn(l.Tc("products.fields.supplier"), "supplier_name"),
+		components.NewUnsortedDataTableColumn(l.Tc("products.fields.aliases"), "aliases"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewActionDataTableColumn(),
+	}
 }
 
-func GetDefaultProductsForCategoryTableConfig(categoryID uuid.UUID) *components.DataTableConfig {
+func GetDefaultProductsForCategoryTableConfig(c *gin.Context, categoryID uuid.UUID) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("products").
-		SetLabel("Products for category").
-		SetSearchPlaceholder("Search products").
-		SetItemLabel("products", "product").
+		SetLabel(l.Tc("categories.related.products")).
+		SetSearchPlaceholder(l.Tc("categories.placeholders.search_products")).
+		SetItemLabel(l.T("products.label_plural"), l.T("products.label")).
 		SetURLString(routes.CategorySearchProducts.URL(routes.ID(categoryID))).
 		SetSortKey("name").
 		SetSortDirection("asc").
-		AddColumns(ProductsForCategoryTableColumns...)
+		AddColumns(GetProductsForCategoryTableColumns(c)...)
 }
 
 templ ProductsForCategoryTableRow(c *gin.Context, product repository.ProductWithDetail) {
+	{{ l := locales.New(c) }}
 	<tr class="hover:bg-base-300">
 		<td>
 			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Brand), c) }>
@@ -240,7 +256,7 @@ templ ProductsForCategoryTableRow(c *gin.Context, product repository.ProductWith
 					Style("soft").
 					Size("sm").
 					HxDelete(routes.ProductDelete.URL(routes.ID(product.ID))).
-					HxConfirm("Are you sure you want to delete this product?").
+					HxConfirm(l.Tc("products.confirm.delete")).
 					HxTarget("closest tr").
 					HxSwap("delete"),
 				)
@@ -252,7 +268,7 @@ templ ProductsForCategoryTableRow(c *gin.Context, product repository.ProductWith
 templ ProductsForCategoryTable(c *gin.Context, categoryID uuid.UUID, products []repository.ProductWithDetail, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultProductsForCategoryTableConfig(categoryID).GetConfigFromURL(c)
+			tableConfig = GetDefaultProductsForCategoryTableConfig(c, categoryID).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(products)).

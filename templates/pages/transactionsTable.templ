@@ -2,6 +2,7 @@ package pages
 
 import (
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
@@ -9,31 +10,37 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var TransactionsTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Date", "transaction_date"),
-	components.NewDataTableColumn("Type", "transaction_type"),
-	components.NewDataTableColumn("State", "state"),
-	components.NewDataTableColumn("Supplier", "supplier"),
-	components.NewDataTableColumn("Base price", "base_price"),
-	components.NewDataTableColumn("Final price", "final_price"),
-	components.NewDataTableColumn("Last updated", "updated_at"),
-	components.NewDataTableColumn("Applied", "applied_at"),
-	components.NewActionDataTableColumn(),
+func GetTransactionsTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("transactions.fields.date"), "transaction_date"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.type"), "transaction_type"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.state"), "state"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.supplier"), "supplier"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.base_price"), "base_price"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.final_price"), "final_price"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.applied_at"), "applied_at"),
+		components.NewActionDataTableColumn(),
+	}
 }
 
-func GetDefaultTransactionsTableConfig() *components.DataTableConfig {
+func GetDefaultTransactionsTableConfig(c *gin.Context) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("transactions").
-		SetLabel("Transactions Overview").
-		SetSearchPlaceholder("Search type, state or supplier name").
-		SetItemLabel("transactions", "transaction").
+		SetLabel(l.Tc("transactions.titles.index")).
+		SetSearchPlaceholder(l.Tc("transactions.placeholders.search")).
+		SetItemLabel(l.T("transactions.label_plural"), l.T("transactions.label")).
 		SetURL(routes.TransactionSearch).
 		SetSortKey("transaction_date").
 		SetSortDirection("desc").
-		AddColumns(TransactionsTableColumns...)
+		AddColumns(GetTransactionsTableColumns(c)...)
 }
 
 templ TransactionsTableRow(c *gin.Context, transaction repository.TransactionWithDetail) {
 	{{
+		l := locales.New(c)
+
 		appliedAtString := "N/A"
 		appliedAtNL := "N/A"
 		if transaction.AppliedAt.Valid {
@@ -96,7 +103,7 @@ templ TransactionsTableRow(c *gin.Context, transaction repository.TransactionWit
 							Size("sm").
 							Color("success").
 							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
-							HxConfirm("Are you sure you want to apply this transaction?").
+							HxConfirm(l.Tc("transactions.confirm.apply")).
 							HxTarget("closest tr").
 							HxSwap("outerHTML").
 							Hx("vals", `{"state":"completed"}`),
@@ -108,7 +115,7 @@ templ TransactionsTableRow(c *gin.Context, transaction repository.TransactionWit
 							Size("sm").
 							Color("warning").
 							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
-							HxConfirm("Are you sure you want to set this transaction as completed?").
+							HxConfirm(l.Tc("transactions.confirm.complete")).
 							HxTarget("closest tr").
 							HxSwap("outerHTML").
 							Hx("vals", `{"state":"completed"}`),
@@ -122,7 +129,7 @@ templ TransactionsTableRow(c *gin.Context, transaction repository.TransactionWit
 templ TransactionsTable(c *gin.Context, transactions []repository.TransactionWithDetail, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+			tableConfig = GetDefaultTransactionsTableConfig(c).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(transactions)).

@@ -2,22 +2,25 @@ package pages
 
 import (
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
 	"github.com/gin-gonic/gin"
+	"github.com/invopop/ctxi18n/i18n"
 )
 
 templ Categories(c *gin.Context, categories []repository.Category) {
-	@layouts.Base(c, "Categories", "categories") {
+	{{ l := locales.New(c) }}
+	@layouts.Base(c, l.Tc("categories.label_plural"), "categories") {
 		<div class="flex flex-col gap-6">
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
-					<h1 class="text-2xl font-bold">Categories</h1>
+					<h1 class="text-2xl font-bold">{ l.Tc("categories.label_plural") }</h1>
 				</div>
 				<div class="flex gap-2">
-					@components.ButtonLink(routes.CategoryCreateForm.URL(), components.ButtonConfig("Create").
+					@components.ButtonLink(routes.CategoryCreateForm.URL(), components.ButtonConfig(l.Tc("actions.create")).
 						Icon(icons.Plus()).
 						Color("primary"),
 					)
@@ -30,43 +33,47 @@ templ Categories(c *gin.Context, categories []repository.Category) {
 
 templ CreateUpdateCategory(c *gin.Context, category *repository.Category) {
 	{{
-		title := "Create category"
+		l := locales.New(c)
+
+		windowTitle := l.Tc("categories.titles.new")
+		title := l.Tc("categories.titles.new")
 		formMethod := "post"
 		formAction := routes.CategoryCreate.URL()
-		submitButtonText := "Create"
+		submitButtonText := l.Tc("actions.create")
 
 		name := ""
 		description := ""
 
 		if category != nil {
-			title = "Update category: " + category.Name
+			windowTitle = l.Tc("categories.titles.edit")
+			title = l.Tc("categories.titles.edit_named", i18n.M{"name": category.Name})
 			formMethod = "put"
 			formAction = routes.CategoryUpdate.URLWithReturn(routes.ID(category.ID), c)
-			submitButtonText = "Update"
+			submitButtonText = l.Tc("actions.update")
 
 			name = category.Name
 			description = category.Description.String
 		}
 	}}
-	@layouts.Base(c, title, "categories") {
+	@layouts.Base(c, windowTitle, "categories") {
 		<h1 class="mb-4 text-2xl font-bold">{ title }</h1>
 		<form id="category-form" name="category-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
 			@components.FormField(components.FormFieldConfig("name").
 				Type("text").
-				Label("Category name").
-				Placeholder("Meals").
+				Label(l.Tc("categories.fields.name")).
+				Placeholder(l.Tc("categories.placeholders.name")).
 				Value(name).
 				Required(),
 			)
 			@components.FormField(components.FormFieldConfig("description").
 				Type("textarea").
-				Label("Description").
-				Placeholder("Category description").
+				Label(l.Tc("table.columns.description")).
+				Placeholder(l.Tc("categories.fields.description")).
 				Value(description).
 				Required(),
 			)
 			<div class="flex justify-end space-x-2">
-				@components.ButtonLink(routes.CategoryList.ReturnOrURL(c), components.ButtonConfig("Back").
+				@components.ButtonLink(routes.CategoryList.ReturnOrURL(c), components.ButtonConfig(l.Tc("actions.back")).
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
@@ -82,13 +89,15 @@ templ CreateUpdateCategory(c *gin.Context, category *repository.Category) {
 
 templ CategoryDetails(c *gin.Context, category repository.Category, subcategories []repository.SubcategoryWithDetail, products []repository.ProductWithDetail) {
 	{{
+		l := locales.New(c)
+
 		safeToDelete := false
 
 		if len(subcategories) == 0 && len(products) == 0 {
 			safeToDelete = true
 		}
 	}}
-	@layouts.Base(c, "Category details", "categories") {
+	@layouts.Base(c, l.Tc("categories.titles.show"), "categories") {
 		<div class="flex flex-col gap-6">
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
@@ -96,24 +105,24 @@ templ CategoryDetails(c *gin.Context, category repository.Category, subcategorie
 					<p class="text-base-content/70 text-sm">{ category.Description.String }</p>
 				</div>
 				<div class="flex gap-2">
-					@components.ButtonLink(routes.CategoryList.ReturnOrURL(c), components.ButtonConfig("Back").
+					@components.ButtonLink(routes.CategoryList.ReturnOrURL(c), components.ButtonConfig(l.Tc("actions.back")).
 						Icon(icons.ArrowLeft()).
 						Color("neutral"),
 					)
-					@components.ButtonLink(routes.SubcategoryCreateForm.URLWithReturnToCurrent(routes.ID(category.ID), c), components.ButtonConfig("Add subcategory").
+					@components.ButtonLink(routes.SubcategoryCreateForm.URLWithReturnToCurrent(routes.ID(category.ID), c), components.ButtonConfig(l.Tc("categories.actions.add_subcategory")).
 						Icon(icons.Plus()).
 						Color("primary"),
 					)
-					@components.ButtonLink(routes.CategoryEditForm.URLWithReturnToCurrent(routes.ID(category.ID), c), components.ButtonConfig("Edit").
+					@components.ButtonLink(routes.CategoryEditForm.URLWithReturnToCurrent(routes.ID(category.ID), c), components.ButtonConfig(l.Tc("actions.edit")).
 						Icon(icons.PencilSquare()).
 						Color("info"),
 					)
-					@components.Button(components.ButtonConfig("Delete").
+					@components.Button(components.ButtonConfig(l.Tc("actions.delete")).
 						Icon(icons.Trash()).
 						Color("error").
 						Disabled(!safeToDelete).
 						HxDelete(routes.CategoryDelete.URLWithReturn(routes.ID(category.ID), c)).
-						HxConfirm("Are you sure you want to delete this category?").
+						HxConfirm(l.Tc("categories.confirm.delete")).
 						HxSwap("none"),
 					)
 				</div>

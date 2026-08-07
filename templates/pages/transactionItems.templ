@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
@@ -12,6 +13,7 @@ import (
 )
 
 templ TransactionItemRow(c *gin.Context, transactionItem repository.TransactionItemWithDetail, editable bool) {
+	{{ l := locales.New(c) }}
 	<tr id={ fmt.Sprintf("transaction_item_%s", transactionItem.ID.String()) }>
 		<td>{ transactionItem.Product.Name }</td>
 		<td>{ transactionItem.Quantity }</td>
@@ -19,8 +21,8 @@ templ TransactionItemRow(c *gin.Context, transactionItem repository.TransactionI
 		<td>{ utils.PgNumericToString(transactionItem.FinalUnitPrice, "0.00") } CHF</td>
 		<td>
 			if editable {
-				<div class="flex justify-end space-x-2">
-					@components.Button(components.ButtonConfig("Edit").
+				<div class="flex space-x-2">
+					@components.Button(components.ButtonConfig(l.Tc("actions.edit")).
 						Icon(icons.PencilSquare()).
 						Style("soft").
 						Size("sm").
@@ -29,13 +31,13 @@ templ TransactionItemRow(c *gin.Context, transactionItem repository.TransactionI
 						HxTarget("#edit_transaction_item_modal>#modal-box").
 						HxSwap("innerHTML"),
 					)
-					@components.Button(components.ButtonConfig("Delete").
+					@components.Button(components.ButtonConfig(l.Tc("actions.delete")).
 						Icon(icons.Trash()).
 						Color("error").
 						Style("soft").
 						Size("sm").
 						HxDelete(routes.TransactionItemDelete.URL(routes.TxItem(transactionItem.TransactionID, transactionItem.ID))).
-						HxConfirm("Are you sure you want to delete this transaction item?").
+						HxConfirm(l.Tc("transaction_items.confirm.delete")).
 						HxTarget("closest tr").
 						HxSwap("delete"),
 					)
@@ -46,19 +48,20 @@ templ TransactionItemRow(c *gin.Context, transactionItem repository.TransactionI
 }
 
 templ SelectProductForTransactionItem(c *gin.Context, transactionID uuid.UUID) {
+	{{ l := locales.New(c) }}
 	<div id="modal-content">
-		<h3 class="mb-4 text-lg font-bold">Select a product</h3>
+		<h3 class="mb-4 text-lg font-bold">{ l.Tc("transaction_items.actions.select_product") }</h3>
 		@components.Search(components.SearchConfig("product_search").
 			Icon(icons.Cube()).
-			Placeholder("Search for a product").
+			Placeholder(l.Tc("transaction_items.placeholders.search_product")).
 			Endpoint(routes.TransactionSearchProducts.URL(routes.ID(transactionID))).
-			FilterDefault("All Categories").
+			FilterDefault(l.Tc("transaction_items.filters.all_categories")).
 			FiltersFromEndpoint(routes.CategoryOptions.URL()).
 			FloatingResults(true),
 		)
 	</div>
 	<div class="modal-action">
-		@components.Button(components.ButtonConfig("Cancel").
+		@components.Button(components.ButtonConfig(l.Tc("actions.cancel")).
 			Type("button").
 			Color("neutral").
 			OnClick("add_transaction_item_modal.close()"),
@@ -68,10 +71,12 @@ templ SelectProductForTransactionItem(c *gin.Context, transactionID uuid.UUID) {
 
 templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWithDetail, transaction repository.Transaction, transactionItem *repository.TransactionItem) {
 	{{
-		title := "Add product to transaction"
+		l := locales.New(c)
+
+		title := l.Tc("transaction_items.titles.new")
 		formMethod := "post"
 		formAction := routes.TransactionItemCreate.URL(routes.ID(transaction.ID))
-		submitButtonText := "Add"
+		submitButtonText := l.Tc("actions.add")
 		modalID := "add_transaction_item_modal"
 
 		quantityValidationPreset := "positiveInteger"
@@ -98,10 +103,10 @@ templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWith
 		}
 
 		if transactionItem != nil {
-			title = "Update product in transaction"
+			title = l.Tc("transaction_items.titles.edit")
 			formMethod = "put"
 			formAction = routes.TransactionItemUpdate.URL(routes.TxItem(transaction.ID, transactionItem.ID))
-			submitButtonText = "Update"
+			submitButtonText = l.Tc("actions.update")
 			modalID = "edit_transaction_item_modal"
 
 			productID = transactionItem.ProductID.String()
@@ -116,14 +121,25 @@ templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWith
 			<div class="card bg-base-200 mb-4 p-4">
 				<div class="flex content-center items-center justify-between gap-4">
 					<div class="flex-1">
-						<p><strong>Brand:</strong> { product.Brand }</p>
-						<p><strong>Product:</strong> { product.Name }</p>
-						<p><strong>Stock:</strong> { fmt.Sprintf("%d", product.InventoryQuantity) }</p>
-						<p><strong>Category:</strong> { product.Category.Name } / { product.Subcategory.Name }</p>
+						<p>
+							<strong>{ l.Tc("products.fields.brand") }:</strong>
+							<a class="link link-hover" href={ routes.BrandDetails.URL(routes.Name(product.Brand)) }>{ product.Brand }</a>
+						</p>
+						<p>
+							<strong>{ l.Tc("table.columns.name") }:</strong>
+							<a class="link link-hover" href={ routes.ProductDetails.URL(routes.ID(product.ID)) }>{ product.Name }</a>
+						</p>
+						<p>
+							<strong>{ l.Tc("products.fields.stock") }:</strong> { fmt.Sprintf("%d", product.InventoryQuantity) }
+						</p>
+						<p>
+							<strong>{ l.Tc("categories.label") }:</strong>
+							<a class="link link-hover" href={ routes.CategoryDetails.URL(routes.ID(product.CategoryID)) }>{ product.Category.Name }</a> / <a class="link link-hover" href={ routes.SubcategoryDetails.URL(routes.Subcategory(product.CategoryID, product.SubcategoryID)) }>{ product.Subcategory.Name }</a>
+						</p>
 					</div>
 					if transactionItem == nil {
 						<div class="shrink-0">
-							@components.Button(components.ButtonConfig("Change").
+							@components.Button(components.ButtonConfig(l.Tc("actions.change")).
 								Type("button").
 								Icon(icons.XMark()).
 								Color("primary").
@@ -141,8 +157,8 @@ templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWith
 			<input id="transaction_id" name="transaction_id" type="text" value={ transaction.ID.String() } hidden/>
 			@components.FormField(components.FormFieldConfig("quantity").
 				Type("number").
-				Label("Quantity").
-				Placeholder("Enter quantity").
+				Label(l.Tc("transaction_items.fields.quantity")).
+				Placeholder(l.Tc("transaction_items.placeholders.quantity")).
 				Value(quantity).
 				ValidationPreset(quantityValidationPreset).
 				Autofocus().
@@ -150,18 +166,20 @@ templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWith
 			)
 			@components.FormField(components.FormFieldConfig("base_unit_price").
 				Type("number").
-				Label("Base unit price (CHF)").
-				Placeholder("Enter base unit price").
+				Label(l.Tc("transaction_items.fields.base_unit_price")).
+				Placeholder(l.Tc("transaction_items.placeholders.base_unit_price")).
 				Value(baseUnitPrice).
 				ValidationPreset("money").
+				Suffix("CHF").
 				Required(),
 			)
 			@components.FormField(components.FormFieldConfig("final_unit_price").
 				Type("number").
-				Label("Final unit price (CHF)").
-				Placeholder("Enter final unit price").
+				Label(l.Tc("transaction_items.fields.final_unit_price")).
+				Placeholder(l.Tc("transaction_items.placeholders.final_unit_price")).
 				Value(finalUnitPrice).
 				ValidationPreset("money").
+				Suffix("CHF").
 				Required(),
 			)
 		</div>
@@ -171,7 +189,7 @@ templ CreateUpdateTransactionItem(c *gin.Context, product repository.ProductWith
 				Icon(icons.FloppyDisk()).
 				Color("primary"),
 			)
-			@components.Button(components.ButtonConfig("Cancel").
+			@components.Button(components.ButtonConfig(l.Tc("actions.cancel")).
 				Type("button").
 				Color("neutral").
 				OnClick(fmt.Sprintf("%s.close()", modalID)),

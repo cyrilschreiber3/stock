@@ -3,16 +3,18 @@ package components
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"strings"
 )
 
 templ FormField(config *formFieldConfig) {
+	{{ l := locales.New(ctx) }}
 	<fieldset class="fieldset">
 		<legend class="fieldset-legend">
 			{ config.label }
 			if !config.required {
-				<span class="badge badge-neutral badge-xs">Optional</span>
+				<span class="badge badge-neutral badge-xs">{ l.Tc("form.optional") }</span>
 			}
 		</legend>
 		if config.prefix != "" || config.suffix != "" {
@@ -46,6 +48,7 @@ func listFormInputState(config *formFieldConfig) string {
 }
 
 templ listFormInput(config *formFieldConfig, inputComponent templ.Component) {
+	{{ l := locales.New(ctx) }}
 	<div x-data={ listFormInputState(config) }>
 		<div class="flex flex-col">
 			<template x-for={ fmt.Sprintf("(item, index) in %s", config.name) } :key="index">
@@ -63,7 +66,7 @@ templ listFormInput(config *formFieldConfig, inputComponent templ.Component) {
 				</div>
 			</template>
 		</div>
-		@Button(ButtonConfig("Add").
+		@Button(ButtonConfig(l.Tc("actions.add")).
 			Icon(icons.Plus()).
 			Type("button").
 			Color("success").
@@ -90,6 +93,7 @@ func multiFieldListFormInputState(config *formFieldConfig) string {
 }
 
 templ multiFieldListFormInput(config *formFieldConfig) {
+	{{ l := locales.New(ctx) }}
 	<div x-data={ multiFieldListFormInputState(config) }>
 		<div class="flex flex-col">
 			<template x-for={ fmt.Sprintf("(item, index) in %s", config.name) } :key="index">
@@ -170,7 +174,7 @@ templ multiFieldListFormInput(config *formFieldConfig) {
 				</div>
 			</template>
 		</div>
-		@Button(ButtonConfig("Add").
+		@Button(ButtonConfig(l.Tc("actions.add")).
 			Icon(icons.Plus()).
 			Type("button").
 			Color("success").

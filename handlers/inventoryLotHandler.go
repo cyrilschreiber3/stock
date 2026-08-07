@@ -19,7 +19,7 @@ func HandleSearchInventoryLotsForProduct() gin.HandlerFunc {
 			return
 		}
 
-		inventoryLotsTableConfig := pages.GetDefaultInventoryLotsForProductTableConfig(productId).GetConfigFromURL(c)
+		inventoryLotsTableConfig := pages.GetDefaultInventoryLotsForProductTableConfig(c, productId).GetConfigFromURL(c)
 
 		inventoryLots, err := db.SearchInventoryLotsWithDetails(c.Request.Context(), repository.SearchInventoryLotsWithDetailsParams{
 			Search:        inventoryLotsTableConfig.SearchValue,

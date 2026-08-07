@@ -2,30 +2,35 @@ package pages
 
 import (
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
 )
 
-var InventoryTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Product brand", "product_brand"),
-	components.NewDataTableColumn("Product Name", "product_name"),
-	components.NewDataTableColumn("Quantity", "quantity"),
-	components.NewDataTableColumn("Average Unit Price", "average_unit_price"),
-	components.NewDataTableColumn("Average Unit Cost", "average_unit_cost"),
-	components.NewDataTableColumn("Updated", "updated"),
+func GetInventoryTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("inventory.fields.product_brand"), "product_brand"),
+		components.NewDataTableColumn(l.Tc("inventory.fields.product_name"), "product_name"),
+		components.NewDataTableColumn(l.Tc("inventory.fields.quantity"), "quantity"),
+		components.NewDataTableColumn(l.Tc("inventory.fields.average_unit_price"), "average_unit_price"),
+		components.NewDataTableColumn(l.Tc("inventory.fields.average_unit_cost"), "average_unit_cost"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+	}
 }
 
-func GetDefaultInventoryTableConfig() *components.DataTableConfig {
+func GetDefaultInventoryTableConfig(c *gin.Context) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("inventory").
-		SetLabel("Inventory Overview").
-		SetSearchPlaceholder("Search products").
-		SetItemLabel("products", "product").
+		SetLabel(l.Tc("inventory.titles.index")).
+		SetSearchPlaceholder(l.Tc("inventory.placeholders.search")).
+		SetItemLabel(l.T("inventory.label_plural"), l.T("inventory.label")).
 		SetURL(routes.InventorySearch).
 		SetSortKey("product_name").
 		SetSortDirection("asc").
-		AddColumns(InventoryTableColumns...)
+		AddColumns(GetInventoryTableColumns(c)...)
 }
 
 templ InventoryTableRow(c *gin.Context, product repository.InventoryWithDetail) {
@@ -54,7 +59,7 @@ templ InventoryTableRow(c *gin.Context, product repository.InventoryWithDetail) 
 templ InventoryTable(c *gin.Context, inventory []repository.InventoryWithDetail, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultInventoryTableConfig().GetConfigFromURL(c)
+			tableConfig = GetDefaultInventoryTableConfig(c).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(inventory)).

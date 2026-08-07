@@ -71,7 +71,7 @@ func HandleGetBrandDetails() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultProductsForBrandTableConfig(brandName).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultProductsForBrandTableConfig(c, brandName).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -99,7 +99,7 @@ func HandleSearchProductsByBrand() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultProductsForBrandTableConfig(brandName).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultProductsForBrandTableConfig(c, brandName).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -120,7 +120,7 @@ func HandleSearchProductsByBrand() gin.HandlerFunc {
 
 func HandleSearchProducts() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultProductsTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultProductsTableConfig(c).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -146,7 +146,7 @@ func HandleSearchProductsByCategory() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultProductsForCategoryTableConfig(categoryId).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultProductsForCategoryTableConfig(c, categoryId).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -179,7 +179,7 @@ func HandleSearchProductsBySubcategory() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultProductsForSubcategoryTableConfig(categoryId, subcategoryId).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultProductsForSubcategoryTableConfig(c, categoryId, subcategoryId).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -206,7 +206,7 @@ func HandleSearchProductsBySupplier() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultProductsForSupplierTableConfig(supplierId).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultProductsForSupplierTableConfig(c, supplierId).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -275,7 +275,7 @@ func HandleGetProductFieldValue() gin.HandlerFunc {
 
 func HandleGetProducts() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultProductsTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultProductsTableConfig(c).GetConfigFromURL(c)
 
 		products, err := db.SearchProductsWithDetails(c, repository.SearchProductsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -310,7 +310,7 @@ func HandleGetProductDetails() gin.HandlerFunc {
 			return
 		}
 
-		inventoryLotsTableConfig := pages.GetDefaultInventoryLotsForProductTableConfig(productIdUUID).GetConfigFromURL(c)
+		inventoryLotsTableConfig := pages.GetDefaultInventoryLotsForProductTableConfig(c, productIdUUID).GetConfigFromURL(c)
 
 		inventoryLots, err := db.SearchInventoryLotsWithDetails(c.Request.Context(), repository.SearchInventoryLotsWithDetailsParams{
 			Search:        inventoryLotsTableConfig.SearchValue,
@@ -324,7 +324,7 @@ func HandleGetProductDetails() gin.HandlerFunc {
 			return
 		}
 
-		transactionTableConfig := pages.GetDefaultTransactionsForProductTableConfig(productIdUUID).GetConfigFromURL(c)
+		transactionTableConfig := pages.GetDefaultTransactionsForProductTableConfig(c, productIdUUID).GetConfigFromURL(c)
 
 		transactions, err := db.SearchTransactionsWithDetailsAndItems(c.Request.Context(), repository.SearchTransactionsWithDetailsAndItemsParams{
 			Search:        transactionTableConfig.SearchValue,
