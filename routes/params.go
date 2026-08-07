@@ -7,6 +7,7 @@ var (
 	ParamField     = ParamSpec{Name: "field", Type: ParamText}
 	ParamProductID = ParamSpec{Name: "product_id", Type: ParamUUID}
 	ParamName      = ParamSpec{Name: "name", Type: ParamText}
+	ParamLang      = ParamSpec{Name: "lang", Type: ParamText}
 )
 
 // Deprecated: Use the StaticRoute type instead of Route[NoParams]
@@ -51,4 +52,16 @@ func (p NameParam) Values() map[string]string {
 
 func Name(name string) NameParam {
 	return NameParam{Name: name}
+}
+
+type LangParam struct {
+	Lang string
+}
+
+func (p LangParam) Values() map[string]string {
+	return map[string]string{"lang": p.Lang}
+}
+
+func Lang(lang string) LangParam {
+	return LangParam{Lang: lang}
 }

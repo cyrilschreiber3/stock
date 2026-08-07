@@ -26,6 +26,9 @@ jobs:
       - name: Setup Nix
         uses: DeterminateSystems/nix-installer-action@v22
 
+      - name: Run the Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v14
+
       - name: Run tests
         run: nix develop --command make test
 
@@ -60,6 +63,9 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
+
+      - name: Run the Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v14
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v4

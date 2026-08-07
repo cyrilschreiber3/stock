@@ -1,0 +1,34 @@
+package components
+
+import "github.com/gin-gonic/gin"
+import "github.com/cyrilschreiber3/stock/routes"
+import "github.com/cyrilschreiber3/stock/locales"
+import "strings"
+
+func getLang(c *gin.Context) string {
+	lang, err := c.Cookie("lang")
+	if err != nil || lang == "" {
+		lang = "en"
+	}
+	return lang
+}
+
+templ LangSelector(c *gin.Context) {
+	<div>
+		<p class="text-base-content flex items-center gap-2 text-sm">
+			{{
+				firstLang := locales.SupportedLanguages[0]
+				otherLangs := locales.SupportedLanguages[1:]
+			}}
+			<button class={ "link link-hover",  templ.KV("font-bold", getLang(c) == firstLang) } hx-post={ routes.LangRoute.URL(routes.Lang(firstLang)) } hx-swap="false">
+				{ strings.ToUpper(firstLang) }
+			</button>
+			for _, lang := range otherLangs {
+				<span class="h-3 w-px self-center bg-current opacity-40"></span>
+				<button class={ "link link-hover",  templ.KV("font-bold", getLang(c) == lang) } hx-post={ routes.LangRoute.URL(routes.Lang(lang)) } hx-swap="false">
+					{ strings.ToUpper(lang) }
+				</button>
+			}
+		</p>
+	</div>
+}

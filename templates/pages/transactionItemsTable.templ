@@ -2,6 +2,7 @@ package pages
 
 import (
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
@@ -10,27 +11,32 @@ import (
 	"github.com/google/uuid"
 )
 
-var TransactionItemsTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Product brand", "product_brand"),
-	components.NewDataTableColumn("Product Name", "product_name"),
-	components.NewDataTableColumn("Quantity", "quantity"),
-	components.NewDataTableColumn("Base Unit Price", "base_unit_price"),
-	components.NewDataTableColumn("Final Unit Cost", "final_unit_cost"),
+func GetTransactionItemsTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("transaction_items.fields.product_brand"), "product_brand"),
+		components.NewDataTableColumn(l.Tc("transaction_items.fields.product_name"), "product_name"),
+		components.NewDataTableColumn(l.Tc("transaction_items.fields.quantity"), "quantity"),
+		components.NewDataTableColumn(l.Tc("transaction_items.fields.base_unit_price"), "base_unit_price"),
+		components.NewDataTableColumn(l.Tc("transaction_items.fields.final_unit_price"), "final_unit_price"),
+	}
 }
 
-func GetDefaultTransactionItemsTableConfig(transactionID uuid.UUID) *components.DataTableConfig {
+func GetDefaultTransactionItemsTableConfig(c *gin.Context, transactionID uuid.UUID) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("transaction_items").
-		SetLabel("Transaction Items Overview").
-		SetSearchPlaceholder("Search transaction items").
-		SetItemLabel("transaction items", "transaction item").
+		SetLabel(l.Tc("transaction_items.titles.index")).
+		SetSearchPlaceholder(l.Tc("transaction_items.placeholders.search")).
+		SetItemLabel(l.T("transaction_items.label_plural"), l.T("transaction_items.label")).
 		SetURLString(routes.TransactionItemSearch.URL(routes.ID(transactionID))).
 		AddAdditionalTriggers("txItemsTableRefresh").
 		SetSortKey("product_name").
 		SetSortDirection("asc").
-		AddColumns(TransactionItemsTableColumns...)
+		AddColumns(GetTransactionItemsTableColumns(c)...)
 }
 
 templ TransactionItemsTableRow(c *gin.Context, transactionItem repository.TransactionItemWithDetail, editable bool) {
+	{{ l := locales.New(c) }}
 	<tr class="hover:bg-base-300">
 		<td>
 			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(transactionItem.Product.Brand), c) }>
@@ -63,7 +69,7 @@ templ TransactionItemsTableRow(c *gin.Context, transactionItem repository.Transa
 						Style("soft").
 						Size("sm").
 						HxDelete(routes.TransactionItemDelete.URL(routes.TxItem(transactionItem.TransactionID, transactionItem.ID))).
-						HxConfirm("Are you sure you want to delete this transaction item?").
+						HxConfirm(l.Tc("transaction_items.confirm.delete")).
 						HxTarget("closest tr").
 						HxSwap("delete"),
 					)
@@ -76,7 +82,7 @@ templ TransactionItemsTableRow(c *gin.Context, transactionItem repository.Transa
 templ TransactionItemsTable(c *gin.Context, transactionID uuid.UUID, transactionItems []repository.TransactionItemWithDetail, editable bool, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultTransactionItemsTableConfig(transactionID).GetConfigFromURL(c)
+			tableConfig = GetDefaultTransactionItemsTableConfig(c, transactionID).GetConfigFromURL(c)
 		}
 		if editable {
 			tableConfig = tableConfig.AddColumns(components.NewActionDataTableColumn())

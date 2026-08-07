@@ -2,6 +2,7 @@ package pages
 
 import (
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
@@ -10,25 +11,30 @@ import (
 	"github.com/google/uuid"
 )
 
-var SupplierTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Name", "name"),
-	components.NewUnsortedDataTableColumn("Description", "description"),
-	components.NewDataTableColumn("Last Updated", "last_updated"),
-	components.NewActionDataTableColumn(),
+func GetSupplierTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("table.columns.name"), "name"),
+		components.NewUnsortedDataTableColumn(l.Tc("table.columns.description"), "description"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewActionDataTableColumn(),
+	}
 }
 
-func GetDefaultSupplierTableConfig() *components.DataTableConfig {
+func GetDefaultSupplierTableConfig(c *gin.Context) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("suppliers").
-		SetLabel("Suppliers").
-		SetSearchPlaceholder("Search suppliers").
-		SetItemLabel("suppliers", "supplier").
+		SetLabel(l.Tc("suppliers.label_plural")).
+		SetSearchPlaceholder(l.Tc("suppliers.placeholders.search")).
+		SetItemLabel(l.Tc("suppliers.label_plural"), l.Tc("suppliers.label")).
 		SetURL(routes.SupplierSearch).
 		SetSortKey("name").
 		SetSortDirection("asc").
-		AddColumns(SupplierTableColumns...)
+		AddColumns(GetSupplierTableColumns(c)...)
 }
 
 templ SuppliersTableRow(c *gin.Context, supplier repository.Supplier) {
+	{{ l := locales.New(c) }}
 	<tr class="hover:bg-base-300">
 		<td>
 			<a class="link link-hover" href={ routes.SupplierDetails.URL(routes.ID(supplier.ID)) }>
@@ -61,8 +67,9 @@ templ SuppliersTableRow(c *gin.Context, supplier repository.Supplier) {
 					Color("error").
 					Style("soft").
 					Size("sm").
-					HxDelete(routes.SupplierDelete.URL(routes.ID(supplier.ID))).
-					HxConfirm("Are you sure you want to delete this supplier? This action cannot be undone."))
+					HxConfirm(l.Tc("suppliers.confirm.delete")).
+					HxDelete(routes.SupplierDelete.URL(routes.ID(supplier.ID))),
+				)
 			</div>
 		</td>
 	</tr>
@@ -71,7 +78,7 @@ templ SuppliersTableRow(c *gin.Context, supplier repository.Supplier) {
 templ SuppliersTable(c *gin.Context, suppliers []repository.Supplier, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultSupplierTableConfig().GetConfigFromURL(c)
+			tableConfig = GetDefaultSupplierTableConfig(c).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(suppliers)).
@@ -84,28 +91,33 @@ templ SuppliersTable(c *gin.Context, suppliers []repository.Supplier, tableConfi
 	}
 }
 
-var ProductsForSupplierTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Brand", "brand"),
-	components.NewDataTableColumn("Name", "name"),
-	components.NewDataTableColumn("Category", "category_name"),
-	components.NewDataTableColumn("Sub-category", "subcategory_name"),
-	components.NewUnsortedDataTableColumn("Aliases", "aliases"),
-	components.NewDataTableColumn("Last updated", "updated_at"),
-	components.NewActionDataTableColumn(),
+func GetProductsForSupplierTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("products.fields.brand"), "brand"),
+		components.NewDataTableColumn(l.Tc("table.columns.name"), "name"),
+		components.NewDataTableColumn(l.Tc("categories.label"), "category_name"),
+		components.NewDataTableColumn(l.Tc("subcategories.label"), "subcategory_name"),
+		components.NewUnsortedDataTableColumn(l.Tc("products.fields.aliases"), "aliases"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewActionDataTableColumn(),
+	}
 }
 
-func GetDefaultProductsForSupplierTableConfig(supplierID uuid.UUID) *components.DataTableConfig {
+func GetDefaultProductsForSupplierTableConfig(c *gin.Context, supplierID uuid.UUID) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("products-for-supplier").
-		SetLabel("Products for supplier").
-		SetSearchPlaceholder("Search products for supplier").
-		SetItemLabel("products", "product").
+		SetLabel(l.Tc("suppliers.related.products")).
+		SetSearchPlaceholder(l.Tc("suppliers.placeholders.search_products")).
+		SetItemLabel(l.T("products.label_plural"), l.T("products.label")).
 		SetURLString(routes.SupplierSearchProducts.URL(routes.ID(supplierID))).
 		SetSortKey("name").
 		SetSortDirection("asc").
-		AddColumns(ProductsForSupplierTableColumns...)
+		AddColumns(GetProductsForSupplierTableColumns(c)...)
 }
 
 templ ProductsForSupplierTableRow(c *gin.Context, product repository.ProductWithDetail) {
+	{{ l := locales.New(c) }}
 	<tr class="hover:bg-base-300">
 		<td>
 			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Brand), c) }>
@@ -159,8 +171,9 @@ templ ProductsForSupplierTableRow(c *gin.Context, product repository.ProductWith
 					Color("error").
 					Style("soft").
 					Size("sm").
-					HxDelete(routes.ProductDelete.URL(routes.ID(product.ID))).
-					HxConfirm("Are you sure you want to delete this product? This action cannot be undone."))
+					HxConfirm(l.Tc("products.confirm.delete")).
+					HxDelete(routes.ProductDelete.URL(routes.ID(product.ID))),
+				)
 			</div>
 		</td>
 	</tr>
@@ -169,7 +182,7 @@ templ ProductsForSupplierTableRow(c *gin.Context, product repository.ProductWith
 templ ProductsForSupplierTable(c *gin.Context, supplierID uuid.UUID, products []repository.ProductWithDetail, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultProductsForSupplierTableConfig(supplierID).GetConfigFromURL(c)
+			tableConfig = GetDefaultProductsForSupplierTableConfig(c, supplierID).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(products)).
@@ -178,6 +191,128 @@ templ ProductsForSupplierTable(c *gin.Context, supplierID uuid.UUID, products []
 	@components.DataTable(c, tableConfig) {
 		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(products)); i++ {
 			@ProductsForSupplierTableRow(c, products[i])
+		}
+	}
+}
+
+func GetTransactionsForSupplierTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("transactions.fields.date"), "transaction_date"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.type"), "transaction_type"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.state"), "state"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.base_price"), "base_price"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.final_price"), "final_price"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.applied_at"), "applied_at"),
+		components.NewActionDataTableColumn(),
+	}
+}
+
+func GetDefaultTransactionsForSupplierTableConfig(c *gin.Context, supplierID uuid.UUID) *components.DataTableConfig {
+	l := locales.New(c)
+	return components.NewDataTableConfig("transactions-for-supplier").
+		SetLabel(l.Tc("suppliers.related.transactions")).
+		SetSearchPlaceholder(l.Tc("suppliers.placeholders.search_transactions")).
+		SetItemLabel(l.T("transactions.label_plural"), l.T("transactions.label")).
+		SetURLString(routes.SupplierSearchTransactions.URL(routes.ID(supplierID))).
+		SetSortKey("transaction_date").
+		SetSortDirection("desc").
+		AddColumns(GetTransactionsForSupplierTableColumns(c)...)
+}
+
+templ TransactionsForSupplierTableRow(c *gin.Context, transaction repository.TransactionWithDetail) {
+	{{
+		l := locales.New(c)
+
+		appliedAtString := "N/A"
+		appliedAtNL := "N/A"
+		if transaction.AppliedAt.Valid {
+			appliedAtString = utils.PgTimestampToString(transaction.AppliedAt)
+			appliedAtNL = utils.PgTimestampToNaturalLanguage(transaction.AppliedAt)
+		}
+	}}
+	<tr>
+		<td>
+			<a class="link link-hover" href={ routes.TransactionDetails.URL(routes.ID(transaction.ID)) }>
+				{ utils.PgDateToNaturalLanguage(transaction.TransactionDate) }
+			</a>
+		</td>
+		<td>
+			@transactionTypeBadge(transaction.TransactionType)
+		</td>
+		<td>
+			@transactionStateBadge(transaction.State)
+		</td>
+		<td>{ utils.PgNumericToString(transaction.BasePrice, "0.00") }</td>
+		<td>{ utils.PgNumericToString(transaction.FinalPrice, "0.00") }</td>
+		<td>
+			<div class="tooltip" data-tip={ utils.PgTimestampToString(transaction.UpdatedAt) }>
+				{ utils.PgTimestampToNaturalLanguage(transaction.UpdatedAt) }
+			</div>
+		</td>
+		<td>
+			<div class="tooltip" data-tip={ appliedAtString }>
+				{ appliedAtNL }
+			</div>
+		</td>
+		<td>
+			<div class="flex gap-2">
+				@components.ButtonLink(routes.TransactionDetails.URL(routes.ID(transaction.ID)), components.ButtonConfig("").
+					Icon(icons.InformationCircle()).
+					Style("soft").
+					Size("sm").
+					Color("info"),
+				)
+				switch transaction.State {
+					case "draft":
+						@components.ButtonLink(routes.TransactionEditForm.URLWithReturnToCurrent(routes.ID(transaction.ID), c), components.ButtonConfig("").
+							Icon(icons.PencilSquare()).
+							Style("soft").
+							Size("sm").
+							Color("primary"),
+						)
+						@components.Button(components.ButtonConfig("").
+							Icon(icons.Check()).
+							Style("soft").
+							Size("sm").
+							Color("success").
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
+							HxConfirm(l.Tc("transactions.confirm.apply")).
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
+					case "pendingRefund":
+						@components.Button(components.ButtonConfig("").
+							Icon(icons.ArrowPath()).
+							Style("soft").
+							Size("sm").
+							Color("warning").
+							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
+							HxConfirm(l.Tc("transactions.confirm.complete")).
+							HxTarget("closest tr").
+							HxSwap("outerHTML").
+							Hx("vals", `{"state":"completed"}`),
+						)
+				}
+			</div>
+		</td>
+	</tr>
+}
+
+templ TransactionsForSupplierTable(c *gin.Context, supplierID uuid.UUID, transactions []repository.TransactionWithDetail, tableConfig *components.DataTableConfig) {
+	{{
+		if tableConfig == nil {
+			tableConfig = GetDefaultTransactionsForSupplierTableConfig(c, supplierID).GetConfigFromURL(c)
+		}
+		tableConfig = tableConfig.
+			SetItemCount(len(transactions)).
+			SetConfigToURL(c)
+	}}
+	@components.DataTable(c, tableConfig) {
+		for i := tableConfig.GetPageOffset(); i < tableConfig.GetPageOffset()+tableConfig.GetPageLimit(len(transactions)); i++ {
+			@TransactionsForSupplierTableRow(c, transactions[i])
 		}
 	}
 }

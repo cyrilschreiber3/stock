@@ -15,7 +15,7 @@ import (
 
 func HandleSearchTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultTransactionsTableConfig(c).GetConfigFromURL(c)
 
 		transactions, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -41,7 +41,7 @@ func HandleSearchTransactionsForProduct() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultTransactionsForProductTableConfig(productId).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultTransactionsForProductTableConfig(c, productId).GetConfigFromURL(c)
 
 		transactionItems, err := db.SearchTransactionsWithDetailsAndItems(c, repository.SearchTransactionsWithDetailsAndItemsParams{
 			Search:        tableConfig.SearchValue,
@@ -60,9 +60,36 @@ func HandleSearchTransactionsForProduct() gin.HandlerFunc {
 	}
 }
 
+func HandleSearchTransactionsForSupplier() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		supplierId, err := parseUUIDParam(c, "id")
+		if err != nil {
+			utils.HXNotify(c, http.StatusBadRequest, "error", "Invalid supplier ID")
+			return
+		}
+
+		tableConfig := pages.GetDefaultTransactionsForSupplierTableConfig(c, supplierId).GetConfigFromURL(c)
+
+		transactionItems, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
+			Search:        tableConfig.SearchValue,
+			SortKey:       tableConfig.SortKey,
+			SortDirection: tableConfig.SortDirection,
+			SupplierID:    supplierId,
+		})
+		if err != nil {
+			slog.Error("Error searching transaction items for supplier", "error", err)
+			utils.HXNotify(c, http.StatusInternalServerError, "error", "Could not search transaction items for supplier")
+			return
+		}
+
+		component := pages.TransactionsForSupplierTable(c, supplierId, transactionItems, tableConfig)
+		utils.RenderTemplate(c, http.StatusOK, component)
+	}
+}
+
 func HandleGetTransactions() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tableConfig := pages.GetDefaultTransactionsTableConfig().GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultTransactionsTableConfig(c).GetConfigFromURL(c)
 
 		transactions, err := db.SearchTransactionsWithDetails(c, repository.SearchTransactionsWithDetailsParams{
 			Search:        tableConfig.SearchValue,
@@ -95,7 +122,7 @@ func HandleGetTransactionDetails() gin.HandlerFunc {
 			return
 		}
 
-		tableConfig := pages.GetDefaultTransactionItemsTableConfig(transactionId).GetConfigFromURL(c)
+		tableConfig := pages.GetDefaultTransactionItemsTableConfig(c, transactionId).GetConfigFromURL(c)
 
 		transactionItems, err := db.SearchTransactionItemsWithDetails(c, repository.SearchTransactionItemsWithDetailsParams{
 			Search:        tableConfig.SearchValue,

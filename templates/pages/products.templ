@@ -3,24 +3,26 @@ package pages
 import (
 	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
 	"github.com/cyrilschreiber3/stock/templates/layouts"
 	"github.com/cyrilschreiber3/stock/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/invopop/ctxi18n/i18n"
 )
 
 templ Products(c *gin.Context, products []repository.ProductWithDetail) {
-	@layouts.Base(c, "Products", "products") {
+	{{ l := locales.New(c) }}
+	@layouts.Base(c, l.Tc("products.label_plural"), "products") {
 		<div class="flex flex-col gap-6">
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<div>
-					<h1 class="text-base-content text-3xl font-bold">Products</h1>
-					<p class="text-base-content/60 mt-1 text-sm">Manage your product inventory</p>
+					<h1 class="text-base-content text-3xl font-bold">{ l.Tc("products.label_plural") }</h1>
 				</div>
 				<div class="flex gap-2">
-					@components.ButtonLink(routes.ProductCreateForm.URL(), components.ButtonConfig("Create").
+					@components.ButtonLink(routes.ProductCreateForm.URL(), components.ButtonConfig(l.Tc("actions.create")).
 						Icon(icons.Plus()).
 						Color("primary"),
 					)
@@ -32,43 +34,47 @@ templ Products(c *gin.Context, products []repository.ProductWithDetail) {
 }
 
 templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
-	@layouts.Base(c, "Edit", "products") {
-		{{
-			title := "Create product"
-			formMethod := "post"
-			formAction := routes.ProductCreate.URL()
-			submitButtonText := "Create"
+	{{
+		l := locales.New(c)
 
-			brand := ""
-			name := ""
-			categoryID := ""
-			subcategoryID := ""
-			supplierID := ""
-			defaultBuy := ""
-			defaultSell := ""
-			aliases := []string{}
+		windowTitle := l.Tc("products.titles.new")
+		title := l.Tc("products.titles.new")
+		formMethod := "post"
+		formAction := routes.ProductCreate.URL()
+		submitButtonText := l.Tc("actions.create")
 
-			if product != nil {
-				title = "Update product: " + product.Name
-				formMethod = "put"
-				formAction = routes.ProductUpdate.URLWithReturn(routes.ID(product.ID), c)
-				submitButtonText = "Update"
+		brand := ""
+		name := ""
+		categoryID := ""
+		subcategoryID := ""
+		supplierID := ""
+		defaultBuy := ""
+		defaultSell := ""
+		aliases := []string{}
 
-				brand = product.Brand
-				name = product.Name
-				categoryID = product.CategoryID.String()
-				subcategoryID = product.SubcategoryID.String()
-				supplierID = product.DefaultSupplierID.String()
-				defaultBuy = utils.PgNumericToString(product.DefaultBuyPrice, "0.00")
-				defaultSell = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
-				aliases = product.Aliases
-			}
-		}}
+		if product != nil {
+			windowTitle = l.Tc("products.titles.edit")
+			title = l.Tc("products.titles.edit_named", i18n.M{"name": product.Name})
+			formMethod = "put"
+			formAction = routes.ProductUpdate.URLWithReturn(routes.ID(product.ID), c)
+			submitButtonText = l.Tc("actions.update")
+
+			brand = product.Brand
+			name = product.Name
+			categoryID = product.CategoryID.String()
+			subcategoryID = product.SubcategoryID.String()
+			supplierID = product.DefaultSupplierID.String()
+			defaultBuy = utils.PgNumericToString(product.DefaultBuyPrice, "0.00")
+			defaultSell = utils.PgNumericToString(product.DefaultSellPrice, "0.00")
+			aliases = product.Aliases
+		}
+	}}
+	@layouts.Base(c, windowTitle, "products") {
 		<h1 class="mb-4 text-2xl font-bold">{ title }</h1>
 		<form id="product-form" name="product-form" { "hx-" + formMethod }={ formAction } hx-swap="none">
 			@components.FormField(components.FormFieldConfig("brand").
 				Type("text").
-				Label("Product Brand").
+				Label(l.Tc("products.fields.brand_label")).
 				Placeholder("Dr. Gabs").
 				Value(brand).
 				DatalistOptionsFromEndpoint(routes.BrandOptions.URL()).
@@ -76,23 +82,23 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 			)
 			@components.FormField(components.FormFieldConfig("name").
 				Type("text").
-				Label("Product Name").
+				Label(l.Tc("products.fields.name_label")).
 				Placeholder("SWAF").
 				Value(name).
 				Required(),
 			)
 			@components.FormField(components.FormFieldConfig("category_id").
 				Type("select").
-				Label("Category").
-				Placeholder("Select a category").
+				Label(l.Tc("categories.label")).
+				Placeholder(l.Tc("products.placeholders.category")).
 				Value(categoryID).
 				Required().
 				OptionsFromEndpoint(routes.CategoryOptions.URL()),
 			)
 			@components.FormField(components.FormFieldConfig("subcategory_id").
 				Type("select").
-				Label("Sub-category").
-				Placeholder("Select a sub-category").
+				Label(l.Tc("subcategories.label")).
+				Placeholder(l.Tc("products.placeholders.subcategory")).
 				Value(subcategoryID).
 				Required().
 				OptionsFromEndpoint(routes.SubcategoryOptions.Pattern()).
@@ -100,15 +106,15 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 			)
 			@components.FormField(components.FormFieldConfig("default_supplier_id").
 				Type("select").
-				Label("Default Supplier").
-				Placeholder("Select a supplier").
+				Label(l.Tc("products.fields.supplier")).
+				Placeholder(l.Tc("products.placeholders.supplier")).
 				Value(supplierID).
 				Required().
 				OptionsFromEndpoint(routes.SupplierOptions.URL()),
 			)
 			@components.FormField(components.FormFieldConfig("default_buy_price").
 				Type("number").
-				Label("Base Buy Price").
+				Label(l.Tc("products.fields.buy_price")).
 				Placeholder("3.00").
 				Value(defaultBuy).
 				ValidationPreset("money").
@@ -117,7 +123,7 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 			)
 			@components.FormField(components.FormFieldConfig("default_sell_price").
 				Type("number").
-				Label("Base Sell Price").
+				Label(l.Tc("products.fields.sell_price")).
 				Placeholder("4.50").
 				Value(defaultSell).
 				ValidationPreset("money").
@@ -126,14 +132,14 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 			)
 			@components.FormField(components.FormFieldConfig("aliases").
 				Type("text").
-				Label("Aliases").
-				Placeholder("Alternate product name").
+				Label(l.Tc("products.fields.aliases")).
+				Placeholder(l.Tc("products.placeholders.alias")).
 				AsList().
 				ValueList(aliases).
 				Required(),
 			)
 			<div class="mt-6 flex justify-end gap-2">
-				@components.ButtonLink(routes.ProductList.ReturnOrURL(c), components.ButtonConfig("Back").
+				@components.ButtonLink(routes.ProductList.ReturnOrURL(c), components.ButtonConfig(l.Tc("actions.back")).
 					Icon(icons.ArrowLeft()).
 					Color("neutral"),
 				)
@@ -148,24 +154,25 @@ templ CreateUpdateProduct(c *gin.Context, product *repository.Product) {
 }
 
 templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inventoryLots []repository.InventoryLotWithDetail, transactions []repository.TransactionWithDetailsAndItem) {
-	@layouts.Base(c, "Product", "products") {
+	{{ l := locales.New(c) }}
+	@layouts.Base(c, l.Tc("products.titles.show"), "products") {
 		<div class="flex flex-col gap-6">
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<h1 class="text-2xl font-bold">{ product.Brand + " - " + product.Name }</h1>
 				<div class="flex gap-2">
-					@components.ButtonLink(routes.ProductList.ReturnOrURL(c), components.ButtonConfig("Back").
+					@components.ButtonLink(routes.ProductList.ReturnOrURL(c), components.ButtonConfig(l.Tc("actions.back")).
 						Icon(icons.ArrowLeft()).
 						Color("neutral"),
 					)
-					@components.ButtonLink(routes.ProductEditForm.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig("Edit").
+					@components.ButtonLink(routes.ProductEditForm.URLWithReturnToCurrent(routes.ID(product.ID), c), components.ButtonConfig(l.Tc("actions.edit")).
 						Icon(icons.PencilSquare()).
 						Color("info"),
 					)
-					@components.Button(components.ButtonConfig("Delete").
+					@components.Button(components.ButtonConfig(l.Tc("actions.delete")).
 						Icon(icons.Trash()).
 						Color("error").
 						HxDelete(routes.ProductDelete.URLWithReturn(routes.ID(product.ID), c)).
-						HxConfirm("Are you sure you want to delete this product?").
+						HxConfirm(l.Tc("products.confirm.delete")).
 						HxSwap("none"),
 					)
 				</div>
@@ -174,7 +181,7 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 				<table class="table w-full">
 					<tbody>
 						<tr>
-							<th>Brand</th>
+							<th>{ l.Tc("products.fields.brand") }</th>
 							<td>
 								<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Brand), c) }>
 									{ product.Brand }
@@ -182,11 +189,11 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 							</td>
 						</tr>
 						<tr>
-							<th>Name</th>
+							<th>{ l.Tc("table.columns.name") }</th>
 							<td>{ product.Name }</td>
 						</tr>
 						<tr>
-							<th>Category</th>
+							<th>{ l.Tc("categories.label") }</th>
 							<td>
 								<a class="link link-hover" href={ routes.CategoryDetails.URLWithReturnToCurrent(routes.ID(product.CategoryID), c) }>
 									{ product.Category.Name }
@@ -194,7 +201,7 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 							</td>
 						</tr>
 						<tr>
-							<th>Sub-category</th>
+							<th>{ l.Tc("subcategories.label") }</th>
 							<td>
 								<a class="link link-hover" href={ routes.SubcategoryDetails.URLWithReturnToCurrent(routes.Subcategory(product.CategoryID, product.SubcategoryID), c) }>
 									{ product.Subcategory.Name }
@@ -202,7 +209,7 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 							</td>
 						</tr>
 						<tr>
-							<th>Default supplier</th>
+							<th>{ l.Tc("products.fields.supplier") }</th>
 							<td>
 								<a class="link link-hover" href={ routes.SupplierDetails.URLWithReturnToCurrent(routes.ID(product.DefaultSupplierID), c) }>
 									{ product.Supplier.Name }
@@ -210,15 +217,15 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 							</td>
 						</tr>
 						<tr>
-							<th>Base buy price</th>
+							<th>{ l.Tc("products.fields.buy_price") }</th>
 							<td>{ utils.PgNumericToString(product.DefaultBuyPrice, "0.00") } CHF</td>
 						</tr>
 						<tr>
-							<th>Base sell price</th>
+							<th>{ l.Tc("products.fields.sell_price") }</th>
 							<td>{ utils.PgNumericToString(product.DefaultSellPrice, "0.00") } CHF</td>
 						</tr>
 						<tr>
-							<th>Aliases</th>
+							<th>{ l.Tc("products.fields.aliases") }</th>
 							<td>
 								<div class="flex flex-wrap gap-2">
 									for _, alias := range product.Aliases {
@@ -230,7 +237,7 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 							</td>
 						</tr>
 						<tr>
-							<th>Created</th>
+							<th>{ l.Tc("table.columns.created_at") }</th>
 							<td>
 								<div class="tooltip" data-tip={ utils.PgTimestampToString(product.CreatedAt) }>
 									{ utils.PgTimestampToNaturalLanguage(product.CreatedAt) }
@@ -238,7 +245,7 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 							</td>
 						</tr>
 						<tr>
-							<th>Last updated</th>
+							<th>{ l.Tc("table.columns.updated_at") }</th>
 							<td>
 								<div class="tooltip" data-tip={ utils.PgTimestampToString(product.UpdatedAt) }>
 									{ utils.PgTimestampToNaturalLanguage(product.UpdatedAt) }
@@ -246,7 +253,7 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 							</td>
 						</tr>
 						<tr>
-							<th>Inventory quantity</th>
+							<th>{ l.Tc("products.fields.inventory_quantity") }</th>
 							<td>{ fmt.Sprintf("%d", product.InventoryQuantity) }</td>
 						</tr>
 					</tbody>
@@ -259,12 +266,13 @@ templ ProductDetails(c *gin.Context, product repository.ProductWithDetail, inven
 }
 
 templ BrandDetails(c *gin.Context, brand string, products []repository.ProductWithDetail) {
-	@layouts.Base(c, "Brand", "products") {
+	{{ l := locales.New(c) }}
+	@layouts.Base(c, l.Tc("brands.titles.show"), "products") {
 		<div class="flex flex-col gap-6">
 			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 				<h1 class="text-2xl font-bold">{ brand }</h1>
 				<div class="flex gap-2">
-					@components.ButtonLink(routes.ProductList.ReturnOrURL(c), components.ButtonConfig("Back").
+					@components.ButtonLink(routes.ProductList.ReturnOrURL(c), components.ButtonConfig(l.Tc("actions.back")).
 						Icon(icons.ArrowLeft()).
 						Color("neutral"),
 					)

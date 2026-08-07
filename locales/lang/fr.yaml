@@ -1,0 +1,238 @@
+fr:
+  nav:
+    title: Gestion d'inventaire
+    home: accueil
+    sections:
+      overview: vue d'ensemble
+      catalog: catalogue
+      operations: opérations
+      inventory: inventaire
+
+  actions:
+    add: ajouter
+    create: créer
+    edit: modifier
+    update: mettre à jour
+    delete: supprimer
+    back: retour
+    prev: préc
+    next: suivant
+    cancel: annuler
+    change: changer
+    close: fermer
+
+  table:
+    columns:
+      name: nom
+      description: description
+      created_at: créé le
+      updated_at: mis à jour le
+      actions: actions
+    empty: aucun résultat trouvé
+
+  form:
+    optional: optionnel
+    search: recherche
+
+  products:
+    label: produit
+    label_plural: produits
+    titles:
+      index: liste des produits
+      show: détails du produit
+      new: créer un produit
+      edit: modifier un produit
+      edit_named: "modifier le produit : %{name}"
+    fields:
+      brand: marque
+      brand_label: marque du produit
+      name_label: nom du produit
+      alias: alias
+      aliases: aliases
+      inventory_quantity: quantité dans l'inventaire
+      supplier: fournisseur par défaut
+      buy_price: prix d'achat de base
+      sell_price: prix de vente de base
+      stock: stock
+    placeholders:
+      search: rechercher marque, nom, (sous-)catégorie ou fournisseur
+      category: séléctionnez une catégorie
+      subcategory: séléctionnez une sous-catégorie
+      supplier: séléctionnez un fournisseur
+      alias: nom de produit alternatif
+    related:
+      transactions: transactions incluant ce produit
+      inventory_lots: lots d'inventaire pour ce produit
+    confirm:
+      delete: êtes-vous sûr de vouloir supprimer ce produit ?
+
+  brands:
+    titles:
+      show: détails de la marque
+    related:
+      products: produits de cette marque
+    placeholders:
+      search: rechercher nom, (sous-)catégorie ou fournisseur
+
+  categories:
+    label: catégorie
+    label_plural: catégories
+    titles:
+      index: liste des catégories
+      show: détails de la catégorie
+      new: créer une catégorie
+      edit: modifier une catégorie
+      edit_named: "modifier la catégorie : %{name}"
+    fields:
+      name: nom de la catégorie
+      description: description de la catégorie
+    placeholders:
+      name: boissons
+      search: rechercher des catégories
+      search_subcategories: rechercher des sous-catégories
+      search_products: rechercher marque, nom, sous-catégorie ou fournisseur
+    related:
+      subcategories: sous-catégories dans cette catégorie
+      products: produits dans cette catégorie
+    actions:
+      add_subcategory: ajouter une sous-catégorie
+    confirm:
+      delete: êtes-vous que vous voulez supprimer cette catégorie ?
+
+  subcategories:
+    label: sous-catégorie
+    label_plural: sous-catégories
+    titles:
+      show: détails de la sous-catégorie
+      new: créer une sous-catégorie
+      edit: modifier une sous-catégorie
+      edit_named: "modifier la sous-catégorie : %{name}"
+    fields:
+      name: nom de la sous-catégorie
+      description: description de la sous-catégorie
+    placeholders:
+      name: bières
+      search_products: rechercher marque, nom ou fournisseur
+    related:
+      products: produits dans cette sous-catégorie
+    confirm:
+      delete: êtes-vous que vous voulez supprimer cette sous-catégorie ?
+
+  suppliers:
+    label: fournisseur
+    label_plural: fournisseurs
+    titles:
+      index: liste des fournisseurs
+      show: détails du fournisseur
+      new: créer un fournisseur
+      edit: modifier un fournisseur
+      edit_named: "modifier le fournisseur : %{name}"
+    fields:
+      name: nom du fournisseur
+      description: description du fournisseur
+    placeholders:
+      search: rechercher des fournisseurs
+      search_products: rechercher marque, nom, (sous-)catégorie
+      search_transactions: rechercher type ou statut
+    related:
+      products: produits pour ce fournisseur
+      transactions: transactions pour ce fournisseur
+    confirm:
+      delete: êtes-vous que vous voulez supprimer ce fournisseur ?
+
+  transactions:
+    label: transaction
+    label_plural: transactions
+    titles:
+      index: liste des transactions
+      show: détails de la transaction
+      new: créer une transaction
+      edit: modifier une transaction
+      edit_dated: "modifier la transaction du : %{date}"
+    fields:
+      date: date
+      date_label: date de la transaction
+      type: type
+      type_label: type de transaction
+      state: statut
+      supplier: fournisseur
+      base_price: prix de base
+      final_price: prix final
+      total_product_price: prix total du produit
+      total_price: prix total
+      applied_at: appliqué le
+      description: description
+    placeholders:
+      type: séléctionnez un type de transaction
+      supplier: séléctionnez un fournisseur
+      description: entrez une description pour cette transaction
+      search: rechercher type, statut ou nom de fournisseur
+    types:
+      buy: entrée
+      sell: sortie
+      adjustment: ajustement
+      correction: correction
+    states:
+      draft: brouillon
+      pending_refund: non-remboursée
+      completed: terminée
+    actions:
+      add_product: ajouter un produit
+      apply: appliquer la transaction
+      apply_without_refund: appliquer sans remboursement
+      set_completed: marquer comme terminée
+      back: retour aux transactions
+    confirm:
+      delete: êtes-vous sûr de vouloir supprimer cette transaction ?
+      apply: êtes-vous sûr de vouloir appliquer cette transaction ?
+      apply_without_refund: êtes-vous sûr de vouloir appliquer cette transaction sans remboursement ?
+      complete: êtes-vous sûr de vouloir marquer cette transaction comme terminée ?
+
+  transaction_items:
+    label: élément de transaction
+    label_plural: éléments de transaction
+    titles:
+      index: liste des éléments de transaction
+      new: ajouter un produit à la transaction
+      edit: modifier un produit dans la transaction
+    fields:
+      product_brand: marque du produit
+      product_name: nom du produit
+      quantity: quantité
+      base_unit_price: prix unitaire de base
+      final_unit_price: prix unitaire final
+    placeholders:
+      search: rechercher des éléments de transaction
+      search_product: rechercher un produit
+      quantity: entrez une quantité
+      base_unit_price: entrez le prix unitaire de base
+      final_unit_price: entrez le prix unitaire final
+    filters:
+      all_categories: toutes les catégories
+    actions:
+      select_product: séléctionner un produit
+    confirm:
+      delete: êtes-vous sûr de vouloir supprimer cet élément de transaction ?
+
+  inventory:
+    label: produit
+    label_plural: produits
+    titles:
+      index: inventaire
+    fields:
+      product_brand: marque du produit
+      product_name: nom du produit
+      quantity: quantité
+      average_unit_price: prix unitaire moyen
+      average_unit_cost: coût unitaire moyen
+    placeholders:
+      search: rechercher des produits
+
+  inventory_lots:
+    label: lot d'inventaire
+    label_plural: lots d'inventaire
+    fields:
+      transaction_date: date de transaction
+      received_quantity: quantité reçue
+      remaining_quantity: quantité restante
+      unit_cost: coût à l'unité

@@ -2,12 +2,16 @@ package components
 
 import (
 	"fmt"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/gin-gonic/gin"
 )
 
 // TODO: make the datatable more generic and reusable by configuring the columns by objects and each implementation selects the columns it wants.
 templ DataTable(c *gin.Context, config *DataTableConfig) {
-	{{ config = config.buildConfig() }}
+	{{
+		config = config.buildConfig()
+		l := locales.New(c)
+	}}
 	<section id={ config.getElementName("table") }>
 		<form
 			id={ config.getFormName() }
@@ -18,6 +22,7 @@ templ DataTable(c *gin.Context, config *DataTableConfig) {
 		>
 			<input type="hidden" name={ config.getSortName() } id={ config.getSortName() } value={ config.SortKey }/>
 			<input type="hidden" name={ config.getSortDirectionName() } id={ config.getSortDirectionName() } value={ config.SortDirection }/>
+			<input type="hidden" name={ config.getPageSelectName() } id={ config.getPageSelectName() } value={ config.CurrentPage }/>
 		</form>
 		<div class="rounded-box border-base-content/10 bg-base-200 overflow-hidden border shadow-md">
 			<div class="bg-base-100 border-base-content/10 flex flex-wrap items-center justify-between gap-4 border-b p-5">
@@ -71,7 +76,7 @@ templ DataTable(c *gin.Context, config *DataTableConfig) {
 					<tbody>
 						{ children... }
 						if config.ItemCount == 0 {
-							<tr><td colspan={ len(config.Columns) } class="text-center">No results found</td></tr>
+							<tr><td colspan={ len(config.Columns) } class="text-center">{ l.Tc("table.empty") }</td></tr>
 						}
 					</tbody>
 				</table>
@@ -85,11 +90,12 @@ templ DataTable(c *gin.Context, config *DataTableConfig) {
 						}
 					</select>
 				</div>
+				// TODO: make the x-on:click more readable by using a function
 				<div class="join flex w-full items-center overflow-x-auto pb-0.5 sm:w-auto sm:pb-0" aria-label="Pagination">
 					{{ pageNumbers := config.pageNumbers() }}
-					<button aria-label="Previous page" type="submit" name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.CurrentPage-1) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item" disabled?={ pageNumbers.DisablePrev }>Prev</button>
+					<button type="submit" x-on:click={ fmt.Sprintf("document.getElementById('%s').value = '%d';", config.getPageSelectName(), config.CurrentPage-1) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item" disabled?={ pageNumbers.DisablePrev }>{ l.Tc("actions.prev") }</button>
 					if pageNumbers.ShowPrefix {
-						<button type="submit" name={ config.getPageSelectName() } value="1" form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item">1</button>
+						<button type="submit" x-on:click={ fmt.Sprintf("document.getElementById('%s').value = '%d';", config.getPageSelectName(), 1) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item">1</button>
 						<a class="btn border-base-content/10 btn-sm join-item pointer-events-none text-xs">
 							...
 						</a>
@@ -97,33 +103,19 @@ templ DataTable(c *gin.Context, config *DataTableConfig) {
 					for _, page := range pageNumbers.Pages {
 						<button
 							type="submit"
-							name={ config.getPageSelectName() }
-							value={ fmt.Sprintf("%d", page) }
 							form={ config.getFormName() }
 							class={ "btn border-base-content/10 btn-sm join-item", templ.KV("btn-primary btn-active pointer-events-none", page == config.CurrentPage) }
+							x-on:click={ fmt.Sprintf("document.getElementById('%s').value = '%d';", config.getPageSelectName(), page) }
 						>{ fmt.Sprintf("%d", page) }</button>
 					}
 					if pageNumbers.ShowSuffix {
 						<a class="btn border-base-content/10 btn-sm join-item pointer-events-none text-xs">
 							...
 						</a>
-						<button type="submit" name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.TotalPages) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item">{ fmt.Sprintf("%d", config.TotalPages) }</button>
+						<button type="submit" x-on:click={ fmt.Sprintf("document.getElementById('%s').value = '%d';", config.getPageSelectName(), config.TotalPages) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item">{ fmt.Sprintf("%d", config.TotalPages) }</button>
 					}
-					<button aria-label="Next page" type="submit" name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.CurrentPage+1) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item" disabled?={ pageNumbers.DisableNext }>Next</button>
+					<button type="submit" x-on:click={ fmt.Sprintf("document.getElementById('%s').value = '%d';", config.getPageSelectName(), config.CurrentPage+1) } form={ config.getFormName() } class="btn border-base-content/10 btn-sm join-item" disabled?={ pageNumbers.DisableNext }>{ l.Tc("actions.next") }</button>
 				</div>
-				// <div class="flex w-full items-center overflow-x-auto pb-0.5 sm:w-auto sm:pb-0" aria-label="Pagination">
-				// 	<p>Page&nbsp;</p>
-				// 	<select name={ config.getPageSelectName() } form={ config.getFormName() } class="select select-sm select-bordered min-w-16" aria-label="Current page">
-				// 		for i := 1; i <= config.TotalPages; i++ {
-				// 			<option value={ fmt.Sprintf("%d", i) } selected?={ i == config.CurrentPage }>{ fmt.Sprintf("%d", i) }</option>
-				// 		}
-				// 	</select>
-				// 	<p>&nbsp;of&nbsp;{ fmt.Sprintf("%d", config.TotalPages) }&nbsp;</p>
-				// 	<div class="join">
-				// 		<button class="btn border-base-content/10 join-item" form={ config.getFormName() } name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.CurrentPage-1) } disabled?={ pageNumbers.DisablePrev }>◄</button>
-				// 		<button class="btn border-base-content/10 join-item" form={ config.getFormName() } name={ config.getPageSelectName() } value={ fmt.Sprintf("%d", config.CurrentPage+1) } disabled?={ pageNumbers.DisableNext }>►</button>
-				// 	</div>
-				// </div>
 			</div>
 		</div>
 	</section>

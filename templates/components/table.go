@@ -19,6 +19,7 @@ type DataTableConfig struct {
 	ItemCount          int
 	ItemLabel          string
 	ItemLabelSingular  string
+	ItemLabelKey       string
 	SortKey            string
 	SortDirection      string
 	CurrentPage        int
@@ -114,6 +115,11 @@ func (c *DataTableConfig) SetItemCount(count int) *DataTableConfig {
 func (c *DataTableConfig) SetItemLabel(label string, singular string) *DataTableConfig {
 	c.ItemLabel = label
 	c.ItemLabelSingular = singular
+	return c
+}
+
+func (c *DataTableConfig) SetItemLabelKey(key string) *DataTableConfig {
+	c.ItemLabelKey = key
 	return c
 }
 

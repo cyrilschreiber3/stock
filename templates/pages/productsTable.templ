@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 	"github.com/cyrilschreiber3/stock/database/repository"
+	"github.com/cyrilschreiber3/stock/locales"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/cyrilschreiber3/stock/templates/components"
 	"github.com/cyrilschreiber3/stock/templates/icons"
@@ -12,29 +13,34 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var ProductsTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Brand", "brand"),
-	components.NewDataTableColumn("Name", "name"),
-	components.NewDataTableColumn("Category", "category"),
-	components.NewDataTableColumn("Subcategory", "subcategory"),
-	components.NewDataTableColumn("Supplier", "supplier"),
-	components.NewUnsortedDataTableColumn("Aliases", "aliases"),
-	components.NewDataTableColumn("Updated", "updated_at"),
-	components.NewActionDataTableColumn(),
+func GetProductsTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("products.fields.brand"), "brand"),
+		components.NewDataTableColumn(l.Tc("table.columns.name"), "name"),
+		components.NewDataTableColumn(l.Tc("categories.label"), "category"),
+		components.NewDataTableColumn(l.Tc("subcategories.label"), "subcategory"),
+		components.NewDataTableColumn(l.Tc("suppliers.label"), "supplier"),
+		components.NewUnsortedDataTableColumn(l.Tc("products.fields.aliases"), "aliases"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewActionDataTableColumn(),
+	}
 }
 
-func GetDefaultProductsTableConfig() *components.DataTableConfig {
+func GetDefaultProductsTableConfig(c *gin.Context) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("products").
-		SetLabel("Products list").
-		SetSearchPlaceholder("Search products, supplier or category").
-		SetItemLabel("products", "product").
+		SetLabel(l.Tc("products.titles.index")).
+		SetSearchPlaceholder(l.Tc("products.placeholders.search")).
+		SetItemLabel(l.T("products.label_plural"), l.T("products.label")).
 		SetURL(routes.ProductSearch).
 		SetSortKey("name").
 		SetSortDirection("asc").
-		AddColumns(ProductsTableColumns...)
+		AddColumns(GetProductsTableColumns(c)...)
 }
 
 templ ProductsTableRow(c *gin.Context, product repository.ProductWithDetail) {
+	{{ l := locales.New(c) }}
 	<tr class="hover:bg-base-300">
 		<td>
 			<a class="link link-hover" href={ routes.BrandDetails.URLWithReturnToCurrent(routes.Name(product.Brand), c) }>
@@ -93,7 +99,7 @@ templ ProductsTableRow(c *gin.Context, product repository.ProductWithDetail) {
 					Style("soft").
 					Size("sm").
 					HxDelete(routes.ProductDelete.URL(routes.ID(product.ID))).
-					HxConfirm("Are you sure you want to delete this product?").
+					HxConfirm(l.Tc("products.confirm.delete")).
 					HxTarget("closest tr").
 					HxSwap("delete"),
 				)
@@ -105,7 +111,7 @@ templ ProductsTableRow(c *gin.Context, product repository.ProductWithDetail) {
 templ ProductsTable(c *gin.Context, products []repository.ProductWithDetail, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultProductsTableConfig().GetConfigFromURL(c)
+			tableConfig = GetDefaultProductsTableConfig(c).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(products)).
@@ -118,30 +124,36 @@ templ ProductsTable(c *gin.Context, products []repository.ProductWithDetail, tab
 	}
 }
 
-var TransactionsForProductTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Date", "transaction_date"),
-	components.NewDataTableColumn("Type", "transaction_type"),
-	components.NewDataTableColumn("State", "state"),
-	components.NewDataTableColumn("Supplier", "supplier"),
-	components.NewDataTableColumn("Total product price", "total_product_price"),
-	components.NewDataTableColumn("Total price", "total_price"),
-	components.NewDataTableColumn("Applied at", "applied_at"),
-	components.NewActionDataTableColumn(),
+func GetTransactionsForProductTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("transactions.fields.date"), "transaction_date"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.type"), "transaction_type"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.state"), "state"),
+		components.NewDataTableColumn(l.Tc("suppliers.label"), "supplier"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.total_product_price"), "total_product_price"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.total_price"), "total_price"),
+		components.NewDataTableColumn(l.Tc("transactions.fields.applied_at"), "applied_at"),
+		components.NewActionDataTableColumn(),
+	}
 }
 
-func GetDefaultTransactionsForProductTableConfig(productID uuid.UUID) *components.DataTableConfig {
+func GetDefaultTransactionsForProductTableConfig(c *gin.Context, productID uuid.UUID) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("transactions_for_product").
-		SetLabel("Transactions for product").
+		SetLabel(l.Tc("products.related.transactions")).
 		DisableSearch().
-		SetItemLabel("transactions", "transaction").
+		SetItemLabel(l.T("transactions.label_plural"), l.T("transactions.label")).
 		SetURLString(routes.ProductSearchTransactions.URL(routes.ID(productID))).
 		SetSortKey("transaction_date").
 		SetSortDirection("desc").
-		AddColumns(TransactionsForProductTableColumns...)
+		AddColumns(GetTransactionsForProductTableColumns(c)...)
 }
 
 templ TransactionsForProductTableRow(c *gin.Context, productID uuid.UUID, transaction repository.TransactionWithDetailsAndItem) {
 	{{
+		l := locales.New(c)
+
 		appliedAtString := "N/A"
 		appliedAtNL := "N/A"
 		if transaction.AppliedAt.Valid {
@@ -175,7 +187,7 @@ templ TransactionsForProductTableRow(c *gin.Context, productID uuid.UUID, transa
 					{ transaction.Supplier.Name }
 				</a>
 			} else {
-				N/A
+				{ "N/A" }
 			}
 		</td>
 		<td>{ utils.PgNumericToString(totalProductPrice, "0.00") } CHF</td>
@@ -207,7 +219,7 @@ templ TransactionsForProductTableRow(c *gin.Context, productID uuid.UUID, transa
 							Size("sm").
 							Color("success").
 							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
-							HxConfirm("Are you sure you want to apply this transaction?").
+							HxConfirm(l.Tc("transactions.confirm.apply")).
 							HxTarget("closest tr").
 							HxSwap("outerHTML").
 							Hx("vals", `{"state":"completed"}`),
@@ -219,7 +231,7 @@ templ TransactionsForProductTableRow(c *gin.Context, productID uuid.UUID, transa
 							Size("sm").
 							Color("warning").
 							HxPost(routes.TransactionApply.URLWithReturnToCurrent(routes.ID(transaction.ID), c)).
-							HxConfirm("Are you sure you want to set this transaction as completed?").
+							HxConfirm(l.Tc("transactions.confirm.complete")).
 							HxTarget("closest tr").
 							HxSwap("outerHTML").
 							Hx("vals", `{"state":"completed"}`),
@@ -233,7 +245,7 @@ templ TransactionsForProductTableRow(c *gin.Context, productID uuid.UUID, transa
 templ TransactionsForProductTable(c *gin.Context, productID uuid.UUID, transactions []repository.TransactionWithDetailsAndItem, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultTransactionsForProductTableConfig(productID).GetConfigFromURL(c)
+			tableConfig = GetDefaultTransactionsForProductTableConfig(c, productID).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(transactions)).
@@ -246,24 +258,28 @@ templ TransactionsForProductTable(c *gin.Context, productID uuid.UUID, transacti
 	}
 }
 
-var InventoryLotsForProductTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Transaction date", "transaction_date"),
-	components.NewDataTableColumn("Received Quantity", "received_quantity"),
-	components.NewDataTableColumn("Remaining Quantity", "remaining_quantity"),
-	components.NewDataTableColumn("Unit cost", "unit_cost"),
-	components.NewDataTableColumn("Supplier", "transaction_supplier"),
-	components.NewDataTableColumn("Created at", "created_at"),
+func GetInventoryLotsForProductTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("inventory_lots.fields.transaction_date"), "transaction_date"),
+		components.NewDataTableColumn(l.Tc("inventory_lots.fields.received_quantity"), "received_quantity"),
+		components.NewDataTableColumn(l.Tc("inventory_lots.fields.remaining_quantity"), "remaining_quantity"),
+		components.NewDataTableColumn(l.Tc("inventory_lots.fields.unit_cost"), "unit_cost"),
+		components.NewDataTableColumn(l.Tc("suppliers.label"), "transaction_supplier"),
+		components.NewDataTableColumn(l.Tc("table.columns.created_at"), "created_at"),
+	}
 }
 
-func GetDefaultInventoryLotsForProductTableConfig(productID uuid.UUID) *components.DataTableConfig {
+func GetDefaultInventoryLotsForProductTableConfig(c *gin.Context, productID uuid.UUID) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("inventory_lots_for_product").
-		SetLabel("Inventory lots for product").
+		SetLabel(l.Tc("products.related.inventory_lots")).
 		DisableSearch().
-		SetItemLabel("inventory lots", "inventory lot").
+		SetItemLabel(l.T("inventory_lots.label_plural"), l.T("inventory_lots.label")).
 		SetURLString(routes.ProductSearchInventoryLots.URL(routes.ID(productID))).
 		SetSortKey("created_at").
 		SetSortDirection("desc").
-		AddColumns(InventoryLotsForProductTableColumns...)
+		AddColumns(GetInventoryLotsForProductTableColumns(c)...)
 }
 
 templ InventoryLotsForProductTableRow(c *gin.Context, inventoryLot repository.InventoryLotWithDetail) {
@@ -292,7 +308,7 @@ templ InventoryLotsForProductTableRow(c *gin.Context, inventoryLot repository.In
 templ InventoryLotsForProductTable(c *gin.Context, productID uuid.UUID, inventoryLots []repository.InventoryLotWithDetail, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultInventoryLotsForProductTableConfig(productID).GetConfigFromURL(c)
+			tableConfig = GetDefaultInventoryLotsForProductTableConfig(c, productID).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(inventoryLots)).
@@ -305,28 +321,33 @@ templ InventoryLotsForProductTable(c *gin.Context, productID uuid.UUID, inventor
 	}
 }
 
-var ProductsForBrandTableColumns = []components.DataTableColumn{
-	components.NewDataTableColumn("Name", "name"),
-	components.NewDataTableColumn("Category", "category"),
-	components.NewDataTableColumn("Subcategory", "subcategory"),
-	components.NewDataTableColumn("Supplier", "supplier"),
-	components.NewUnsortedDataTableColumn("Aliases", "aliases"),
-	components.NewDataTableColumn("Updated", "updated_at"),
-	components.NewActionDataTableColumn(),
+func GetProductsForBrandTableColumns(c *gin.Context) []components.DataTableColumn {
+	l := locales.New(c)
+	return []components.DataTableColumn{
+		components.NewDataTableColumn(l.Tc("table.columns.name"), "name"),
+		components.NewDataTableColumn(l.Tc("categories.label"), "category"),
+		components.NewDataTableColumn(l.Tc("subcategories.label"), "subcategory"),
+		components.NewDataTableColumn(l.Tc("suppliers.label"), "supplier"),
+		components.NewUnsortedDataTableColumn(l.Tc("products.fields.aliases"), "aliases"),
+		components.NewDataTableColumn(l.Tc("table.columns.updated_at"), "updated_at"),
+		components.NewActionDataTableColumn(),
+	}
 }
 
-func GetDefaultProductsForBrandTableConfig(brand string) *components.DataTableConfig {
+func GetDefaultProductsForBrandTableConfig(c *gin.Context, brand string) *components.DataTableConfig {
+	l := locales.New(c)
 	return components.NewDataTableConfig("products_for_brand").
-		SetLabel("Products for brand").
-		SetSearchPlaceholder("Search products for brand").
-		SetItemLabel("products", "product").
+		SetLabel(l.Tc("brands.related.products")).
+		SetSearchPlaceholder(l.Tc("brands.placeholders.search")).
+		SetItemLabel(l.T("products.label_plural"), l.T("products.label")).
 		SetURLString(routes.BrandSearchProducts.URL(routes.Name(brand))).
 		SetSortKey("name").
 		SetSortDirection("asc").
-		AddColumns(ProductsForBrandTableColumns...)
+		AddColumns(GetProductsForBrandTableColumns(c)...)
 }
 
 templ ProductsForBrandTableRow(c *gin.Context, product repository.ProductWithDetail) {
+	{{ l := locales.New(c) }}
 	<tr class="hover:bg-base-300">
 		<td>
 			<a class="link link-hover" href={ routes.ProductDetails.URL(routes.ID(product.ID)) }>
@@ -380,7 +401,7 @@ templ ProductsForBrandTableRow(c *gin.Context, product repository.ProductWithDet
 					Style("soft").
 					Size("sm").
 					HxDelete(routes.ProductDelete.URL(routes.ID(product.ID))).
-					HxConfirm("Are you sure you want to delete this product?").
+					HxConfirm(l.Tc("products.confirm.delete")).
 					HxTarget("closest tr").
 					HxSwap("delete"),
 				)
@@ -392,7 +413,7 @@ templ ProductsForBrandTableRow(c *gin.Context, product repository.ProductWithDet
 templ ProductsForBrandTable(c *gin.Context, brand string, products []repository.ProductWithDetail, tableConfig *components.DataTableConfig) {
 	{{
 		if tableConfig == nil {
-			tableConfig = GetDefaultProductsForBrandTableConfig(brand).GetConfigFromURL(c)
+			tableConfig = GetDefaultProductsForBrandTableConfig(c, brand).GetConfigFromURL(c)
 		}
 		tableConfig = tableConfig.
 			SetItemCount(len(products)).

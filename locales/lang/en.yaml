@@ -1,0 +1,238 @@
+en:
+  nav:
+    title: Inventory Management
+    home: home
+    sections:
+      overview: overview
+      catalog: catalog
+      operations: operations
+      inventory: inventory
+
+  actions:
+    add: add
+    create: create
+    edit: edit
+    update: update
+    delete: delete
+    back: back
+    prev: prev
+    next: next
+    cancel: cancel
+    change: change
+    close: close
+
+  table:
+    columns:
+      name: name
+      description: description
+      created_at: created at
+      updated_at: updated at
+      actions: actions
+    empty: no results found
+
+  form:
+    optional: optional
+    search: search
+
+  products:
+    label: product
+    label_plural: products
+    titles:
+      index: products list
+      show: product details
+      new: create product
+      edit: update product
+      edit_named: "update product: %{name}"
+    fields:
+      brand: brand
+      brand_label: product brand
+      name_label: product name
+      alias: alias
+      aliases: aliases
+      inventory_quantity: inventory quantity
+      supplier: default supplier
+      buy_price: base buy price
+      sell_price: base sell price
+      stock: stock
+    placeholders:
+      search: search brand, name, (sub)category or supplier
+      category: select a category
+      subcategory: select a subcategory
+      supplier: select a supplier
+      alias: alternate product name
+    related:
+      transactions: transactions including this product
+      inventory_lots: inventory lots for this product
+    confirm:
+      delete: are you sure you want to delete this product?
+
+  brands:
+    titles:
+      show: brand details
+    related:
+      products: products of this brand
+    placeholders:
+      search: search name, (sub)category or supplier
+
+  categories:
+    label: category
+    label_plural: categories
+    titles:
+      index: categories list
+      show: category details
+      new: create category
+      edit: update category
+      edit_named: "update category: %{name}"
+    fields:
+      name: category name
+      description: category description
+    placeholders:
+      name: Drinks
+      search: search categories
+      search_subcategories: search subcategories
+      search_products: search brand, name, subcategory or supplier
+    related:
+      subcategories: subcategories in this category
+      products: products in this category
+    actions:
+      add_subcategory: add subcategory
+    confirm:
+      delete: are you sure you want to delete this category?
+
+  subcategories:
+    label: subcategory
+    label_plural: subcategories
+    titles:
+      show: subcategory details
+      new: create subcategory
+      edit: update subcategory
+      edit_named: "update subcategory: %{name}"
+    fields:
+      name: subcategory name
+      description: subcategory description
+    placeholders:
+      name: Beers
+      search_products: search brand, name or supplier
+    related:
+      products: products in this subcategory
+    confirm:
+      delete: are you sure you want to delete this subcategory?
+
+  suppliers:
+    label: supplier
+    label_plural: suppliers
+    titles:
+      index: supplier list
+      show: supplier details
+      new: create supplier
+      edit: update supplier
+      edit_named: "update supplier: %{name}"
+    fields:
+      name: supplier name
+      description: supplier description
+    placeholders:
+      search: search suppliers
+      search_products: search brand, name, (sub)category
+      search_transactions: search type or state
+    related:
+      products: products for this supplier
+      transactions: transactions for this supplier
+    confirm:
+      delete: are you sure you want to delete this supplier?
+
+  transactions:
+    label: transaction
+    label_plural: transactions
+    titles:
+      index: transactions list
+      show: transaction details
+      new: create transaction
+      edit: update transaction
+      edit_dated: "update transaction from: %{date}"
+    fields:
+      date: date
+      date_label: transaction date
+      type: type
+      type_label: transaction type
+      state: state
+      supplier: supplier
+      base_price: base price
+      final_price: final price
+      total_product_price: total product price
+      total_price: total price
+      applied_at: applied at
+      description: description
+    placeholders:
+      type: select transaction type
+      supplier: select a supplier
+      description: enter a description for this transaction
+      search: search type, state or supplier name
+    types:
+      buy: purchase
+      sell: sale
+      adjustment: adjustment
+      correction: correction
+    states:
+      draft: draft
+      pending_refund: pending refund
+      completed: completed
+    actions:
+      add_product: add product
+      apply: apply transaction
+      apply_without_refund: apply without refund
+      set_completed: set as completed
+      back: back to transactions
+    confirm:
+      delete: are you sure you want to delete this transaction?
+      apply: are you sure you want to apply this transaction?
+      apply_without_refund: are you sure you want to apply this transaction without a refund?
+      complete: are you sure you want to set this transaction as completed?
+
+  transaction_items:
+    label: transaction item
+    label_plural: transaction items
+    titles:
+      index: transaction items list
+      new: add product to transaction
+      edit: update product in transaction
+    fields:
+      product_brand: product brand
+      product_name: product name
+      quantity: quantity
+      base_unit_price: base unit price
+      final_unit_price: final unit price
+    placeholders:
+      search: search transaction items
+      search_product: search for a product
+      quantity: enter quantity
+      base_unit_price: enter the base unit price
+      final_unit_price: enter the final unit price
+    filters:
+      all_categories: all categories
+    actions:
+      select_product: select a product
+    confirm:
+      delete: are you sure you want to delete this transaction item?
+
+  inventory:
+    label: product
+    label_plural: products
+    titles:
+      index: inventory
+    fields:
+      product_brand: product brand
+      product_name: product name
+      quantity: quantity
+      average_unit_price: average unit price
+      average_unit_cost: average unit cost
+    placeholders:
+      search: search products
+
+  inventory_lots:
+    label: inventory lot
+    label_plural: inventory lots
+    fields:
+      transaction_date: transaction date
+      received_quantity: received quantity
+      remaining_quantity: remaining quantity
+      unit_cost: unit cost

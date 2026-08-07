@@ -8,6 +8,7 @@ import (
 
 func registerCoreRoutes(r *gin.Engine) {
 	routes.Index.Register(r, handlers.Index())
+	routes.LangRoute.Register(r, handlers.HandleLanguageSelection())
 }
 
 func registerApiRoutes(r *gin.Engine) {
@@ -68,6 +69,7 @@ func registerSupplierRoutes(r *gin.Engine) {
 	routes.SupplierCreate.Register(r, handlers.HandleCreateSupplier())
 	routes.SupplierDetails.Register(r, handlers.HandleGetSupplierDetails())
 	routes.SupplierSearchProducts.Register(r, handlers.HandleSearchProductsBySupplier())
+	routes.SupplierSearchTransactions.Register(r, handlers.HandleSearchTransactionsForSupplier())
 	routes.SupplierEditForm.Register(r, handlers.HandleShowUpdateSupplierForm())
 	routes.SupplierUpdate.Register(r, handlers.HandleUpdateSupplier())
 	routes.SupplierDelete.Register(r, handlers.HandleDeleteSupplier())

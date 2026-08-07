@@ -64,11 +64,31 @@ tailwind: ## Generate Tailwind static CSS file
 init: init-deps sqlc templ-build tailwind ## Initialize the project (fetch libraries, generate SQLC queries and models)
 	@test -f .env || cp example.env .env
 
-test: init ## Run tests
+i18n-fix: ## Check for missing translation keys across all locales and add them to the translation files
+	@go run ./cmd/i18n-check/main.go --fix
+
+i18n-check: ## Check for missing translations across all locales
+	@go run ./cmd/i18n-check/main.go
+
+templ-fmt: ## Format all Templ templates
+	@templ fmt .
+
+templ-fmt-check: ## Check formatting for all Templ templates
 	@templ fmt -fail .
+
+prettier-fmt: ## Format all Templ templates with Prettier
+	@prettier --write ./**/*.templ
+
+prettier-fmt-check: ## Check formatting for all Templ templates with Prettier
 	@prettier --check ./**/*.templ
+
+gofmt-check: ## Check formatting for all Go files
 	@test -z "$$(gofmt -l .)" || (echo "gofmt issues in:"; gofmt -l .; exit 1)
+
+go-test: ## Run Go tests
 	@go test ./...
+
+test: init i18n-check templ-fmt-check prettier-fmt-check gofmt-check go-test ## Run tests
 
 build: init sqlc templ-build tailwind ## Build the project
 	@go build -o stock main.go

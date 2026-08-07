@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cyrilschreiber3/stock/logger"
+	"github.com/cyrilschreiber3/stock/middlewares"
 	"github.com/cyrilschreiber3/stock/routes"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -27,7 +28,7 @@ func Init() *gin.Engine {
 
 	router := gin.New()
 
-	router.Use(ginLogger, gin.Recovery())
+	router.Use(ginLogger, gin.Recovery(), middlewares.InternationalisationMiddleware())
 
 	setupCors(router)
 
